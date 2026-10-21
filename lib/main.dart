@@ -254,8 +254,13 @@ Future<Widget> _initializeApp(ValueChanged<String> reportStage) async {
   final systemControls = await SystemMediaControls.create(
     artworkFile: (url) async => (await artworkCache.getSingleFile(url)).path,
   );
-  final taskbarLyrics = Platform.isWindows
-      ? TaskbarLyricsControls(MethodChannelTaskbarLyrics())
+  final flymeLyricsSupported =
+      Platform.isAndroid && await MethodChannelTaskbarLyrics.isFlymeSupported();
+  final taskbarLyrics = Platform.isWindows || flymeLyricsSupported
+      ? TaskbarLyricsControls(
+          MethodChannelTaskbarLyrics(),
+          isFlyme: flymeLyricsSupported,
+        )
       : null;
   final mediaControls = taskbarLyrics == null
       ? systemControls

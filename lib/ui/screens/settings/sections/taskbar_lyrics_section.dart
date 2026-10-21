@@ -29,16 +29,48 @@ class TaskbarLyricsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!_available(context)) return const SizedBox.shrink();
+    final lyricsControls = context.read<TaskbarLyricsControls?>();
+    final isFlyme = lyricsControls?.isFlyme ?? false;
     final l10n = context.l10n;
     final provider = context.read<PreferencesProvider>();
-    final prefs = context.select<PreferencesProvider, AppPreferences>((p) => p.prefs);
-    void update(AppPreferences Function(AppPreferences p) change) => provider.update(change(provider.prefs));
+    final prefs = context.select<PreferencesProvider, AppPreferences>(
+      (p) => p.prefs,
+    );
+    void update(AppPreferences Function(AppPreferences p) change) =>
+        provider.update(change(provider.prefs));
+
+    if (isFlyme) {
+      final locale = Localizations.localeOf(context);
+      final traditionalChinese =
+          locale.scriptCode?.toLowerCase() == 'hant' ||
+          const {'TW', 'HK', 'MO'}.contains(locale.countryCode?.toUpperCase());
+      final title = locale.languageCode == 'zh'
+          ? (traditionalChinese ? '魅族狀態列歌詞' : '魅族状态栏歌词')
+          : 'Flyme status-bar lyrics';
+      final subtitle = locale.languageCode == 'zh'
+          ? (traditionalChinese
+                ? '在魅族 Flyme 狀態列顯示 Flutify 正在播放的歌詞句。'
+                : '在魅族 Flyme 状态栏显示 Flutify 正在播放的歌词句。')
+          : 'Show Flutify’s current lyric line in the Meizu Flyme status bar.';
+      return SettingsSection(
+        title: title,
+        children: [
+          SettingsSwitchTile(
+            title: title,
+            subtitle: subtitle,
+            value: prefs.taskbarLyrics,
+            onChanged: (v) => update((p) => p.copyWith(taskbarLyrics: v)),
+          ),
+        ],
+      );
+    }
 
     // 设置页预览跟随应用当前主题；实际任务栏仍由原生端跟随系统。
     final lightTaskbar = Theme.of(context).brightness == Brightness.light;
     final accent = context.select<AppearanceProvider, Color>((a) => a.accent);
     final color = switch (prefs.taskbarLyricsColor) {
-      TaskbarLyricsColor.auto => lightTaskbar ? const Color(0xFF141414) : Colors.white,
+      TaskbarLyricsColor.auto =>
+        lightTaskbar ? const Color(0xFF141414) : Colors.white,
       TaskbarLyricsColor.white => Colors.white,
       TaskbarLyricsColor.black => const Color(0xFF141414),
       TaskbarLyricsColor.accent => _accentFor(context, accent, lightTaskbar),
@@ -80,7 +112,8 @@ class TaskbarLyricsSection extends StatelessWidget {
                 TaskbarLyricsColor.custom => l10n.taskbarLyricsColorCustom,
               },
               selected: prefs.taskbarLyricsColor,
-              onChanged: (v) => update((p) => p.copyWith(taskbarLyricsColor: v)),
+              onChanged: (v) =>
+                  update((p) => p.copyWith(taskbarLyricsColor: v)),
             ),
           ),
           if (prefs.taskbarLyricsColor == TaskbarLyricsColor.custom)
@@ -90,8 +123,16 @@ class TaskbarLyricsSection extends StatelessWidget {
                 color: Color(prefs.taskbarLyricsCustomColor),
                 label: l10n.settingsTaskbarLyricsChangeColor,
                 onTap: () async {
-                  final picked = await CustomColorDialog.show(context, initial: Color(prefs.taskbarLyricsCustomColor));
-                  if (picked != null) update((p) => p.copyWith(taskbarLyricsCustomColor: picked.toARGB32()));
+                  final picked = await CustomColorDialog.show(
+                    context,
+                    initial: Color(prefs.taskbarLyricsCustomColor),
+                  );
+                  if (picked != null)
+                    update(
+                      (p) => p.copyWith(
+                        taskbarLyricsCustomColor: picked.toARGB32(),
+                      ),
+                    );
                 },
               ),
             ),
@@ -104,7 +145,8 @@ class TaskbarLyricsSection extends StatelessWidget {
             minIcon: Icons.opacity_rounded,
             maxIcon: Icons.circle,
             labelOf: (v) => '${v.round()}%',
-            onChanged: (v) => update((p) => p.copyWith(taskbarLyricsOpacity: v.round())),
+            onChanged: (v) =>
+                update((p) => p.copyWith(taskbarLyricsOpacity: v.round())),
           ),
           SettingsSliderTile(
             title: l10n.settingsTaskbarLyricsFontSize,
@@ -115,7 +157,8 @@ class TaskbarLyricsSection extends StatelessWidget {
             minIcon: Icons.text_decrease_rounded,
             maxIcon: Icons.text_increase_rounded,
             labelOf: (v) => '${v.round()}%',
-            onChanged: (v) => update((p) => p.copyWith(taskbarLyricsFontScale: v.round())),
+            onChanged: (v) =>
+                update((p) => p.copyWith(taskbarLyricsFontScale: v.round())),
           ),
         ],
       ],
@@ -123,9 +166,16 @@ class TaskbarLyricsSection extends StatelessWidget {
   }
 
   /// 与原生一致：深色任务栏用强调色的亮色调，浅色任务栏用暗色调。
-  static Color _accentFor(BuildContext context, Color accent, bool lightTaskbar) {
+  static Color _accentFor(
+    BuildContext context,
+    Color accent,
+    bool lightTaskbar,
+  ) {
     final appearance = context.read<AppearanceProvider>();
-    return appearance.theme(lightTaskbar ? Brightness.light : Brightness.dark).colorScheme.primary;
+    return appearance
+        .theme(lightTaskbar ? Brightness.light : Brightness.dark)
+        .colorScheme
+        .primary;
   }
 }
 
@@ -135,7 +185,11 @@ class _ColorButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _ColorButton({required this.color, required this.label, required this.onTap});
+  const _ColorButton({
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

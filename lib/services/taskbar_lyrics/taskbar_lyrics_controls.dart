@@ -63,8 +63,11 @@ class TaskbarLyricsControls implements SystemMediaControls {
   int _retries = 0;
   Timer? _retryTimer;
 
+  final bool isFlyme;
+
   TaskbarLyricsControls(
     this._platform, {
+    this.isFlyme = false,
     http.Client? client,
     this.retryDelays = const [
       Duration(seconds: 10),

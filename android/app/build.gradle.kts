@@ -60,6 +60,10 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".flyme_test"
+            versionNameSuffix = "-flyme-test"
+        }
         release {
             signingConfig = signingConfigs.getByName("release")
         }
@@ -77,6 +81,8 @@ flutter {
 }
 
 dependencies {
+    // AudioService is referenced by MainActivity for the Flyme lyric bridge.
+    implementation("androidx.media:media:1.7.0")
     // Android 原生 DRM 播放：Media3 ExoPlayer + 设备 Widevine（纯音频）。
     // 部分机型 WebView EME 不可用（createMediaKeys 永不 settle，真机实测），
     // DRM 曲目在 Android 上改走原生播放器；HLS/清单/license 反代仍复用 Dart 侧本地回环服务。

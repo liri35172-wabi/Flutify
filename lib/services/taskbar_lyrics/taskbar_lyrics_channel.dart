@@ -107,6 +107,16 @@ class MethodChannelTaskbarLyrics implements TaskbarLyricsPlatform {
   final StreamController<TaskbarLyricsEvent> _events =
       StreamController.broadcast();
 
+  static Future<bool> isFlymeSupported() async {
+    try {
+      return await _channel.invokeMethod<bool>('isFlymeSupported') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
   MethodChannelTaskbarLyrics() {
     _channel.setMethodCallHandler((call) async {
       if (call.method != 'event') return;
