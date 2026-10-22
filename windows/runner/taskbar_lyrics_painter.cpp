@@ -283,7 +283,7 @@ void TaskbarLyricsPainter::PaintLyrics(const Canvas& canvas, const std::wstring&
                                 Font* font, float top, float lane_h, float travel, int incoming_alpha) {
         Graphics* g = canvas.graphics;
         const Gdiplus::GraphicsState state = g->Save();
-        g->SetClip(RectF(0, top, canvas.width, lane_h));
+        g->SetClip(RectF(0.0f, top, static_cast<float>(canvas.width), lane_h));
         const bool row_changes = !outgoing.empty() && outgoing != incoming;
         if (p < 1.0f && row_changes) {
           const float y = top - travel * p;
