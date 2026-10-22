@@ -294,6 +294,12 @@ void TaskbarLyricsWindow::SyncState() {
       has_track_ = shared_->has_track;
       title_ = shared_->title;
       artist_ = shared_->artist;
+      lines_.clear();
+      display_index_ = -2;
+      last_current_.clear();
+      last_translation_.clear();
+      transition_previous_.clear();
+      transition_previous_translation_.clear();
       frame_signature_.clear();
     }
     if (shared_->art_version != art_version_) {
@@ -305,6 +311,10 @@ void TaskbarLyricsWindow::SyncState() {
       lyrics_version_ = shared_->lyrics_version;
       lines_ = shared_->lines;
       display_index_ = -2;
+      last_current_.clear();
+      last_translation_.clear();
+      transition_previous_.clear();
+      transition_previous_translation_.clear();
       frame_signature_.clear();
     }
     if (shared_->style_version != style_version_) {
@@ -625,7 +635,7 @@ void TaskbarLyricsWindow::Render() {
                                  std::to_wstring(style_.font_scale) + L"|" +
                                  std::to_wstring(w) + L"x" + std::to_wstring(h);
 
-  std::wstring previous, current, next, current_trans;
+  std::wstring previous, current, next, current_trans, previous_trans, next_trans;
   float eased = 1;
   std::wstring signature;
   if (control) {
@@ -644,22 +654,44 @@ void TaskbarLyricsWindow::Render() {
         hi = mid - 1;
       }
     }
-    const ULONGLONG now = GetTickCount64();
-    if (index != display_index_) {
-      // 首次进入（刚换歌 / 刚从控制条切回）不播放动画，直接停在当前句
-      anim_start_ = display_index_ == -2 ? 0 : now;
-      display_index_ = index;
-    }
-    const float p = (std::min)(1.0f, static_cast<float>(now - anim_start_) / static_cast<float>(kAnimMs));
-    eased = 1 - std::pow(1 - p, 3.0f);  // easeOutCubic
     if (index < 0) {
       current = L"\u266A " + title_ + (artist_.empty() ? L"" : L" \u2014 " + artist_);
     } else {
       current = lines_[index].text.empty() ? L"\u266A \u266A \u266A" : lines_[index].text;
       current_trans = lines_[index].translation;
-      if (index > 0) previous = lines_[index - 1].text;
+      if (index > 0) {
+        previous = lines_[index - 1].text;
+        previous_trans = lines_[index - 1].translation;
+      }
     }
-    if (index + 1 < static_cast<int>(lines_.size())) next = lines_[index + 1].text;
+    if (index + 1 < static_cast<int>(lines_.size())) {
+      next = lines_[index + 1].text;
+      next_trans = lines_[index + 1].translation;
+    }
+    const ULONGLONG now = GetTickCount64();
+    if (index != display_index_) {
+      const bool has_outgoing = display_index_ != -2 && !last_current_.empty();
+      const bool primary_changed = current != last_current_;
+      const bool translation_changed = current_trans != last_translation_;
+      if (has_outgoing) {
+        // Keep an unchanged language row fixed while the other one transitions.
+        previous = primary_changed ? last_current_ : L"";
+        previous_trans = translation_changed ? last_translation_ : L"";
+      }
+      transition_previous_ = previous;
+      transition_previous_translation_ = previous_trans;
+      anim_start_ = (display_index_ == -2 || (!primary_changed && !translation_changed)) ? 0 : now;
+      display_index_ = index;
+    }
+    const float p = anim_start_ == 0 ? 1.0f :
+        (std::min)(1.0f, static_cast<float>(now - anim_start_) / static_cast<float>(kAnimMs));
+    if (p < 1.0f) {
+      previous = transition_previous_;
+      previous_trans = transition_previous_translation_;
+    }
+    eased = 1 - std::pow(1 - p, 3.0f);  // easeOutCubic
+    last_current_ = current;
+    last_translation_ = current_trans;
     // 动画期间逐帧推，静止时内容不变就跳过
     if (p >= 1) signature = L"L|" + current + L"|" + current_trans + L"|" + next + L"|" + style_sig;
   }
@@ -680,7 +712,8 @@ void TaskbarLyricsWindow::Render() {
     layout_ = painter_->PaintControl(canvas, title_.empty() ? L"Flutify" : title_, artist_, art_.get(), playing_,
                                      hovered_button_);
   } else {
-    painter_->PaintLyrics(canvas, previous, current, next, current_trans, eased);
+    painter_->PaintLyrics(canvas, previous, current, next, current_trans, previous_trans, next_trans,
+                          false, eased);
   }
   g.Flush(Gdiplus::FlushIntentionSync);
   Push();

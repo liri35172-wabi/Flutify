@@ -61,7 +61,7 @@ class MainActivity : AudioServiceActivity() {
                             else -> 0xFFFFFFFF.toInt()
                         }
                         val fontScale = (values?.get("fontScale") as? Number)?.toInt() ?: 100
-                        AudioService.setFloatingLyricsStyle(color, fontScale)
+                        AudioService.setFloatingLyricsStyle(color, fontScale, mode == "auto")
                         result.success(null)
                     }
                     "setOverlayEnabled" -> {
@@ -75,7 +75,9 @@ class MainActivity : AudioServiceActivity() {
                         }
                     }
                     "setEnabled" -> {
-                        AudioService.setFlymeLyricsEnabled(call.arguments as? Boolean == true)
+                        if (isMeizuOrFlyme()) {
+                            AudioService.setFlymeLyricsEnabled(call.arguments as? Boolean == true)
+                        }
                         result.success(null)
                     }
                     "setLyrics" -> {

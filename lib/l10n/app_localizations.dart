@@ -3683,6 +3683,18 @@ abstract class AppLocalizations {
   /// **'歌词颜色'**
   String get settingsFloatingLyricsColor;
 
+  /// No description provided for @settingsFloatingLyricsAutoColorSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动模式使用白字和清晰的黑白细描边，适配明暗背景；不会读取其他应用的画面。'**
+  String get settingsFloatingLyricsAutoColorSubtitle;
+
+  /// No description provided for @settingsFlymeLyricsUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态栏歌词仅适用于受支持的魅族 Flyme 设备；悬浮歌词仍可单独使用。'**
+  String get settingsFlymeLyricsUnavailable;
+
   /// No description provided for @settingsFloatingLyricsCustomColor.
   ///
   /// In zh, this message translates to:

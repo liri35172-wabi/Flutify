@@ -105,6 +105,10 @@ class TaskbarLyricsWindow {
 
   // ---- 切句动画 ----
   int display_index_ = -2;
+  std::wstring last_current_;
+  std::wstring last_translation_;
+  std::wstring transition_previous_;
+  std::wstring transition_previous_translation_;
   ULONGLONG anim_start_ = 0;
 
   // ---- 绘制表面（32bpp 预乘 DIB，尺寸变化时重建）----

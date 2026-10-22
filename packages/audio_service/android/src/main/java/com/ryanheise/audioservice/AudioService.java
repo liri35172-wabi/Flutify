@@ -122,6 +122,7 @@ public class AudioService extends MediaBrowserServiceCompat {
     private static boolean floatingLyricsClickThrough;
     private static boolean floatingLyricsTransparent;
     private static int floatingLyricsColor = 0xFFFFFFFF;
+    private static boolean floatingLyricsAuto = true;
     private static int floatingLyricsFontScale = 100;
     private static String[] floatingLyricTranslations = new String[0];
     private static String floatingDisplayedLine = "";
@@ -184,14 +185,15 @@ public class AudioService extends MediaBrowserServiceCompat {
         if (service != null) service.refreshFloatingLyrics(true);
     }
 
-    public static void setFloatingLyricsStyle(int color, int fontScale) {
+    public static void setFloatingLyricsStyle(int color, int fontScale, boolean automatic) {
         synchronized (AudioService.class) {
             floatingLyricsColor = color | 0xFF000000;
             floatingLyricsFontScale = Math.max(80, Math.min(150, fontScale));
+            floatingLyricsAuto = automatic;
         }
         AudioService service = instance;
         if (service != null && service.lyricsOverlayWindow != null) {
-            service.lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale);
+            service.lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale, floatingLyricsAuto);
         }
     }
     private static ServiceListener listener;
@@ -876,12 +878,12 @@ public class AudioService extends MediaBrowserServiceCompat {
         boolean permissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this);
         if (lyricsOverlayWindow != null) {
             lyricsOverlayWindow.setOptions(clickThrough, transparent);
-            lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale);
+            lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale, floatingLyricsAuto);
         }
         if (enabled && permissionGranted && !nextLine.isEmpty()) {
             if (lyricsOverlayWindow == null) lyricsOverlayWindow = new LyricsOverlayWindow(this);
             lyricsOverlayWindow.setOptions(clickThrough, transparent);
-            lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale);
+            lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale, floatingLyricsAuto);
             if (force || !nextLine.equals(floatingDisplayedLine)) {
                 lyricsOverlayWindow.show(nextLine, nextTranslation);
                 floatingDisplayedLine = nextLine;

@@ -1937,6 +1937,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsFloatingLyricsColor => '歌词颜色';
 
   @override
+  String get settingsFloatingLyricsAutoColorSubtitle =>
+      '自动模式使用白字和清晰的黑白细描边，适配明暗背景；不会读取其他应用的画面。';
+
+  @override
+  String get settingsFlymeLyricsUnavailable =>
+      '状态栏歌词仅适用于受支持的魅族 Flyme 设备；悬浮歌词仍可单独使用。';
+
+  @override
   String get settingsFloatingLyricsCustomColor => '自定义歌词颜色';
 
   @override
@@ -3873,6 +3881,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsFloatingLyricsColor => '歌詞顏色';
+
+  @override
+  String get settingsFloatingLyricsAutoColorSubtitle =>
+      '自動模式使用白字與清晰的黑白細描邊，適配明暗背景；不會讀取其他應用的畫面。';
+
+  @override
+  String get settingsFlymeLyricsUnavailable =>
+      '狀態列歌詞僅適用於支援的魅族 Flyme 裝置；懸浮歌詞仍可單獨使用。';
 
   @override
   String get settingsFloatingLyricsCustomColor => '自訂歌詞顏色';

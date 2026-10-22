@@ -962,6 +962,8 @@
   "settingsFloatingLyricsTransparent": "透明背景",
   "settingsFloatingLyricsTransparentSubtitle": "隱藏深色底板，只保留歌詞文字。",
   "settingsFloatingLyricsColor": "歌詞顏色",
+  "settingsFloatingLyricsAutoColorSubtitle": "自動模式使用白字與清晰的黑白細描邊，適配明暗背景；不會讀取其他應用的畫面。",
+  "settingsFlymeLyricsUnavailable": "狀態列歌詞僅適用於支援的魅族 Flyme 裝置；懸浮歌詞仍可單獨使用。",
   "settingsFloatingLyricsCustomColor": "自訂歌詞顏色",
   "settingsFloatingLyricsFontSize": "歌詞字號"
 }

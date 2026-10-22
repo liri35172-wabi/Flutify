@@ -130,7 +130,10 @@ class TaskbarLyricsControls implements SystemMediaControls {
     final overlayStyleChanged = overlayStyle != _overlayStyle;
     if (overlayStyleChanged) _overlayStyle = overlayStyle;
     final wasActive = _active;
-    final taskbarChanged = enabled != _enabled;
+    // Flyme's status-bar ticker is vendor-specific. Keep the portable Android
+    // overlay independent, but never send a ticker-enable request on other devices.
+    final effectiveTaskbarEnabled = enabled && (!isAndroid || isFlyme);
+    final taskbarChanged = effectiveTaskbarEnabled != _enabled;
     final overlayChanged = overlayEnabled != _overlayEnabled;
     final overlayOptionsChanged =
         overlayClickThrough != _overlayClickThrough ||
@@ -141,11 +144,13 @@ class TaskbarLyricsControls implements SystemMediaControls {
         !overlayStyleChanged) {
       return;
     }
-    _enabled = enabled;
+    _enabled = effectiveTaskbarEnabled;
     _overlayEnabled = overlayEnabled;
     _overlayClickThrough = overlayClickThrough;
     _overlayTransparentBackground = overlayTransparentBackground;
-    if (taskbarChanged) unawaited(_platform.setEnabled(enabled));
+    if (taskbarChanged) {
+      unawaited(_platform.setEnabled(effectiveTaskbarEnabled));
+    }
     if (overlayChanged && (isAndroid || isWindows)) {
       unawaited(_platform.setOverlayEnabled(overlayEnabled));
     }

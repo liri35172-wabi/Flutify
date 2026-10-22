@@ -54,6 +54,7 @@ class FloatingLyricsWindow {
   std::wstring title_;
   std::wstring artist_;
   std::vector<taskbar_lyrics::LyricLine> lines_;
+  bool bilingual_overlay_ = false;
   bool playing_ = false;
   bool transparent_background_ = false;
   int64_t anchor_ms_ = 0;
@@ -64,6 +65,10 @@ class FloatingLyricsWindow {
   int width_ = 680;
   int height_ = 100;
   int display_index_ = -2;
+  std::wstring last_current_;
+  std::wstring last_translation_;
+  std::wstring transition_previous_;
+  std::wstring transition_previous_translation_;
   ULONGLONG anim_start_ = 0;
   UINT interval_ = 0;
 

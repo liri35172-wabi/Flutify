@@ -117,7 +117,12 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
       fontSize: 16 * prefs.floatingLyricsFontScale / 100,
       fontWeight: FontWeight.w600,
       shadows: const [
-        Shadow(color: Color(0x88000000), blurRadius: 1.4, offset: Offset(0, 1)),
+        Shadow(color: Color(0xDFFFFFFF), blurRadius: 0, offset: Offset(0, 0.9)),
+        Shadow(
+          color: Color(0xE6000000),
+          blurRadius: 0,
+          offset: Offset(0, -0.9),
+        ),
       ],
     );
     return SettingsSection(
@@ -176,6 +181,7 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
           ),
           SettingsTile(
             title: l10n.settingsFloatingLyricsColor,
+            subtitle: l10n.settingsFloatingLyricsAutoColorSubtitle,
             below: SettingsSegmented<TaskbarLyricsColor>(
               values: TaskbarLyricsColor.values,
               labelOf: (value) => switch (value) {

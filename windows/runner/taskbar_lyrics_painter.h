@@ -27,6 +27,7 @@ class TaskbarLyricsPainter {
     int opacity;           // 15 ~ 100
     double font_scale;     // 歌词字号倍率（用户设置，0.8 ~ 1.3）
     bool floating_overlay = false;  // 独立桌面浮窗使用更大的字号和紧凑行距
+    bool dual_contrast_outline = false;  // 浮窗各颜色均加清晰黑白双描边；不读取底层应用画面
   };
 
   // 控制条各区域（客户区坐标），用于命中测试。
@@ -48,10 +49,12 @@ class TaskbarLyricsPainter {
   // 当前句是否需要折成两行。
   bool NeedsWrap(const Canvas& canvas, const std::wstring& current);
 
-  // [current_translation]：当前句的译文（双语歌词）；非空时当前句改为「原文 + 译文小字」两行布局。
+  // 双语浮窗的两行分别裁剪、同步动画；任务栏调用仍保留原本的静态双语布局。
   // [progress]：切句动画进度（0 = 刚切换，1 = 静止），已做缓动。
   void PaintLyrics(const Canvas& canvas, const std::wstring& previous, const std::wstring& current,
-                   const std::wstring& next, const std::wstring& current_translation, float progress);
+                   const std::wstring& next, const std::wstring& current_translation,
+                   const std::wstring& previous_translation, const std::wstring& next_translation,
+                   bool bilingual_overlay, float progress);
 
   ControlLayout PaintControl(const Canvas& canvas, const std::wstring& title, const std::wstring& artist,
                              Gdiplus::Bitmap* art, bool playing, Button hovered);

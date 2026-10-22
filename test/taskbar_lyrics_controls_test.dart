@@ -179,6 +179,42 @@ void main() {
     expect(platform.calls, contains('overlayStyle:accent:120'));
   });
 
+  test('Auto overlay color mode is forwarded distinctly', () async {
+    final platform = _FakePlatform();
+    final controls = TaskbarLyricsControls(platform, isAndroid: true);
+    addTearDown(controls.dispose);
+    const autoStyle = TaskbarLyricsStyle(
+      mode: TaskbarLyricsColor.auto,
+      fontScale: 110,
+    );
+    controls.configure(
+      enabled: false,
+      overlayEnabled: true,
+      style: const TaskbarLyricsStyle(mode: TaskbarLyricsColor.white),
+      overlayStyle: autoStyle,
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(platform.overlayStyle, autoStyle);
+    expect(platform.calls, contains('overlayStyle:auto:110'));
+  });
+
+  test(
+    'non-Flyme Android keeps status-bar lyrics off but allows overlay',
+    () async {
+      final platform = _FakePlatform();
+      final controls = TaskbarLyricsControls(
+        platform,
+        isAndroid: true,
+        isFlyme: false,
+      );
+      addTearDown(controls.dispose);
+      controls.configure(enabled: true, overlayEnabled: true, style: style);
+      await settle();
+      expect(platform.calls, isNot(contains('enabled:true')));
+      expect(platform.calls, contains('overlay:true'));
+    },
+  );
+
   test('Windows 透明背景选项传给原生浮窗', () async {
     final platform = _FakePlatform();
     final controls = TaskbarLyricsControls(platform, isWindows: true);

@@ -177,7 +177,22 @@ void TaskbarLyricsPainter::DrawText(const Canvas& canvas, const std::wstring& te
   alpha = alpha * canvas.opacity / 100;
   if (text.empty() || alpha <= 2) return;
   const BYTE visible_alpha = static_cast<BYTE>((std::min)(alpha, 255));
-  if (canvas.floating_overlay) {
+  if (canvas.floating_overlay && canvas.dual_contrast_outline) {
+    // Auto cannot inspect a different app's pixels. A crisp two-tone edge keeps white
+    // lyrics legible over both light and dark content without a broad, blurry shadow.
+    const int offsets[8][2] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}};
+    const auto draw_outline = [&](BYTE red, BYTE green, BYTE blue, float radius, BYTE alpha) {
+      SolidBrush outline(Color(static_cast<BYTE>(visible_alpha * alpha / 255), red, green, blue));
+      for (const auto& offset : offsets) {
+        RectF shifted(rect.X + static_cast<float>(offset[0] * radius * canvas.scale),
+                      rect.Y + static_cast<float>(offset[1] * radius * canvas.scale), rect.Width, rect.Height);
+        canvas.graphics->DrawString(text.c_str(), static_cast<INT>(text.size()), font, shifted,
+                                     text_format_.get(), &outline);
+      }
+    };
+    draw_outline(255, 255, 255, 1.7f, 205);  // outer light halo
+    draw_outline(0, 0, 0, 0.9f, 235);         // inner dark edge
+  } else if (canvas.floating_overlay) {
     const int luminance = canvas.color.GetR() * 299 + canvas.color.GetG() * 587 + canvas.color.GetB() * 114;
     const BYTE shade = luminance >= 128000 ? 0 : 255;
     SolidBrush shadow(Color(static_cast<BYTE>(visible_alpha * 0.68), shade, shade, shade));
@@ -214,7 +229,10 @@ bool TaskbarLyricsPainter::WrapNeeded(const Canvas& canvas, const std::wstring& 
 
 void TaskbarLyricsPainter::PaintLyrics(const Canvas& canvas, const std::wstring& previous,
                                        const std::wstring& current, const std::wstring& next,
-                                       const std::wstring& current_translation, float progress) {
+                                       const std::wstring& current_translation,
+                                       const std::wstring& previous_translation,
+                                       const std::wstring& next_translation, bool bilingual_overlay,
+                                       float progress) {
   TrimCaches();
   const double big_pt = (canvas.floating_overlay ? kOverlayBigPt : kBigPt) *
                         canvas.scale * canvas.font_scale;
@@ -223,34 +241,69 @@ void TaskbarLyricsPainter::PaintLyrics(const Canvas& canvas, const std::wstring&
   const float pad = static_cast<float>(8 * canvas.scale);
   const float avail = canvas.width - pad * 2;
 
-  if (!current_translation.empty()) {
-    // 双语：在浮窗里按实际字高紧凑堆叠，避免两行被拉到容器上下两端。
-    // 任务栏仍使用原有的均分布局。
-    if (canvas.floating_overlay) {
+  if (canvas.floating_overlay && bilingual_overlay) {
+      // Animate the primary and translation rows in their own clipped lanes. Each row
+      // uses the same timeline but its own outgoing/incoming strings, so skipped lyric
+      // timestamps cannot leave an unrelated prior line behind.
       double original_pt = big_pt * 0.95;
       double translation_pt = small_pt;
       const double floor_pt = small_pt * 0.78;
       Font* ofont = nullptr;
       Font* tfont = nullptr;
+      const std::wstring& primary_font_text = current.empty() ? previous : current;
+      const std::wstring& translation_font_text = current_translation.empty()
+                                                      ? previous_translation
+                                                      : current_translation;
       for (;;) {
-        ofont = FontFor(current, original_pt, true);
-        tfont = FontFor(current_translation, translation_pt, false);
-        const bool fits = MeasureWidth(canvas.graphics, current, ofont) <= avail &&
-                          MeasureWidth(canvas.graphics, current_translation, tfont) <= avail;
+        ofont = FontFor(primary_font_text, original_pt, true);
+        tfont = FontFor(translation_font_text, translation_pt, false);
+        const float current_width = MeasureWidth(canvas.graphics, current, ofont);
+        const float outgoing_width = previous.empty() ? 0 :
+            MeasureWidth(canvas.graphics, previous, FontFor(previous, original_pt, true));
+        const float current_translation_width = current_translation.empty() ? 0 :
+            MeasureWidth(canvas.graphics, current_translation, tfont);
+        const float outgoing_translation_width = previous_translation.empty() ? 0 :
+            MeasureWidth(canvas.graphics, previous_translation,
+                         FontFor(previous_translation, translation_pt, false));
+        const bool fits = (std::max)(current_width, outgoing_width) <= avail &&
+                          (std::max)(current_translation_width, outgoing_translation_width) <= avail;
         if (fits || original_pt <= floor_pt) break;
         original_pt -= 0.5;
         translation_pt = (std::max)(floor_pt, translation_pt - 0.25);
       }
-      const float primary_h = static_cast<float>(original_pt * kPointToPixel * 1.45);
-      const float translation_h = static_cast<float>(translation_pt * kPointToPixel * 1.45);
-      const float gap = static_cast<float>(3 * canvas.scale);
-      const float block_h = primary_h + gap + translation_h;
-      const float block_top = (canvas.height - block_h) / 2.0f;
-      DrawText(canvas, current, ofont, RectF(pad, block_top, avail, primary_h), 255);
-      DrawText(canvas, current_translation, tfont,
-               RectF(pad, block_top + primary_h + gap, avail, translation_h), 215);
+      const float row_gap = static_cast<float>(2 * canvas.scale);
+      const float usable_h = canvas.height - row_gap;
+      const float primary_h = usable_h * 0.64f;
+      const float translation_h = usable_h - primary_h;
+      const float block_top = row_gap / 2.0f;
+      const float p = (std::clamp)(progress, 0.0f, 1.0f);
+      const float travel_primary = primary_h;
+      const float travel_translation = translation_h;
+      const auto draw_row = [&](const std::wstring& outgoing, const std::wstring& incoming,
+                                Font* font, float top, float lane_h, float travel, int incoming_alpha) {
+        Graphics* g = canvas.graphics;
+        const Gdiplus::GraphicsState state = g->Save();
+        g->SetClip(RectF(0, top, canvas.width, lane_h));
+        const bool row_changes = !outgoing.empty() && outgoing != incoming;
+        if (p < 1.0f && row_changes) {
+          const float y = top - travel * p;
+          DrawText(canvas, outgoing, font, RectF(pad, y, avail, lane_h),
+                   static_cast<int>(incoming_alpha * (1.0f - p)));
+        }
+        if (!incoming.empty()) {
+          const float row_alpha = row_changes ? incoming_alpha * p : incoming_alpha;
+          const float y = row_changes ? top + travel * (1.0f - p) : top;
+          DrawText(canvas, incoming, font, RectF(pad, y, avail, lane_h), static_cast<int>(row_alpha));
+        }
+        g->Restore(state);
+      };
+      draw_row(previous, current, ofont, block_top, primary_h, travel_primary, 255);
+      draw_row(previous_translation, current_translation, tfont,
+               block_top + primary_h + row_gap, translation_h, travel_translation, 215);
       return;
-    }
+  }
+
+  if (!current_translation.empty()) {
     // 任务栏双语：沿用原有均分布局。
     const float top_h = canvas.height * 0.62f;
     double original_pt = big_pt * 0.95;

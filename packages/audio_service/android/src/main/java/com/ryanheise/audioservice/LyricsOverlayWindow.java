@@ -1,7 +1,9 @@
 package com.ryanheise.audioservice;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -45,10 +47,9 @@ final class LyricsOverlayWindow {
         root.setClickable(true);
         root.setFocusable(false);
 
-        primary = new TextView(context);
+        primary = new ContrastTextView(context);
         primary.setTextColor(textColor);
         // Keep lyrics readable over light or busy apps even when the surface is transparent.
-        primary.setShadowLayer(dp(1.25f), 0f, dp(1f), 0xA8000000);
         primary.setTextSize(18);
         primary.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         primary.setSingleLine(true);
@@ -60,9 +61,8 @@ final class LyricsOverlayWindow {
         root.addView(primary, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        translation = new TextView(context);
+        translation = new ContrastTextView(context);
         translation.setTextColor(0xFFE7E9EF);
-        translation.setShadowLayer(dp(1.25f), 0f, dp(1f), 0xA8000000);
         translation.setTextSize(12);
         translation.setSingleLine(true);
         translation.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
@@ -115,17 +115,16 @@ final class LyricsOverlayWindow {
         }
     }
 
-    void setStyle(int color, int fontScale) {
-        textColor = color | 0xFF000000;
+    void setStyle(int color, int fontScale, boolean automatic) {
+        textColor = automatic ? Color.WHITE : (color | 0xFF000000);
         this.fontScale = Math.max(80, Math.min(150, fontScale));
+        boolean lightText = usesLightText(textColor);
         primary.setTextColor(textColor);
         primary.setTextSize(18f * this.fontScale / 100f);
-        boolean lightText = usesLightText(textColor);
-        int edgeColor = lightText ? 0xF0000000 : 0xF0FFFFFF;
-        primary.setShadowLayer(dp(1.25f), 0f, dp(1f), (edgeColor & 0x00FFFFFF) | 0xA8000000);
+        ((ContrastTextView) primary).setDualContrastOutline(true);
         translation.setTextColor(lightText ? 0xFFE7E9EF : 0xFF252A32);
-        translation.setShadowLayer(dp(1.25f), 0f, dp(1f), (edgeColor & 0x00FFFFFF) | 0xA8000000);
         translation.setTextSize(12f * this.fontScale / 100f);
+        ((ContrastTextView) translation).setDualContrastOutline(true);
         root.setBackground(transparentBackground ? null : background());
     }
 
@@ -195,6 +194,49 @@ final class LyricsOverlayWindow {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    /** Auto is a static, high-contrast treatment; it never samples another app's screen. */
+    private final class ContrastTextView extends TextView {
+        private boolean useDualContrastOutline = true;
+
+        ContrastTextView(Context context) {
+            super(context);
+        }
+
+        void setDualContrastOutline(boolean enabled) {
+            useDualContrastOutline = enabled;
+            getPaint().clearShadowLayer();
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            if (!useDualContrastOutline) {
+                super.onDraw(canvas);
+                return;
+            }
+            Paint textPaint = getPaint();
+            Paint.Style originalStyle = textPaint.getStyle();
+            float originalStrokeWidth = textPaint.getStrokeWidth();
+            Paint.Join originalJoin = textPaint.getStrokeJoin();
+            int originalColor = textPaint.getColor();
+            textPaint.clearShadowLayer();
+            textPaint.setStyle(Paint.Style.STROKE);
+            textPaint.setStrokeJoin(Paint.Join.ROUND);
+            textPaint.setStrokeWidth(dp(2.2f));
+            textPaint.setColor(0xDFFFFFFF);
+            super.onDraw(canvas);
+            textPaint.setStrokeWidth(dp(1.25f));
+            textPaint.setColor(0xE6000000);
+            super.onDraw(canvas);
+            textPaint.setStyle(Paint.Style.FILL);
+            textPaint.setColor(originalColor);
+            super.onDraw(canvas);
+            textPaint.setStyle(originalStyle);
+            textPaint.setStrokeWidth(originalStrokeWidth);
+            textPaint.setStrokeJoin(originalJoin);
         }
     }
 

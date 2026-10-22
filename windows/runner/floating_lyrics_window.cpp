@@ -199,11 +199,22 @@ void FloatingLyricsWindow::SyncState() {
     title_ = shared_->title;
     artist_ = shared_->artist;
     display_index_ = -2;
+    lines_.clear();
+    last_current_.clear();
+    last_translation_.clear();
+    transition_previous_.clear();
+    transition_previous_translation_.clear();
   }
   if (shared_->lyrics_version != lyrics_version_) {
     lyrics_version_ = shared_->lyrics_version;
     lines_ = shared_->lines;
+    bilingual_overlay_ = std::any_of(lines_.begin(), lines_.end(),
+                                     [](const auto& line) { return !line.translation.empty(); });
     display_index_ = -2;
+    last_current_.clear();
+    last_translation_.clear();
+    transition_previous_.clear();
+    transition_previous_translation_.clear();
   }
   if (shared_->overlay_style_version != overlay_style_version_) {
     overlay_style_version_ = shared_->overlay_style_version;
@@ -252,7 +263,7 @@ Gdiplus::Color FloatingLyricsWindow::TextColor() const {
 
 void FloatingLyricsWindow::Render() {
   if (!overlay_ || width_ <= 0 || height_ <= 0) return;
-  std::wstring previous, current, next, translation;
+  std::wstring previous, current, next, translation, previous_translation, next_translation;
   int index = -1;
   if (!lines_.empty()) {
     int low = 0;
@@ -268,24 +279,48 @@ void FloatingLyricsWindow::Render() {
     }
   }
 
-  const ULONGLONG now = GetTickCount64();
-  if (index != display_index_) {
-    anim_start_ = display_index_ == -2 ? 0 : now;
-    display_index_ = index;
-  }
-  const float progress = display_index_ == -2
-                             ? 1.0f
-                             : (std::min)(1.0f, static_cast<float>(now - anim_start_) /
-                                                    static_cast<float>(kAnimationMs));
-  const float eased = 1.0f - std::pow(1.0f - progress, 3.0f);
   if (lines_.empty() || index < 0) {
     current = L"\u266A " + title_ + (artist_.empty() ? L"" : L" \u2014 " + artist_);
   } else {
     current = lines_[index].text.empty() ? L"\u266A \u266A \u266A" : lines_[index].text;
     translation = lines_[index].translation;
-    if (index > 0) previous = lines_[index - 1].text;
-    if (index + 1 < static_cast<int>(lines_.size())) next = lines_[index + 1].text;
+    if (index > 0) {
+      previous = lines_[index - 1].text;
+      previous_translation = lines_[index - 1].translation;
+    }
+    if (index + 1 < static_cast<int>(lines_.size())) {
+      next = lines_[index + 1].text;
+      next_translation = lines_[index + 1].translation;
+    }
   }
+
+  const ULONGLONG now = GetTickCount64();
+  if (index != display_index_) {
+    const bool has_outgoing = display_index_ != -2 && !last_current_.empty();
+    const bool primary_changed = current != last_current_;
+    const bool translation_changed = translation != last_translation_;
+    if (has_outgoing) {
+      // Animate from the actual last target, not an unrelated indexed predecessor.
+      // Keep an unchanged row in place while the other language transitions.
+      previous = primary_changed ? last_current_ : L"";
+      previous_translation = translation_changed ? last_translation_ : L"";
+    }
+    transition_previous_ = previous;
+    transition_previous_translation_ = previous_translation;
+    anim_start_ = (display_index_ == -2 || (!primary_changed && !translation_changed)) ? 0 : now;
+    display_index_ = index;
+  }
+  const float progress = anim_start_ == 0
+                             ? 1.0f
+                             : (std::min)(1.0f, static_cast<float>(now - anim_start_) /
+                                                    static_cast<float>(kAnimationMs));
+  if (progress < 1.0f) {
+    previous = transition_previous_;
+    previous_translation = transition_previous_translation_;
+  }
+  const float eased = 1.0f - std::pow(1.0f - progress, 3.0f);
+  last_current_ = current;
+  last_translation_ = translation;
 
   if (!EnsureSurface(width_, height_)) return;
   Gdiplus::Bitmap bitmap(width_, height_, width_ * 4, PixelFormat32bppPARGB, static_cast<BYTE*>(surface_bits_));
@@ -312,8 +347,10 @@ void FloatingLyricsWindow::Render() {
 
   const auto color = TextColor();
   const TaskbarLyricsPainter::Canvas canvas{&graphics, width_, height_, scale_, color, style_.opacity,
-                                            style_.font_scale / 100.0, true};
-  painter_->PaintLyrics(canvas, previous, current, next, translation, eased);
+                                            style_.font_scale / 100.0, true,
+                                            true};
+  painter_->PaintLyrics(canvas, previous, current, next, translation,
+                        previous_translation, next_translation, bilingual_overlay_, eased);
   graphics.Flush(Gdiplus::FlushIntentionSync);
   Push();
 }

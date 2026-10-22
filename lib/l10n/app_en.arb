@@ -685,6 +685,8 @@
   "settingsFloatingLyricsTransparent": "Transparent background",
   "settingsFloatingLyricsTransparentSubtitle": "Hide the dark panel and leave the lyrics text visible.",
   "settingsFloatingLyricsColor": "Lyrics color",
+  "settingsFloatingLyricsAutoColorSubtitle": "Auto uses white lyrics with a crisp dark-and-light outline for contrast; it does not read other apps’ screens.",
+  "settingsFlymeLyricsUnavailable": "Flyme status-bar lyrics require a supported Meizu/Flyme device. Floating lyrics remain available separately.",
   "settingsFloatingLyricsCustomColor": "Custom lyric color",
   "settingsFloatingLyricsFontSize": "Lyrics font size"
 }

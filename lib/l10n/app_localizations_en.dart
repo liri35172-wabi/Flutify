@@ -2049,6 +2049,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFloatingLyricsColor => 'Lyrics color';
 
   @override
+  String get settingsFloatingLyricsAutoColorSubtitle =>
+      'Auto uses white lyrics with a crisp dark-and-light outline for contrast; it does not read other apps’ screens.';
+
+  @override
+  String get settingsFlymeLyricsUnavailable =>
+      'Flyme status-bar lyrics require a supported Meizu/Flyme device. Floating lyrics remain available separately.';
+
+  @override
   String get settingsFloatingLyricsCustomColor => 'Custom lyric color';
 
   @override
