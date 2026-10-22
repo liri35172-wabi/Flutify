@@ -11,6 +11,7 @@ import '../../../../providers/appearance_provider.dart';
 import '../../../../services/taskbar_lyrics/taskbar_lyrics_channel.dart';
 import '../../../../services/taskbar_lyrics/taskbar_lyrics_controls.dart';
 import '../widgets/custom_color_dialog.dart';
+import '../widgets/floating_lyrics_preview_text.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/settings_segmented.dart';
 import '../widgets/settings_slider_tile.dart';
@@ -112,19 +113,6 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
       TaskbarLyricsColor.accent => accent,
       TaskbarLyricsColor.custom => Color(prefs.floatingLyricsCustomColor),
     };
-    final previewText = TextStyle(
-      color: lyricColor,
-      fontSize: 16 * prefs.floatingLyricsFontScale / 100,
-      fontWeight: FontWeight.w600,
-      shadows: const [
-        Shadow(color: Color(0xDFFFFFFF), blurRadius: 0, offset: Offset(0, 0.9)),
-        Shadow(
-          color: Color(0xE6000000),
-          blurRadius: 0,
-          offset: Offset(0, -0.9),
-        ),
-      ],
-    );
     return SettingsSection(
       title: l10n.settingsFloatingLyrics,
       children: [
@@ -158,22 +146,18 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    '无名的人啊  我敬你一杯酒',
-                    style: previewText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  FloatingLyricsPreviewText(
+                    text: '无名的人啊  我敬你一杯酒',
+                    color: lyricColor,
+                    fontSize: 16 * prefs.floatingLyricsFontScale / 100,
+                    fontWeight: FontWeight.w600,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    '敬你的沉默 和每一聲怒吼',
-                    style: previewText.copyWith(
-                      fontSize: 10 * prefs.floatingLyricsFontScale / 100,
-                      fontWeight: FontWeight.w400,
-                      color: lyricColor.withValues(alpha: 0.88),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  FloatingLyricsPreviewText(
+                    text: '敬你的沉默 和每一聲怒吼',
+                    color: lyricColor.withValues(alpha: 0.88),
+                    fontSize: 10 * prefs.floatingLyricsFontScale / 100,
+                    fontWeight: FontWeight.w400,
                   ),
                 ],
               ),

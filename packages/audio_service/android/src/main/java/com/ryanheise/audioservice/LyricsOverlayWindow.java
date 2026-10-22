@@ -121,10 +121,10 @@ final class LyricsOverlayWindow {
         boolean lightText = usesLightText(textColor);
         primary.setTextColor(textColor);
         primary.setTextSize(18f * this.fontScale / 100f);
-        ((ContrastTextView) primary).setDualContrastOutline(true);
+        ((ContrastTextView) primary).setContrastOutline(true);
         translation.setTextColor(lightText ? 0xFFE7E9EF : 0xFF252A32);
         translation.setTextSize(12f * this.fontScale / 100f);
-        ((ContrastTextView) translation).setDualContrastOutline(true);
+        ((ContrastTextView) translation).setContrastOutline(true);
         root.setBackground(transparentBackground ? null : background());
     }
 
@@ -199,21 +199,21 @@ final class LyricsOverlayWindow {
 
     /** Auto is a static, high-contrast treatment; it never samples another app's screen. */
     private final class ContrastTextView extends TextView {
-        private boolean useDualContrastOutline = true;
+        private boolean useContrastOutline = true;
 
         ContrastTextView(Context context) {
             super(context);
         }
 
-        void setDualContrastOutline(boolean enabled) {
-            useDualContrastOutline = enabled;
+        void setContrastOutline(boolean enabled) {
+            useContrastOutline = enabled;
             getPaint().clearShadowLayer();
             invalidate();
         }
 
         @Override
         protected void onDraw(Canvas canvas) {
-            if (!useDualContrastOutline) {
+            if (!useContrastOutline) {
                 super.onDraw(canvas);
                 return;
             }
@@ -225,11 +225,10 @@ final class LyricsOverlayWindow {
             textPaint.clearShadowLayer();
             textPaint.setStyle(Paint.Style.STROKE);
             textPaint.setStrokeJoin(Paint.Join.ROUND);
-            textPaint.setStrokeWidth(dp(2.2f));
-            textPaint.setColor(0xDFFFFFFF);
-            super.onDraw(canvas);
-            textPaint.setStrokeWidth(dp(1.25f));
-            textPaint.setColor(0xE6000000);
+            // One thin opposing keyline keeps the glyph shape crisp. Stacking broad white
+            // and black strokes made colored and black lyrics look swollen on-device.
+            textPaint.setStrokeWidth(dp(1f));
+            textPaint.setColor(usesLightText(originalColor) ? 0xE6000000 : 0xDFFFFFFF);
             super.onDraw(canvas);
             textPaint.setStyle(Paint.Style.FILL);
             textPaint.setColor(originalColor);
