@@ -3676,6 +3676,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'隐藏深色底板，只保留歌词文字。'**
   String get settingsFloatingLyricsTransparentSubtitle;
+
+  /// No description provided for @settingsFloatingLyricsColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'歌词颜色'**
+  String get settingsFloatingLyricsColor;
+
+  /// No description provided for @settingsFloatingLyricsCustomColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义歌词颜色'**
+  String get settingsFloatingLyricsCustomColor;
+
+  /// No description provided for @settingsFloatingLyricsFontSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'歌词字号'**
+  String get settingsFloatingLyricsFontSize;
 }
 
 class _AppLocalizationsDelegate

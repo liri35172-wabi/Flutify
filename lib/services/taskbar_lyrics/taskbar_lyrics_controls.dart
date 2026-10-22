@@ -42,6 +42,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
   bool _overlayClickThrough = false;
   bool _overlayTransparentBackground = false;
   TaskbarLyricsStyle? _style;
+  TaskbarLyricsStyle? _overlayStyle;
   MediaTrackInfo? _track;
   MediaPlaybackInfo? _playback;
   DateTime _playbackAt = DateTime.now();
@@ -96,6 +97,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
     bool overlayClickThrough = false,
     bool overlayTransparentBackground = false,
     required TaskbarLyricsStyle style,
+    TaskbarLyricsStyle overlayStyle = const TaskbarLyricsStyle(),
     bool bilingual = true,
     String locale = 'zh-Hans',
   }) {
@@ -125,13 +127,20 @@ class TaskbarLyricsControls implements SystemMediaControls {
       _style = style;
       if (_active) unawaited(_platform.setStyle(style));
     }
+    final overlayStyleChanged = overlayStyle != _overlayStyle;
+    if (overlayStyleChanged) _overlayStyle = overlayStyle;
     final wasActive = _active;
     final taskbarChanged = enabled != _enabled;
     final overlayChanged = overlayEnabled != _overlayEnabled;
     final overlayOptionsChanged =
         overlayClickThrough != _overlayClickThrough ||
         overlayTransparentBackground != _overlayTransparentBackground;
-    if (!taskbarChanged && !overlayChanged && !overlayOptionsChanged) return;
+    if (!taskbarChanged &&
+        !overlayChanged &&
+        !overlayOptionsChanged &&
+        !overlayStyleChanged) {
+      return;
+    }
     _enabled = enabled;
     _overlayEnabled = overlayEnabled;
     _overlayClickThrough = overlayClickThrough;
@@ -139,6 +148,9 @@ class TaskbarLyricsControls implements SystemMediaControls {
     if (taskbarChanged) unawaited(_platform.setEnabled(enabled));
     if (overlayChanged && (isAndroid || isWindows)) {
       unawaited(_platform.setOverlayEnabled(overlayEnabled));
+    }
+    if (overlayStyleChanged && _active) {
+      unawaited(_platform.setOverlayStyle(overlayStyle));
     }
     if (isAndroid && (overlayChanged || overlayOptionsChanged)) {
       unawaited(
@@ -150,6 +162,9 @@ class TaskbarLyricsControls implements SystemMediaControls {
     }
     if (!wasActive && _active) {
       unawaited(_pushAll());
+      if (isAndroid || isWindows) {
+        unawaited(_platform.setOverlayStyle(overlayStyle));
+      }
     } else if (wasActive && !_active) {
       _resetLyricsState();
     }

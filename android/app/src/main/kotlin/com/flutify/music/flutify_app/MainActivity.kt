@@ -49,6 +49,21 @@ class MainActivity : AudioServiceActivity() {
                         )
                         result.success(null)
                     }
+                    "setOverlayStyle" -> {
+                        val values = call.arguments as? Map<*, *>
+                        val mode = values?.get("mode") as? String ?: "auto"
+                        val custom = (values?.get("custom") as? Number)?.toInt() ?: 0xFFFFFFFF.toInt()
+                        val accent = (values?.get("accentOnDark") as? Number)?.toInt() ?: 0xFF1ED760.toInt()
+                        val color = when (mode) {
+                            "black" -> 0xFF141414.toInt()
+                            "accent" -> accent
+                            "custom" -> custom
+                            else -> 0xFFFFFFFF.toInt()
+                        }
+                        val fontScale = (values?.get("fontScale") as? Number)?.toInt() ?: 100
+                        AudioService.setFloatingLyricsStyle(color, fontScale)
+                        result.success(null)
+                    }
                     "setOverlayEnabled" -> {
                         val enabled = call.arguments as? Boolean == true
                         val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)

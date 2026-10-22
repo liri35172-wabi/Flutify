@@ -24,6 +24,8 @@ final class LyricsOverlayWindow {
     private boolean attached;
     private boolean clickThrough;
     private boolean transparentBackground;
+    private int textColor = Color.WHITE;
+    private int fontScale = 100;
     private float downRawX;
     private float downRawY;
     private int downX;
@@ -37,17 +39,17 @@ final class LyricsOverlayWindow {
         root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
-        root.setPadding(dp(18), dp(10), dp(18), dp(10));
+        root.setPadding(dp(20), dp(11), dp(20), dp(11));
         root.setBackground(background());
-        root.setElevation(dp(8));
+        root.setElevation(dp(10));
         root.setClickable(true);
         root.setFocusable(false);
 
         primary = new TextView(context);
-        primary.setTextColor(Color.WHITE);
+        primary.setTextColor(textColor);
         // Keep lyrics readable over light or busy apps even when the surface is transparent.
         primary.setShadowLayer(dp(3.5f), 0f, dp(1f), 0xF0000000);
-        primary.setTextSize(16);
+        primary.setTextSize(18);
         primary.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         primary.setSingleLine(true);
         primary.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
@@ -59,7 +61,7 @@ final class LyricsOverlayWindow {
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         translation = new TextView(context);
-        translation.setTextColor(0xFFD8D8D8);
+        translation.setTextColor(0xFFE7E9EF);
         translation.setShadowLayer(dp(3.5f), 0f, dp(1f), 0xF0000000);
         translation.setTextSize(12);
         translation.setSingleLine(true);
@@ -111,6 +113,20 @@ final class LyricsOverlayWindow {
                 attached = false;
             }
         }
+    }
+
+    void setStyle(int color, int fontScale) {
+        textColor = color | 0xFF000000;
+        this.fontScale = Math.max(80, Math.min(150, fontScale));
+        primary.setTextColor(textColor);
+        primary.setTextSize(18f * this.fontScale / 100f);
+        boolean lightText = usesLightText(textColor);
+        int edgeColor = lightText ? 0xF0000000 : 0xF0FFFFFF;
+        primary.setShadowLayer(dp(3.5f), 0f, dp(1f), edgeColor);
+        translation.setTextColor(lightText ? 0xFFE7E9EF : 0xFF252A32);
+        translation.setShadowLayer(dp(3.5f), 0f, dp(1f), edgeColor);
+        translation.setTextSize(12f * this.fontScale / 100f);
+        root.setBackground(transparentBackground ? null : background());
     }
 
     void show(String text, String translatedText) {
@@ -195,10 +211,18 @@ final class LyricsOverlayWindow {
 
     private GradientDrawable background() {
         GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(0xCC202124);
-        drawable.setCornerRadius(dp(24));
-        drawable.setStroke(dp(1), 0x33FFFFFF);
+        boolean lightText = usesLightText(textColor);
+        drawable.setColor(lightText ? 0xD91A1E27 : 0xEAF5F6FA);
+        drawable.setCornerRadius(dp(20));
+        drawable.setStroke(dp(1), lightText ? 0x44FFFFFF : 0x44353A45);
         return drawable;
+    }
+
+    private static boolean usesLightText(int color) {
+        int red = Color.red(color);
+        int green = Color.green(color);
+        int blue = Color.blue(color);
+        return red * 299 + green * 587 + blue * 114 >= 128000;
     }
 
     private int dp(float value) {

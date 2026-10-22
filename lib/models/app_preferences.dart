@@ -110,6 +110,9 @@ class AppPreferences {
   final bool floatingLyrics;
   final bool floatingLyricsClickThrough;
   final bool floatingLyricsTransparent;
+  final TaskbarLyricsColor floatingLyricsColor;
+  final int floatingLyricsCustomColor;
+  final int floatingLyricsFontScale;
   final TaskbarLyricsColor taskbarLyricsColor;
 
   /// [TaskbarLyricsColor.custom] 时的颜色（ARGB）。
@@ -156,6 +159,9 @@ class AppPreferences {
     this.floatingLyrics = false,
     this.floatingLyricsClickThrough = false,
     this.floatingLyricsTransparent = false,
+    this.floatingLyricsColor = TaskbarLyricsColor.auto,
+    this.floatingLyricsCustomColor = defaultTaskbarLyricsCustomColor,
+    this.floatingLyricsFontScale = 100,
     this.taskbarLyricsColor = TaskbarLyricsColor.auto,
     this.taskbarLyricsCustomColor = defaultTaskbarLyricsCustomColor,
     this.taskbarLyricsOpacity = 100,
@@ -173,6 +179,8 @@ class AppPreferences {
   static const int defaultTaskbarLyricsCustomColor = 0xFF1ED760;
   static const int minTaskbarLyricsFontScale = 80;
   static const int maxTaskbarLyricsFontScale = 130;
+  static const int minFloatingLyricsFontScale = 80;
+  static const int maxFloatingLyricsFontScale = 150;
   static const int minBackupIntervalMinutes = 20;
   static const int maxBackupIntervalMinutes = 1440;
   static const int defaultBackupIntervalMinutes = 60;
@@ -212,6 +220,9 @@ class AppPreferences {
     bool? floatingLyrics,
     bool? floatingLyricsClickThrough,
     bool? floatingLyricsTransparent,
+    TaskbarLyricsColor? floatingLyricsColor,
+    int? floatingLyricsCustomColor,
+    int? floatingLyricsFontScale,
     TaskbarLyricsColor? taskbarLyricsColor,
     int? taskbarLyricsCustomColor,
     int? taskbarLyricsOpacity,
@@ -267,6 +278,15 @@ class AppPreferences {
           floatingLyricsClickThrough ?? this.floatingLyricsClickThrough,
       floatingLyricsTransparent:
           floatingLyricsTransparent ?? this.floatingLyricsTransparent,
+      floatingLyricsColor: floatingLyricsColor ?? this.floatingLyricsColor,
+      floatingLyricsCustomColor:
+          floatingLyricsCustomColor ?? this.floatingLyricsCustomColor,
+      floatingLyricsFontScale: floatingLyricsFontScale != null
+          ? floatingLyricsFontScale.clamp(
+              minFloatingLyricsFontScale,
+              maxFloatingLyricsFontScale,
+            )
+          : this.floatingLyricsFontScale,
       taskbarLyricsColor: taskbarLyricsColor ?? this.taskbarLyricsColor,
       taskbarLyricsCustomColor:
           taskbarLyricsCustomColor ?? this.taskbarLyricsCustomColor,
@@ -310,6 +330,9 @@ class AppPreferences {
     'floatingLyrics': floatingLyrics,
     'floatingLyricsClickThrough': floatingLyricsClickThrough,
     'floatingLyricsTransparent': floatingLyricsTransparent,
+    'floatingLyricsColor': floatingLyricsColor.name,
+    'floatingLyricsCustomColor': floatingLyricsCustomColor,
+    'floatingLyricsFontScale': floatingLyricsFontScale,
     'taskbarLyricsColor': taskbarLyricsColor.name,
     'taskbarLyricsCustomColor': taskbarLyricsCustomColor,
     'taskbarLyricsOpacity': taskbarLyricsOpacity,
@@ -327,6 +350,8 @@ class AppPreferences {
     final lead = json['remoteLyricsLeadMs'];
     final port = json['proxyPort'];
     final customColor = json['taskbarLyricsCustomColor'];
+    final overlayCustomColor = json['floatingLyricsCustomColor'];
+    final overlayFontScale = json['floatingLyricsFontScale'];
     final opacity = json['taskbarLyricsOpacity'];
     final fontScale = json['taskbarLyricsFontScale'];
     final backupInterval = json['backupIntervalMinutes'];
@@ -427,6 +452,23 @@ class AppPreferences {
         json['floatingLyricsTransparent'],
         d.floatingLyricsTransparent,
       ),
+      floatingLyricsColor: pick(
+        TaskbarLyricsColor.values,
+        json['floatingLyricsColor'],
+        d.floatingLyricsColor,
+      ),
+      floatingLyricsCustomColor:
+          overlayCustomColor is int &&
+              overlayCustomColor >= 0 &&
+              overlayCustomColor <= 0xFFFFFFFF
+          ? 0xFF000000 | overlayCustomColor
+          : d.floatingLyricsCustomColor,
+      floatingLyricsFontScale: overlayFontScale is int
+          ? overlayFontScale.clamp(
+              minFloatingLyricsFontScale,
+              maxFloatingLyricsFontScale,
+            )
+          : d.floatingLyricsFontScale,
       taskbarLyricsColor: pick(
         TaskbarLyricsColor.values,
         json['taskbarLyricsColor'],
@@ -500,6 +542,9 @@ class AppPreferences {
       other.floatingLyrics == floatingLyrics &&
       other.floatingLyricsClickThrough == floatingLyricsClickThrough &&
       other.floatingLyricsTransparent == floatingLyricsTransparent &&
+      other.floatingLyricsColor == floatingLyricsColor &&
+      other.floatingLyricsCustomColor == floatingLyricsCustomColor &&
+      other.floatingLyricsFontScale == floatingLyricsFontScale &&
       other.taskbarLyricsColor == taskbarLyricsColor &&
       other.taskbarLyricsCustomColor == taskbarLyricsCustomColor &&
       other.taskbarLyricsOpacity == taskbarLyricsOpacity &&
@@ -540,6 +585,9 @@ class AppPreferences {
     floatingLyrics,
     floatingLyricsClickThrough,
     floatingLyricsTransparent,
+    floatingLyricsColor,
+    floatingLyricsCustomColor,
+    floatingLyricsFontScale,
     taskbarLyricsColor,
     taskbarLyricsCustomColor,
     taskbarLyricsOpacity,

@@ -1932,6 +1932,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsFloatingLyricsTransparentSubtitle => '隐藏深色底板，只保留歌词文字。';
+
+  @override
+  String get settingsFloatingLyricsColor => '歌词颜色';
+
+  @override
+  String get settingsFloatingLyricsCustomColor => '自定义歌词颜色';
+
+  @override
+  String get settingsFloatingLyricsFontSize => '歌词字号';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3861,4 +3870,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsFloatingLyricsTransparentSubtitle => '隱藏深色底板，只保留歌詞文字。';
+
+  @override
+  String get settingsFloatingLyricsColor => '歌詞顏色';
+
+  @override
+  String get settingsFloatingLyricsCustomColor => '自訂歌詞顏色';
+
+  @override
+  String get settingsFloatingLyricsFontSize => '歌詞字號';
 }

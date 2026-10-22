@@ -87,10 +87,9 @@ class _TaskbarLyricsBindingState extends State<TaskbarLyricsBinding> {
     );
     final appearance = context.read<AppearanceProvider>();
     final accent = context.select<AppearanceProvider, Color>((a) => a.accent);
-    final (
-      onDark,
-      onLight,
-    ) = prefs.taskbarLyricsColor == TaskbarLyricsColor.accent
+    final (onDark, onLight) =
+        (prefs.taskbarLyricsColor == TaskbarLyricsColor.accent ||
+            prefs.floatingLyricsColor == TaskbarLyricsColor.accent)
         ? _tones(appearance, accent)
         : _accentTones;
     final l10n = context.l10n;
@@ -102,6 +101,13 @@ class _TaskbarLyricsBindingState extends State<TaskbarLyricsBinding> {
       overlayTransparentBackground: prefs.floatingLyricsTransparent,
       bilingual: prefs.lyricsBilingual,
       locale: Localizations.localeOf(context).toLanguageTag(),
+      overlayStyle: TaskbarLyricsStyle(
+        mode: prefs.floatingLyricsColor,
+        customColor: prefs.floatingLyricsCustomColor,
+        accentOnDark: onDark,
+        accentOnLight: onLight,
+        fontScale: prefs.floatingLyricsFontScale,
+      ),
       style: TaskbarLyricsStyle(
         mode: prefs.taskbarLyricsColor,
         customColor: prefs.taskbarLyricsCustomColor,

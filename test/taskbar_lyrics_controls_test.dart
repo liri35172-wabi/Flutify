@@ -18,6 +18,7 @@ class _FakePlatform implements TaskbarLyricsPlatform {
   final StreamController<TaskbarLyricsEvent> controller =
       StreamController.broadcast();
   List<LyricLine>? lyrics;
+  TaskbarLyricsStyle? overlayStyle;
 
   @override
   Stream<TaskbarLyricsEvent> get events => controller.stream;
@@ -34,6 +35,12 @@ class _FakePlatform implements TaskbarLyricsPlatform {
     required bool clickThrough,
     required bool transparentBackground,
   }) async => calls.add('overlayOptions:$clickThrough:$transparentBackground');
+
+  @override
+  Future<void> setOverlayStyle(TaskbarLyricsStyle style) async {
+    overlayStyle = style;
+    calls.add("overlayStyle:${style.mode.name}:${style.fontScale}");
+  }
 
   @override
   Future<void> setStyle(TaskbarLyricsStyle style) async =>
@@ -136,6 +143,41 @@ void main() {
   tearDown(() => controls.dispose());
 
   Future<void> settle() => Future<void>.delayed(Duration.zero);
+
+  test('floating overlay style is delivered independently', () async {
+    final platform = _FakePlatform();
+    final controls = TaskbarLyricsControls(platform, isWindows: true);
+    addTearDown(controls.dispose);
+    const overlayStyle = TaskbarLyricsStyle(
+      mode: TaskbarLyricsColor.custom,
+      customColor: 0xFF336699,
+      fontScale: 140,
+    );
+    controls.configure(
+      enabled: false,
+      overlayEnabled: true,
+      style: const TaskbarLyricsStyle(mode: TaskbarLyricsColor.white),
+      overlayStyle: overlayStyle,
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(platform.overlayStyle, overlayStyle);
+    expect(platform.calls, contains('overlayStyle:custom:140'));
+    expect(platform.calls, contains('style:white'));
+
+    const updatedOverlayStyle = TaskbarLyricsStyle(
+      mode: TaskbarLyricsColor.accent,
+      fontScale: 120,
+    );
+    controls.configure(
+      enabled: false,
+      overlayEnabled: true,
+      style: const TaskbarLyricsStyle(mode: TaskbarLyricsColor.white),
+      overlayStyle: updatedOverlayStyle,
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(platform.overlayStyle, updatedOverlayStyle);
+    expect(platform.calls, contains('overlayStyle:accent:120'));
+  });
 
   test('关闭时不向原生推送曲目', () async {
     await controls.setTrack(track);

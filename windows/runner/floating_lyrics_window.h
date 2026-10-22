@@ -49,7 +49,7 @@ class FloatingLyricsWindow {
 
   uint64_t track_version_ = ~0ull;
   uint64_t lyrics_version_ = ~0ull;
-  uint64_t style_version_ = ~0ull;
+  uint64_t overlay_style_version_ = ~0ull;
   bool has_track_ = false;
   std::wstring title_;
   std::wstring artist_;

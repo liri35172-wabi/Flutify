@@ -153,26 +153,32 @@ void TaskbarLyrics::OnMethodCall(const flutter::MethodCall<EncodableValue>& call
 
   {
     std::lock_guard<std::mutex> lock(shared_.mutex);
-    if (method == "setStyle") {
+    if (method == "setStyle" || method == "setOverlayStyle") {
       if (args) {
-        auto& style = shared_.style;
+        auto& style = method == "setOverlayStyle" ? shared_.overlay_style : shared_.style;
         style.mode = ParseMode(GetText(*args, "mode"));
         style.custom = static_cast<uint32_t>(GetInt(*args, "custom", style.custom));
         style.accent_on_dark = static_cast<uint32_t>(GetInt(*args, "accentOnDark", style.accent_on_dark));
         style.accent_on_light = static_cast<uint32_t>(GetInt(*args, "accentOnLight", style.accent_on_light));
-        style.opacity = static_cast<int>(GetInt(*args, "opacity", 100));
-        style.opacity = style.opacity < 15 ? 15 : (style.opacity > 100 ? 100 : style.opacity);
-        style.font_scale = static_cast<int>(GetInt(*args, "fontScale", 100));
-        style.font_scale = style.font_scale < 80 ? 80 : (style.font_scale > 130 ? 130 : style.font_scale);
-        if (const EncodableValue* labels = Find(*args, "labels")) {
-          if (const auto* map = std::get_if<EncodableMap>(labels)) {
-            shared_.labels.open = GetText(*map, "open");
-            shared_.labels.refetch = GetText(*map, "refetch");
-            shared_.labels.disable = GetText(*map, "disable");
+        if (method == "setStyle") {
+          style.opacity = static_cast<int>(GetInt(*args, "opacity", 100));
+          style.opacity = style.opacity < 15 ? 15 : (style.opacity > 100 ? 100 : style.opacity);
+          if (const EncodableValue* labels = Find(*args, "labels")) {
+            if (const auto* map = std::get_if<EncodableMap>(labels)) {
+              shared_.labels.open = GetText(*map, "open");
+              shared_.labels.refetch = GetText(*map, "refetch");
+              shared_.labels.disable = GetText(*map, "disable");
+            }
           }
         }
+        style.font_scale = static_cast<int>(GetInt(*args, "fontScale", 100));
+        style.font_scale = style.font_scale < 80 ? 80 : (style.font_scale > (method == "setOverlayStyle" ? 150 : 130) ? (method == "setOverlayStyle" ? 150 : 130) : style.font_scale);
       }
-      shared_.style_version++;
+      if (method == "setOverlayStyle") {
+        shared_.overlay_style_version++;
+      } else {
+        shared_.style_version++;
+      }
     } else if (method == "setTrack") {
       shared_.has_track = args != nullptr;
       shared_.title = args ? GetText(*args, "title") : L"";

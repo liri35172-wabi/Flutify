@@ -683,5 +683,8 @@
   "settingsFloatingLyricsClickThrough": "タッチを透過",
   "settingsFloatingLyricsClickThroughSubtitle": "オンにするとタッチ操作を下のゲームに渡します。歌詞ウィンドウを動かすには、先にオフにしてからドラッグしてください。",
   "settingsFloatingLyricsTransparent": "背景を透明にする",
-  "settingsFloatingLyricsTransparentSubtitle": "暗い背景パネルを隠し、歌詞だけを表示します。"
+  "settingsFloatingLyricsTransparentSubtitle": "暗い背景パネルを隠し、歌詞だけを表示します。",
+  "settingsFloatingLyricsColor": "歌詞の色",
+  "settingsFloatingLyricsCustomColor": "カスタム歌詞色",
+  "settingsFloatingLyricsFontSize": "歌詞の文字サイズ"
 }

@@ -2044,4 +2044,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsFloatingLyricsTransparentSubtitle =>
       'Hide the dark panel and leave the lyrics text visible.';
+
+  @override
+  String get settingsFloatingLyricsColor => 'Lyrics color';
+
+  @override
+  String get settingsFloatingLyricsCustomColor => 'Custom lyric color';
+
+  @override
+  String get settingsFloatingLyricsFontSize => 'Lyrics font size';
 }

@@ -977,5 +977,8 @@
   "settingsFloatingLyricsClickThrough": "触控穿透",
   "settingsFloatingLyricsClickThroughSubtitle": "开启后，触摸会交给下层游戏；要移动歌词窗，请先关闭此项再拖动。",
   "settingsFloatingLyricsTransparent": "透明背景",
-  "settingsFloatingLyricsTransparentSubtitle": "隐藏深色底板，只保留歌词文字。"
+  "settingsFloatingLyricsTransparentSubtitle": "隐藏深色底板，只保留歌词文字。",
+  "settingsFloatingLyricsColor": "歌词颜色",
+  "settingsFloatingLyricsCustomColor": "自定义歌词颜色",
+  "settingsFloatingLyricsFontSize": "歌词字号"
 }

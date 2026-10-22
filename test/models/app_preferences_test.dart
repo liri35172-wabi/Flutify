@@ -1,6 +1,5 @@
 import 'package:flutify_app/models/app_preferences.dart';
-import 'package:flutify_app/models/playback_state.dart'
-    show SpotifyRepeatMode;
+import 'package:flutify_app/models/playback_state.dart' show SpotifyRepeatMode;
 import 'package:flutter_test/flutter_test.dart';
 
 /// 偏好的序列化：往返一致；坏数据 / 越界值回退或夹紧，不会导致启动失败。
@@ -26,12 +25,36 @@ void main() {
       canvasEnabled: false,
       lyricsBilingual: true,
       taskbarLyrics: true,
+      floatingLyrics: true,
+      floatingLyricsClickThrough: true,
+      floatingLyricsTransparent: true,
+      floatingLyricsColor: TaskbarLyricsColor.custom,
+      floatingLyricsCustomColor: 0xFFB02050,
+      floatingLyricsFontScale: 145,
       taskbarLyricsColor: TaskbarLyricsColor.custom,
       taskbarLyricsCustomColor: 0xFF336699,
       taskbarLyricsOpacity: 60,
     );
     expect(AppPreferences.decode(prefs.encode()), prefs);
   });
+
+  test(
+    'floating lyric style settings are independently persisted and bounded',
+    () {
+      final prefs = AppPreferences.fromJson({
+        'floatingLyricsColor': 'custom',
+        'floatingLyricsCustomColor': 0xFF123456,
+        'floatingLyricsFontScale': 999,
+      });
+      expect(prefs.floatingLyricsColor, TaskbarLyricsColor.custom);
+      expect(prefs.floatingLyricsCustomColor, 0xFF123456);
+      expect(
+        prefs.floatingLyricsFontScale,
+        AppPreferences.maxFloatingLyricsFontScale,
+      );
+      expect(AppPreferences.defaults.floatingLyricsFontScale, 100);
+    },
+  );
 
   test('taskbar lyrics: off by default, bad values are sanitised', () {
     expect(AppPreferences.defaults.taskbarLyrics, isFalse);

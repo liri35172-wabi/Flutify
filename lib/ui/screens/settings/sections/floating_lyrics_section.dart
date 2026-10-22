@@ -5,10 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../l10n/l10n.dart';
+import '../../../../models/app_preferences.dart';
 import '../../../../providers/preferences_provider.dart';
+import '../../../../providers/appearance_provider.dart';
 import '../../../../services/taskbar_lyrics/taskbar_lyrics_channel.dart';
 import '../../../../services/taskbar_lyrics/taskbar_lyrics_controls.dart';
+import '../widgets/custom_color_dialog.dart';
 import '../widgets/settings_section.dart';
+import '../widgets/settings_segmented.dart';
+import '../widgets/settings_slider_tile.dart';
 
 class FloatingLyricsSection extends StatefulWidget {
   const FloatingLyricsSection({super.key});
@@ -92,15 +97,29 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
   @override
   Widget build(BuildContext context) {
     if (!_available(context)) return const SizedBox.shrink();
-    final preferences = context.select<PreferencesProvider, (bool, bool, bool)>(
-      (provider) => (
-        provider.prefs.floatingLyrics,
-        provider.prefs.floatingLyricsClickThrough,
-        provider.prefs.floatingLyricsTransparent,
-      ),
+    final prefs = context.select<PreferencesProvider, AppPreferences>(
+      (provider) => provider.prefs,
     );
-    final (enabled, clickThrough, transparent) = preferences;
+    final enabled = prefs.floatingLyrics;
     final l10n = context.l10n;
+    final provider = context.read<PreferencesProvider>();
+    void update(AppPreferences Function(AppPreferences p) change) =>
+        provider.update(change(provider.prefs));
+    final accent = context.select<AppearanceProvider, Color>((a) => a.accent);
+    final lyricColor = switch (prefs.floatingLyricsColor) {
+      TaskbarLyricsColor.auto || TaskbarLyricsColor.white => Colors.white,
+      TaskbarLyricsColor.black => const Color(0xFF16181D),
+      TaskbarLyricsColor.accent => accent,
+      TaskbarLyricsColor.custom => Color(prefs.floatingLyricsCustomColor),
+    };
+    final previewText = TextStyle(
+      color: lyricColor,
+      fontSize: 16 * prefs.floatingLyricsFontScale / 100,
+      fontWeight: FontWeight.w600,
+      shadows: const [
+        Shadow(color: Color(0xE6000000), blurRadius: 5, offset: Offset(0, 1)),
+      ],
+    );
     return SettingsSection(
       title: l10n.settingsFloatingLyrics,
       children: [
@@ -112,39 +131,153 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
             if (enabled) {
               unawaited(_enable(context));
             } else {
-              context.read<PreferencesProvider>().update(
-                context.read<PreferencesProvider>().prefs.copyWith(
-                  floatingLyrics: false,
-                ),
-              );
+              update((p) => p.copyWith(floatingLyrics: false));
             }
           },
         ),
+        if (enabled) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+            child: Container(
+              height: 68,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF20242D),
+                    Color(0xFF777A80),
+                    Color(0xFFE7E8EA),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '无名的人啊  我敬你一杯酒',
+                    style: previewText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '敬你的沉默 和每一聲怒吼',
+                    style: previewText.copyWith(
+                      fontSize: 10 * prefs.floatingLyricsFontScale / 100,
+                      fontWeight: FontWeight.w400,
+                      color: lyricColor.withValues(alpha: 0.88),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SettingsTile(
+            title: l10n.settingsFloatingLyricsColor,
+            below: SettingsSegmented<TaskbarLyricsColor>(
+              values: TaskbarLyricsColor.values,
+              labelOf: (value) => switch (value) {
+                TaskbarLyricsColor.auto => l10n.taskbarLyricsColorAuto,
+                TaskbarLyricsColor.white => l10n.taskbarLyricsColorWhite,
+                TaskbarLyricsColor.black => l10n.taskbarLyricsColorBlack,
+                TaskbarLyricsColor.accent => l10n.taskbarLyricsColorAccent,
+                TaskbarLyricsColor.custom => l10n.taskbarLyricsColorCustom,
+              },
+              selected: prefs.floatingLyricsColor,
+              onChanged: (value) =>
+                  update((p) => p.copyWith(floatingLyricsColor: value)),
+            ),
+          ),
+          if (prefs.floatingLyricsColor == TaskbarLyricsColor.custom)
+            SettingsTile(
+              title: l10n.settingsFloatingLyricsCustomColor,
+              trailing: _FloatingLyricsColorButton(
+                color: Color(prefs.floatingLyricsCustomColor),
+                label: l10n.settingsTaskbarLyricsChangeColor,
+                onTap: () async {
+                  final picked = await CustomColorDialog.show(
+                    context,
+                    initial: Color(prefs.floatingLyricsCustomColor),
+                  );
+                  if (picked != null) {
+                    update(
+                      (p) => p.copyWith(
+                        floatingLyricsCustomColor: picked.toARGB32(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          SettingsSliderTile(
+            title: l10n.settingsFloatingLyricsFontSize,
+            value: prefs.floatingLyricsFontScale.toDouble(),
+            min: AppPreferences.minFloatingLyricsFontScale.toDouble(),
+            max: AppPreferences.maxFloatingLyricsFontScale.toDouble(),
+            divisions: 14,
+            minIcon: Icons.text_decrease_rounded,
+            maxIcon: Icons.text_increase_rounded,
+            labelOf: (value) => '${value.round()}%',
+            onChanged: (value) => update(
+              (p) => p.copyWith(floatingLyricsFontScale: value.round()),
+            ),
+          ),
+        ],
         if (Platform.isAndroid) ...[
           SettingsSwitchTile(
             title: l10n.settingsFloatingLyricsClickThrough,
             subtitle: l10n.settingsFloatingLyricsClickThroughSubtitle,
-            value: clickThrough,
-            onChanged: (value) {
-              final provider = context.read<PreferencesProvider>();
-              provider.update(
-                provider.prefs.copyWith(floatingLyricsClickThrough: value),
-              );
-            },
+            value: prefs.floatingLyricsClickThrough,
+            onChanged: (value) =>
+                update((p) => p.copyWith(floatingLyricsClickThrough: value)),
           ),
           SettingsSwitchTile(
             title: l10n.settingsFloatingLyricsTransparent,
             subtitle: l10n.settingsFloatingLyricsTransparentSubtitle,
-            value: transparent,
-            onChanged: (value) {
-              final provider = context.read<PreferencesProvider>();
-              provider.update(
-                provider.prefs.copyWith(floatingLyricsTransparent: value),
-              );
-            },
+            value: prefs.floatingLyricsTransparent,
+            onChanged: (value) =>
+                update((p) => p.copyWith(floatingLyricsTransparent: value)),
           ),
         ],
       ],
+    );
+  }
+}
+
+class _FloatingLyricsColorButton extends StatelessWidget {
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  const _FloatingLyricsColorButton({
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: scheme.outlineVariant, width: 1.5),
+        ),
+      ),
+      label: Text(label),
     );
   }
 }

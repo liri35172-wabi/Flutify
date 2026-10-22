@@ -65,6 +65,8 @@ struct Shared {
 
   uint64_t style_version = 0;
   Style style;
+  uint64_t overlay_style_version = 0;
+  Style overlay_style;
   Labels labels;
 };
 

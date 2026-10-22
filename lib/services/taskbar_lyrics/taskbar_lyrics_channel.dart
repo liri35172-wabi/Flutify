@@ -89,6 +89,7 @@ abstract interface class TaskbarLyricsPlatform {
     required bool clickThrough,
     required bool transparentBackground,
   });
+  Future<void> setOverlayStyle(TaskbarLyricsStyle style);
   Future<void> setStyle(TaskbarLyricsStyle style);
 
   /// null 清除曲目（窗口隐藏）。
@@ -171,6 +172,10 @@ class MethodChannelTaskbarLyrics implements TaskbarLyricsPlatform {
     'clickThrough': clickThrough,
     'transparentBackground': transparentBackground,
   });
+
+  @override
+  Future<void> setOverlayStyle(TaskbarLyricsStyle style) =>
+      _invoke('setOverlayStyle', style.toMap());
 
   @override
   Future<void> setStyle(TaskbarLyricsStyle style) =>

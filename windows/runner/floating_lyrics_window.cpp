@@ -205,9 +205,9 @@ void FloatingLyricsWindow::SyncState() {
     lines_ = shared_->lines;
     display_index_ = -2;
   }
-  if (shared_->style_version != style_version_) {
-    style_version_ = shared_->style_version;
-    style_ = shared_->style;
+  if (shared_->overlay_style_version != overlay_style_version_) {
+    overlay_style_version_ = shared_->overlay_style_version;
+    style_ = shared_->overlay_style;
   }
   playing_ = shared_->playing;
   anchor_ms_ = shared_->anchor_ms;

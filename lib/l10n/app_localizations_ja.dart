@@ -1957,4 +1957,13 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get settingsFloatingLyricsTransparentSubtitle =>
       '暗い背景パネルを隠し、歌詞だけを表示します。';
+
+  @override
+  String get settingsFloatingLyricsColor => '歌詞の色';
+
+  @override
+  String get settingsFloatingLyricsCustomColor => 'カスタム歌詞色';
+
+  @override
+  String get settingsFloatingLyricsFontSize => '歌詞の文字サイズ';
 }

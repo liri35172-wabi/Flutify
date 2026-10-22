@@ -121,6 +121,8 @@ public class AudioService extends MediaBrowserServiceCompat {
     private static boolean floatingLyricsEnabled;
     private static boolean floatingLyricsClickThrough;
     private static boolean floatingLyricsTransparent;
+    private static int floatingLyricsColor = 0xFFFFFFFF;
+    private static int floatingLyricsFontScale = 100;
     private static String[] floatingLyricTranslations = new String[0];
     private static String floatingDisplayedLine = "";
 
@@ -180,6 +182,17 @@ public class AudioService extends MediaBrowserServiceCompat {
         }
         AudioService service = instance;
         if (service != null) service.refreshFloatingLyrics(true);
+    }
+
+    public static void setFloatingLyricsStyle(int color, int fontScale) {
+        synchronized (AudioService.class) {
+            floatingLyricsColor = color | 0xFF000000;
+            floatingLyricsFontScale = Math.max(80, Math.min(150, fontScale));
+        }
+        AudioService service = instance;
+        if (service != null && service.lyricsOverlayWindow != null) {
+            service.lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale);
+        }
     }
     private static ServiceListener listener;
     private static List<MediaSessionCompat.QueueItem> queue = new ArrayList<>();
@@ -863,10 +876,12 @@ public class AudioService extends MediaBrowserServiceCompat {
         boolean permissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this);
         if (lyricsOverlayWindow != null) {
             lyricsOverlayWindow.setOptions(clickThrough, transparent);
+            lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale);
         }
         if (enabled && permissionGranted && !nextLine.isEmpty()) {
             if (lyricsOverlayWindow == null) lyricsOverlayWindow = new LyricsOverlayWindow(this);
             lyricsOverlayWindow.setOptions(clickThrough, transparent);
+            lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale);
             if (force || !nextLine.equals(floatingDisplayedLine)) {
                 lyricsOverlayWindow.show(nextLine, nextTranslation);
                 floatingDisplayedLine = nextLine;

@@ -683,5 +683,8 @@
   "settingsFloatingLyricsClickThrough": "Click-through",
   "settingsFloatingLyricsClickThroughSubtitle": "Pass taps to the game underneath. Turn this off first when you want to drag the lyrics window.",
   "settingsFloatingLyricsTransparent": "Transparent background",
-  "settingsFloatingLyricsTransparentSubtitle": "Hide the dark panel and leave the lyrics text visible."
+  "settingsFloatingLyricsTransparentSubtitle": "Hide the dark panel and leave the lyrics text visible.",
+  "settingsFloatingLyricsColor": "Lyrics color",
+  "settingsFloatingLyricsCustomColor": "Custom lyric color",
+  "settingsFloatingLyricsFontSize": "Lyrics font size"
 }
