@@ -299,7 +299,6 @@ void FloatingLyricsWindow::Render() {
   const Gdiplus::RectF pill(margin, margin, width_ - 2 * margin, height_ - 2 * margin);
   Gdiplus::GraphicsPath path;
   AddRoundRect(&path, pill, static_cast<float>(22 * scale_));
-  const bool light_background = UsesLightBackground();
   if (!transparent_background_) {
     // A softly tinted glass surface lets the game or desktop remain visible without
     // the conspicuous opaque grey slab from the first build.
