@@ -18,6 +18,7 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -116,6 +117,11 @@ public class AudioService extends MediaBrowserServiceCompat {
     private static long flymePlaybackAnchorUptimeMs;
     private static String flymeTickerText = "";
 
+    // Optional floating lyrics overlay, hosted by this already-running media service.
+    private static boolean floatingLyricsEnabled;
+    private static String[] floatingLyricTranslations = new String[0];
+    private static String floatingDisplayedLine = "";
+
     /** Called only by Flutify's Meizu-specific Flutter bridge. */
     public static void setFlymeLyricsEnabled(boolean enabled) {
         synchronized (AudioService.class) {
@@ -127,12 +133,21 @@ public class AudioService extends MediaBrowserServiceCompat {
 
     /** Installs Flutify's own timestamped lyrics; this does not read another app's notifications. */
     public static void setFlymeLyrics(long[] timesMs, String[] texts) {
+        setLyricsData(timesMs, texts, null);
+    }
+
+    /** Shares Flutify's current lyrics with the Flyme ticker and the optional floating overlay. */
+    public static void setLyricsData(long[] timesMs, String[] texts, String[] translations) {
         synchronized (AudioService.class) {
             flymeLyricTimes = timesMs == null ? new long[0] : timesMs.clone();
             flymeLyricTexts = texts == null ? new String[0] : texts.clone();
+            floatingLyricTranslations = translations == null ? new String[0] : translations.clone();
         }
         AudioService service = instance;
-        if (service != null) service.refreshFlymeTicker(true);
+        if (service != null) {
+            service.refreshFlymeTicker(true);
+            service.refreshFloatingLyrics(true);
+        }
     }
 
     public static void setFlymePlayback(boolean playing, long positionMs) {
@@ -142,7 +157,18 @@ public class AudioService extends MediaBrowserServiceCompat {
             flymePlaybackAnchorUptimeMs = SystemClock.elapsedRealtime();
         }
         AudioService service = instance;
-        if (service != null) service.refreshFlymeTicker(false);
+        if (service != null) {
+            service.refreshFlymeTicker(false);
+            service.refreshFloatingLyrics(false);
+        }
+    }
+
+    public static void setFloatingLyricsEnabled(boolean enabled) {
+        synchronized (AudioService.class) {
+            floatingLyricsEnabled = enabled;
+        }
+        AudioService service = instance;
+        if (service != null) service.refreshFloatingLyrics(true);
     }
     private static ServiceListener listener;
     private static List<MediaSessionCompat.QueueItem> queue = new ArrayList<>();
@@ -326,6 +352,14 @@ public class AudioService extends MediaBrowserServiceCompat {
     private boolean notificationCreated;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Handler flymeLyricsHandler = new Handler(Looper.getMainLooper());
+    private final Handler floatingLyricsHandler = new Handler(Looper.getMainLooper());
+    private LyricsOverlayWindow lyricsOverlayWindow;
+    private final Runnable floatingLyricsUpdater = new Runnable() {
+        @Override
+        public void run() {
+            refreshFloatingLyrics(false);
+        }
+    };
     private final Runnable flymeTickerUpdater = new Runnable() {
         @Override
         public void run() {
@@ -397,6 +431,7 @@ public class AudioService extends MediaBrowserServiceCompat {
         };
 
         flutterEngine = AudioServicePlugin.getFlutterEngine(this);
+        refreshFloatingLyrics(true);
         System.out.println("flutterEngine warmed up");
     }
 
@@ -415,6 +450,11 @@ public class AudioService extends MediaBrowserServiceCompat {
     public void onDestroy() {
         super.onDestroy();
         flymeLyricsHandler.removeCallbacksAndMessages(null);
+        floatingLyricsHandler.removeCallbacksAndMessages(null);
+        if (lyricsOverlayWindow != null) {
+            lyricsOverlayWindow.dispose();
+            lyricsOverlayWindow = null;
+        }
         if (listener != null) {
             listener.onDestroy();
             listener = null;
@@ -774,6 +814,49 @@ public class AudioService extends MediaBrowserServiceCompat {
             keepUpdating = flymeLyricsEnabled && flymePlaybackPlaying;
         }
         if (keepUpdating) flymeLyricsHandler.postDelayed(flymeTickerUpdater, 250L);
+    }
+
+    private void refreshFloatingLyrics(boolean force) {
+        floatingLyricsHandler.removeCallbacks(floatingLyricsUpdater);
+        String nextLine = "";
+        String nextTranslation = "";
+        boolean enabled;
+        boolean keepUpdating;
+        synchronized (AudioService.class) {
+            enabled = floatingLyricsEnabled;
+            if (enabled && flymeLyricTimes.length > 0 && flymeLyricTexts.length > 0) {
+                long position = flymePlaybackPositionMs;
+                if (flymePlaybackPlaying) {
+                    position += Math.max(0L, SystemClock.elapsedRealtime() - flymePlaybackAnchorUptimeMs);
+                }
+                int lineIndex = -1;
+                int count = Math.min(flymeLyricTimes.length, flymeLyricTexts.length);
+                for (int i = 0; i < count; i++) {
+                    if (flymeLyricTimes[i] > position) break;
+                    lineIndex = i;
+                }
+                if (lineIndex >= 0) {
+                    nextLine = flymeLyricTexts[lineIndex].trim();
+                    if (lineIndex < floatingLyricTranslations.length) {
+                        nextTranslation = floatingLyricTranslations[lineIndex].trim();
+                    }
+                }
+            }
+            keepUpdating = enabled && flymePlaybackPlaying;
+        }
+
+        boolean permissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this);
+        if (enabled && permissionGranted && !nextLine.isEmpty()) {
+            if (lyricsOverlayWindow == null) lyricsOverlayWindow = new LyricsOverlayWindow(this);
+            if (force || !nextLine.equals(floatingDisplayedLine)) {
+                lyricsOverlayWindow.show(nextLine, nextTranslation);
+                floatingDisplayedLine = nextLine;
+            }
+        } else {
+            if (lyricsOverlayWindow != null) lyricsOverlayWindow.hide();
+            floatingDisplayedLine = "";
+        }
+        if (keepUpdating) floatingLyricsHandler.postDelayed(floatingLyricsUpdater, 250L);
     }
 
     private void updateFlymeTicker(boolean force) {

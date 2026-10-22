@@ -84,6 +84,7 @@ abstract interface class TaskbarLyricsPlatform {
   Stream<TaskbarLyricsEvent> get events;
 
   Future<void> setEnabled(bool enabled);
+  Future<void> setOverlayEnabled(bool enabled);
   Future<void> setStyle(TaskbarLyricsStyle style);
 
   /// null 清除曲目（窗口隐藏）。
@@ -106,6 +107,27 @@ class MethodChannelTaskbarLyrics implements TaskbarLyricsPlatform {
 
   final StreamController<TaskbarLyricsEvent> _events =
       StreamController.broadcast();
+
+  static Future<bool> hasOverlayPermission() async {
+    try {
+      return await _channel.invokeMethod<bool>('hasOverlayPermission') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  static Future<bool> requestOverlayPermission() async {
+    try {
+      return await _channel.invokeMethod<bool>('requestOverlayPermission') ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
 
   static Future<bool> isFlymeSupported() async {
     try {
@@ -132,6 +154,10 @@ class MethodChannelTaskbarLyrics implements TaskbarLyricsPlatform {
 
   @override
   Future<void> setEnabled(bool enabled) => _invoke('setEnabled', enabled);
+
+  @override
+  Future<void> setOverlayEnabled(bool enabled) =>
+      _invoke('setOverlayEnabled', enabled);
 
   @override
   Future<void> setStyle(TaskbarLyricsStyle style) =>

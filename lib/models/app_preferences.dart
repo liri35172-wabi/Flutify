@@ -105,6 +105,9 @@ class AppPreferences {
 
   /// Windows：把当前歌词嵌入任务栏（天气小组件右侧）。
   final bool taskbarLyrics;
+
+  /// Android: show the current lyric line in a draggable overlay above other apps.
+  final bool floatingLyrics;
   final TaskbarLyricsColor taskbarLyricsColor;
 
   /// [TaskbarLyricsColor.custom] 时的颜色（ARGB）。
@@ -148,6 +151,7 @@ class AppPreferences {
     this.lyricsAutoTranslate = true,
     this.lyricsBilingual = false,
     this.taskbarLyrics = false,
+    this.floatingLyrics = false,
     this.taskbarLyricsColor = TaskbarLyricsColor.auto,
     this.taskbarLyricsCustomColor = defaultTaskbarLyricsCustomColor,
     this.taskbarLyricsOpacity = 100,
@@ -201,6 +205,7 @@ class AppPreferences {
     bool? lyricsAutoTranslate,
     bool? lyricsBilingual,
     bool? taskbarLyrics,
+    bool? floatingLyrics,
     TaskbarLyricsColor? taskbarLyricsColor,
     int? taskbarLyricsCustomColor,
     int? taskbarLyricsOpacity,
@@ -251,6 +256,7 @@ class AppPreferences {
       lyricsAutoTranslate: lyricsAutoTranslate ?? this.lyricsAutoTranslate,
       lyricsBilingual: lyricsBilingual ?? this.lyricsBilingual,
       taskbarLyrics: taskbarLyrics ?? this.taskbarLyrics,
+      floatingLyrics: floatingLyrics ?? this.floatingLyrics,
       taskbarLyricsColor: taskbarLyricsColor ?? this.taskbarLyricsColor,
       taskbarLyricsCustomColor:
           taskbarLyricsCustomColor ?? this.taskbarLyricsCustomColor,
@@ -291,6 +297,7 @@ class AppPreferences {
     'lyricsAutoTranslate': lyricsAutoTranslate,
     'lyricsBilingual': lyricsBilingual,
     'taskbarLyrics': taskbarLyrics,
+    'floatingLyrics': floatingLyrics,
     'taskbarLyricsColor': taskbarLyricsColor.name,
     'taskbarLyricsCustomColor': taskbarLyricsCustomColor,
     'taskbarLyricsOpacity': taskbarLyricsOpacity,
@@ -399,6 +406,7 @@ class AppPreferences {
       ),
       lyricsBilingual: flag(json['lyricsBilingual'], d.lyricsBilingual),
       taskbarLyrics: flag(json['taskbarLyrics'], d.taskbarLyrics),
+      floatingLyrics: flag(json['floatingLyrics'], d.floatingLyrics),
       taskbarLyricsColor: pick(
         TaskbarLyricsColor.values,
         json['taskbarLyricsColor'],
@@ -469,6 +477,7 @@ class AppPreferences {
       other.lyricsAutoTranslate == lyricsAutoTranslate &&
       other.lyricsBilingual == lyricsBilingual &&
       other.taskbarLyrics == taskbarLyrics &&
+      other.floatingLyrics == floatingLyrics &&
       other.taskbarLyricsColor == taskbarLyricsColor &&
       other.taskbarLyricsCustomColor == taskbarLyricsCustomColor &&
       other.taskbarLyricsOpacity == taskbarLyricsOpacity &&
@@ -506,6 +515,7 @@ class AppPreferences {
     lyricsAutoTranslate,
     lyricsBilingual,
     taskbarLyrics,
+    floatingLyrics,
     taskbarLyricsColor,
     taskbarLyricsCustomColor,
     taskbarLyricsOpacity,

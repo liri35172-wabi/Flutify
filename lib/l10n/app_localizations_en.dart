@@ -1131,6 +1131,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTaskbarLyricsSection => 'Taskbar lyrics';
 
   @override
+  String get settingsFloatingLyrics => 'Floating lyrics overlay';
+
+  @override
+  String get settingsFloatingLyricsSubtitle =>
+      'Shows the current lyric line over other apps while music is playing; drag to move it.';
+
+  @override
   String get settingsTaskbarLyrics => 'Show lyrics on the taskbar';
 
   @override

@@ -1,6 +1,9 @@
 package com.flutify.music.flutify_app
 
 import android.os.Build
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import com.ryanheise.audioservice.AudioService
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -20,6 +23,34 @@ class MainActivity : AudioServiceActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "isFlymeSupported" -> result.success(isMeizuOrFlyme())
+                    "hasOverlayPermission" -> result.success(
+                        Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
+                    )
+                    "requestOverlayPermission" -> {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
+                            result.success(true)
+                        } else {
+                            try {
+                                startActivity(Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:$packageName")
+                                ))
+                                result.success(false)
+                            } catch (error: Exception) {
+                                result.error("overlay_permission", error.message, null)
+                            }
+                        }
+                    }
+                    "setOverlayEnabled" -> {
+                        val enabled = call.arguments as? Boolean == true
+                        val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
+                        if (enabled && !granted) {
+                            result.success(false)
+                        } else {
+                            AudioService.setFloatingLyricsEnabled(enabled)
+                            result.success(true)
+                        }
+                    }
                     "setEnabled" -> {
                         AudioService.setFlymeLyricsEnabled(call.arguments as? Boolean == true)
                         result.success(null)
@@ -28,7 +59,8 @@ class MainActivity : AudioServiceActivity() {
                         val values = call.arguments as? Map<*, *>
                         val times = toLongArray(values?.get("times"))
                         val texts = toStringArray(values?.get("texts"))
-                        AudioService.setFlymeLyrics(times, texts)
+                        val translations = toStringArray(values?.get("texts2"))
+                        AudioService.setLyricsData(times, texts, translations)
                         result.success(null)
                     }
                     "setPlayback" -> {

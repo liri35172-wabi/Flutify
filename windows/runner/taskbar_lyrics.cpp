@@ -7,6 +7,7 @@
 
 #include "gdiplus_include.h"
 #include "taskbar_lyrics_window.h"
+#include "floating_lyrics_window.h"
 
 namespace {
 
@@ -88,26 +89,45 @@ TaskbarLyrics::TaskbarLyrics(HWND window, flutter::BinaryMessenger* messenger) :
 TaskbarLyrics::~TaskbarLyrics() {
   channel_->SetMethodCallHandler(nullptr);
   SetEnabled(false);
+  SetOverlayEnabled(false);
+}
+
+bool TaskbarLyrics::EnsureGdiplus() {
+  if (gdiplus_token_) return true;
+  Gdiplus::GdiplusStartupInput input;
+  if (Gdiplus::GdiplusStartup(&gdiplus_token_, &input, nullptr) != Gdiplus::Ok) {
+    gdiplus_token_ = 0;
+    return false;
+  }
+  return true;
+}
+
+void TaskbarLyrics::ShutdownGdiplusIfIdle() {
+  if (lyrics_window_ || overlay_window_ || !gdiplus_token_) return;
+  Gdiplus::GdiplusShutdown(gdiplus_token_);
+  gdiplus_token_ = 0;
 }
 
 void TaskbarLyrics::SetEnabled(bool enabled) {
   if (enabled == (lyrics_window_ != nullptr)) return;
   if (enabled) {
-    if (!gdiplus_token_) {
-      Gdiplus::GdiplusStartupInput input;
-      if (Gdiplus::GdiplusStartup(&gdiplus_token_, &input, nullptr) != Gdiplus::Ok) {
-        gdiplus_token_ = 0;
-        return;
-      }
-    }
+    if (!EnsureGdiplus()) return;
     lyrics_window_ = std::make_unique<TaskbarLyricsWindow>(window_, &shared_);
   } else {
-    // 先停窗口线程（它持有 GDI+ 对象），再关闭 GDI+
+    // 先停窗口线程（它持有 GDI+ 对象），没有其他歌词窗时再关闭 GDI+
     lyrics_window_ = nullptr;
-    if (gdiplus_token_) {
-      Gdiplus::GdiplusShutdown(gdiplus_token_);
-      gdiplus_token_ = 0;
-    }
+    ShutdownGdiplusIfIdle();
+  }
+}
+
+void TaskbarLyrics::SetOverlayEnabled(bool enabled) {
+  if (enabled == (overlay_window_ != nullptr)) return;
+  if (enabled) {
+    if (!EnsureGdiplus()) return;
+    overlay_window_ = std::make_unique<FloatingLyricsWindow>(window_, &shared_);
+  } else {
+    overlay_window_ = nullptr;
+    ShutdownGdiplusIfIdle();
   }
 }
 
@@ -120,6 +140,13 @@ void TaskbarLyrics::OnMethodCall(const flutter::MethodCall<EncodableValue>& call
   if (method == "setEnabled") {
     const auto* enabled = arguments ? std::get_if<bool>(arguments) : nullptr;
     SetEnabled(enabled && *enabled);
+    result->Success();
+    return;
+  }
+
+  if (method == "setOverlayEnabled") {
+    const auto* enabled = arguments ? std::get_if<bool>(arguments) : nullptr;
+    SetOverlayEnabled(enabled && *enabled);
     result->Success();
     return;
   }
@@ -190,6 +217,7 @@ void TaskbarLyrics::OnMethodCall(const flutter::MethodCall<EncodableValue>& call
     }
   }
   if (lyrics_window_) lyrics_window_->Wake();
+  if (overlay_window_) overlay_window_->Wake();
   result->Success();
 }
 

@@ -95,7 +95,9 @@ class _TaskbarLyricsBindingState extends State<TaskbarLyricsBinding> {
         : _accentTones;
     final l10n = context.l10n;
     controls.configure(
-      enabled: prefs.taskbarLyrics,
+      enabled: prefs.taskbarLyrics && (controls.isFlyme || !controls.isAndroid),
+      overlayEnabled:
+          prefs.floatingLyrics && (controls.isAndroid || controls.isWindows),
       bilingual: prefs.lyricsBilingual,
       locale: Localizations.localeOf(context).toLanguageTag(),
       style: TaskbarLyricsStyle(

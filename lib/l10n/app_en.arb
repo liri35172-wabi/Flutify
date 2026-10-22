@@ -376,6 +376,8 @@
   "settingsLyricsBilingual": "Community lyric translations",
   "settingsLyricsBilingualSubtitle": "Preload Chinese translations from QQ Music, then NetEase for missing or incomplete lyrics, and finally LRCLIB when fallback is enabled. Also used by taskbar lyrics. Turning this off still allows manual and automatic searches. The song title and artist are sent to queried sources.",
   "settingsTaskbarLyricsSection": "Taskbar lyrics",
+  "settingsFloatingLyrics": "Floating lyrics overlay",
+  "settingsFloatingLyricsSubtitle": "Shows the current lyric line over other apps while music is playing; drag to move it.",
   "settingsTaskbarLyrics": "Show lyrics on the taskbar",
   "settingsTaskbarLyricsSubtitle": "Shown on the left when taskbar icons are centered, or just left of the system tray when left-aligned; paused on vertical taskbars. Hover for playback controls, click to open Flutify, right-click to reload lyrics",
   "settingsTaskbarLyricsColor": "Text color",

@@ -13,6 +13,7 @@ import 'sections/connect_section.dart';
 import 'sections/glass_section.dart';
 import 'sections/language_section.dart';
 import 'sections/lyrics_section.dart';
+import 'sections/floating_lyrics_section.dart';
 import 'sections/motion_section.dart';
 import 'sections/network_section.dart';
 import 'sections/playback_section.dart';
@@ -28,12 +29,12 @@ import 'widgets/web_login_card.dart';
 /// 账号区卡片：账号卡片 + （有 Web token 服务时）全曲播放 Web 登录卡片。
 /// 测试中不注入 WebTokenService，Web 登录卡片自动省略。
 List<Widget> _accountCards(BuildContext context) => [
-      const AccountCard(),
-      if (context.read<WebTokenService?>() != null) ...[
-        const SizedBox(height: 12),
-        const WebLoginCard(),
-      ],
-    ];
+  const AccountCard(),
+  if (context.read<WebTokenService?>() != null) ...[
+    const SizedBox(height: 12),
+    const WebLoginCard(),
+  ],
+];
 
 /// 设置页（单列顺序）：账号 → 播放 → 歌词 → 外观 → 强调色 → 液态玻璃 → 文字与形状 → 动效
 /// → 动画调试（临时）→ 语言 → Spotify Connect → 网络 → 存储 → 隐私 → 启动 → 关于。
@@ -50,7 +51,9 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final desktop = ShellBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
+    final desktop = ShellBreakpoints.isDesktop(
+      MediaQuery.sizeOf(context).width,
+    );
     return desktop ? const _DesktopSettings() : const _MobileSettings();
   }
 }
@@ -60,6 +63,7 @@ const List<Widget> _singleColumn = [
   PlaybackSection(),
   LyricsSection(),
   TaskbarLyricsSection(),
+  FloatingLyricsSection(),
   AppearanceSection(),
   AccentSection(),
   GlassSection(),
@@ -94,8 +98,17 @@ class _MobileSettings extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 720),
             child: ListView(
               // 末尾留白 = 底部播放栏 / 导航占位（MediaQuery 底部 padding）+ 基础间距
-              padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.paddingOf(context).bottom + 40),
-              children: [..._accountCards(context), const SizedBox(height: 28), ..._singleColumn],
+              padding: EdgeInsets.fromLTRB(
+                16,
+                8,
+                16,
+                MediaQuery.paddingOf(context).bottom + 40,
+              ),
+              children: [
+                ..._accountCards(context),
+                const SizedBox(height: 28),
+                ..._singleColumn,
+              ],
             ),
           ),
         ),
@@ -139,6 +152,7 @@ class _DesktopSettings extends StatelessWidget {
                           const MotionSection(),
                           const LyricsSection(),
                           const TaskbarLyricsSection(),
+                          const FloatingLyricsSection(),
                           const LanguageSection(),
                           const NetworkSection(),
                           const RegionCheckSection(),
@@ -167,22 +181,38 @@ class _DesktopSettings extends StatelessWidget {
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [..._accountCards(context), const SizedBox(height: 28), ..._singleColumn],
+                  children: [
+                    ..._accountCards(context),
+                    const SizedBox(height: 28),
+                    ..._singleColumn,
+                  ],
                 );
 
           return SingleChildScrollView(
             // 末尾留白 = 悬浮播放栏占位（MediaQuery 底部 padding）+ 基础间距
-            padding: EdgeInsets.fromLTRB(32, 28, 32, MediaQuery.paddingOf(context).bottom + 48),
+            padding: EdgeInsets.fromLTRB(
+              32,
+              28,
+              32,
+              MediaQuery.paddingOf(context).bottom + 48,
+            ),
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: twoColumns ? _twoColumnMaxWidth : _singleColumnMaxWidth),
+                constraints: BoxConstraints(
+                  maxWidth: twoColumns
+                      ? _twoColumnMaxWidth
+                      : _singleColumnMaxWidth,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       context.l10n.commonSettings,
-                      style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     body,

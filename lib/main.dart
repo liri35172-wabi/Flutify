@@ -256,10 +256,12 @@ Future<Widget> _initializeApp(ValueChanged<String> reportStage) async {
   );
   final flymeLyricsSupported =
       Platform.isAndroid && await MethodChannelTaskbarLyrics.isFlymeSupported();
-  final taskbarLyrics = Platform.isWindows || flymeLyricsSupported
+  final taskbarLyrics = Platform.isWindows || Platform.isAndroid
       ? TaskbarLyricsControls(
           MethodChannelTaskbarLyrics(),
           isFlyme: flymeLyricsSupported,
+          isAndroid: Platform.isAndroid,
+          isWindows: Platform.isWindows,
         )
       : null;
   final mediaControls = taskbarLyrics == null

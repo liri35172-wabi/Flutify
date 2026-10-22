@@ -11,6 +11,7 @@
 #include "taskbar_lyrics_state.h"
 
 class TaskbarLyricsWindow;
+class FloatingLyricsWindow;
 
 // 任务栏歌词（原「任务栏歌词」项目合并进 Flutify 后的原生部分）。
 //
@@ -37,12 +38,16 @@ class TaskbarLyrics {
   void OnMethodCall(const flutter::MethodCall<flutter::EncodableValue>& call,
                     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
   void SetEnabled(bool enabled);
+  void SetOverlayEnabled(bool enabled);
+  bool EnsureGdiplus();
+  void ShutdownGdiplusIfIdle();
 
   HWND window_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_;
   ULONG_PTR gdiplus_token_ = 0;
   taskbar_lyrics::Shared shared_;
   std::unique_ptr<TaskbarLyricsWindow> lyrics_window_;
+  std::unique_ptr<FloatingLyricsWindow> overlay_window_;
 };
 
 #endif  // RUNNER_TASKBAR_LYRICS_H_

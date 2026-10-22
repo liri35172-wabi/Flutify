@@ -26,6 +26,10 @@ class _FakePlatform implements TaskbarLyricsPlatform {
   Future<void> setEnabled(bool enabled) async => calls.add('enabled:$enabled');
 
   @override
+  Future<void> setOverlayEnabled(bool enabled) async =>
+      calls.add('overlay:$enabled');
+
+  @override
   Future<void> setStyle(TaskbarLyricsStyle style) async =>
       calls.add('style:${style.mode.name}');
 
@@ -140,6 +144,26 @@ void main() {
     );
     expect(platform.calls, isEmpty);
     expect(loaded, isEmpty);
+  });
+
+  test('Windows 悬浮歌词开关可独立于任务栏歌词', () async {
+    final overlayControls = TaskbarLyricsControls(platform, isWindows: true);
+    addTearDown(overlayControls.dispose);
+    overlayControls.configure(
+      enabled: false,
+      overlayEnabled: true,
+      style: style,
+    );
+    await settle();
+    expect(platform.calls, contains('overlay:true'));
+    expect(platform.calls, isNot(contains('enabled:true')));
+    overlayControls.configure(
+      enabled: false,
+      overlayEnabled: false,
+      style: style,
+    );
+    await settle();
+    expect(platform.calls, contains('overlay:false'));
   });
 
   test('开启后补推样式、曲目、封面、同步歌词与进度', () async {

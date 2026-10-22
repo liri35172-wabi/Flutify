@@ -31,6 +31,9 @@ class TaskbarLyricsSection extends StatelessWidget {
     if (!_available(context)) return const SizedBox.shrink();
     final lyricsControls = context.read<TaskbarLyricsControls?>();
     final isFlyme = lyricsControls?.isFlyme ?? false;
+    if (lyricsControls?.isAndroid == true && !isFlyme) {
+      return const SizedBox.shrink();
+    }
     final l10n = context.l10n;
     final provider = context.read<PreferencesProvider>();
     final prefs = context.select<PreferencesProvider, AppPreferences>(

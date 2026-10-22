@@ -586,6 +586,8 @@
   "settingsLyricsBilingual": "社区歌词翻译",
   "settingsLyricsBilingualSubtitle": "加载歌词时预取中文译词，优先 QQ 音乐，缺失或不完整时查网易云，启用补全时最后查 LRCLIB，也供任务栏歌词使用。关闭后仍可手动或自动查询；曲名与歌手会发送到查询来源。",
   "settingsTaskbarLyricsSection": "任务栏歌词",
+  "settingsFloatingLyrics": "桌面歌词浮窗",
+  "settingsFloatingLyricsSubtitle": "播放时将当前歌词浮在其他应用上方，可拖动调整位置。",
   "settingsTaskbarLyrics": "在任务栏显示歌词",
   "settingsTaskbarLyricsSubtitle": "任务栏图标居中时显示在左侧，居左时显示在系统托盘左边；任务栏竖向时自动停用。悬停显示播放控制，点按打开 Flutify，右键重新获取歌词",
   "settingsTaskbarLyricsColor": "文字颜色",

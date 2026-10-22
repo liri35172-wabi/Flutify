@@ -2087,6 +2087,18 @@ abstract class AppLocalizations {
   /// **'任务栏歌词'**
   String get settingsTaskbarLyricsSection;
 
+  /// No description provided for @settingsFloatingLyrics.
+  ///
+  /// In zh, this message translates to:
+  /// **'桌面歌词浮窗'**
+  String get settingsFloatingLyrics;
+
+  /// No description provided for @settingsFloatingLyricsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放时将当前歌词浮在其他应用上方，可拖动调整位置。'**
+  String get settingsFloatingLyricsSubtitle;
+
   /// No description provided for @settingsTaskbarLyrics.
   ///
   /// In zh, this message translates to:

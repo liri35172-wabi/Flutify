@@ -1090,6 +1090,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsTaskbarLyricsSection => '任务栏歌词';
 
   @override
+  String get settingsFloatingLyrics => '桌面歌词浮窗';
+
+  @override
+  String get settingsFloatingLyricsSubtitle => '播放时将当前歌词浮在其他应用上方，可拖动调整位置。';
+
+  @override
   String get settingsTaskbarLyrics => '在任务栏显示歌词';
 
   @override
@@ -2999,6 +3005,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsTaskbarLyricsSection => '任務欄歌詞';
+
+  @override
+  String get settingsFloatingLyrics => '桌面歌詞浮窗';
+
+  @override
+  String get settingsFloatingLyricsSubtitle => '播放時將目前歌詞浮在其他應用上方，可拖曳調整位置。';
 
   @override
   String get settingsTaskbarLyrics => '在任務欄顯示歌詞';

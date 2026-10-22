@@ -38,6 +38,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
   void Function()? onDisable;
 
   bool _enabled = false;
+  bool _overlayEnabled = false;
   TaskbarLyricsStyle? _style;
   MediaTrackInfo? _track;
   MediaPlaybackInfo? _playback;
@@ -64,10 +65,16 @@ class TaskbarLyricsControls implements SystemMediaControls {
   Timer? _retryTimer;
 
   final bool isFlyme;
+  final bool isAndroid;
+  final bool isWindows;
+
+  bool get _active => _enabled || _overlayEnabled;
 
   TaskbarLyricsControls(
     this._platform, {
     this.isFlyme = false,
+    this.isAndroid = false,
+    this.isWindows = false,
     http.Client? client,
     this.retryDelays = const [
       Duration(seconds: 10),
@@ -78,24 +85,25 @@ class TaskbarLyricsControls implements SystemMediaControls {
     _platformEvents = _platform.events.listen(_onPlatformEvent);
   }
 
-  bool get enabled => _enabled;
+  bool get enabled => _active;
 
   /// 界面层每次构建时调用；只在开关 / 样式真正变化时通知原生。
   void configure({
     required bool enabled,
+    bool overlayEnabled = false,
     required TaskbarLyricsStyle style,
     bool bilingual = true,
     String locale = 'zh-Hans',
   }) {
     final languageChanged = _locale != locale;
     _locale = locale;
-    if (languageChanged && _enabled && _lastLines != null) {
+    if (languageChanged && _active && _lastLines != null) {
       unawaited(_platform.setLyrics(_linesForPlatform(_lastLines!)));
     }
     if (bilingual != _bilingual) {
       _bilingual = bilingual;
       final track = _track;
-      if (_enabled && track != null) {
+      if (_active && track != null) {
         if (bilingual) {
           // 打开：关闭期间取到的歌词没查过网易云译文。SpotifyProvider 在偏好变化时已同步作废内存里的歌词
           //（见 main.dart），这里重新取到的是带译文的结果；取到之前原生照常显示原文
@@ -111,15 +119,22 @@ class TaskbarLyricsControls implements SystemMediaControls {
     }
     if (style != _style) {
       _style = style;
-      if (_enabled) unawaited(_platform.setStyle(style));
+      if (_active) unawaited(_platform.setStyle(style));
     }
-    if (enabled == _enabled) return;
+    final wasActive = _active;
+    final taskbarChanged = enabled != _enabled;
+    final overlayChanged = overlayEnabled != _overlayEnabled;
+    if (!taskbarChanged && !overlayChanged) return;
     _enabled = enabled;
-    if (enabled) {
-      unawaited(_platform.setEnabled(true).then((_) => _pushAll()));
-    } else {
+    _overlayEnabled = overlayEnabled;
+    if (taskbarChanged) unawaited(_platform.setEnabled(enabled));
+    if (overlayChanged && (isAndroid || isWindows)) {
+      unawaited(_platform.setOverlayEnabled(overlayEnabled));
+    }
+    if (!wasActive && _active) {
+      unawaited(_pushAll());
+    } else if (wasActive && !_active) {
       _resetLyricsState();
-      unawaited(_platform.setEnabled(false));
     }
   }
 
@@ -139,14 +154,14 @@ class TaskbarLyricsControls implements SystemMediaControls {
     _track = track;
     _generation++;
     _resetLyricsState();
-    if (_enabled) await _pushTrack();
+    if (_active) await _pushTrack();
   }
 
   @override
   Future<void> setPlayback(MediaPlaybackInfo info) async {
     _playback = info;
     _playbackAt = DateTime.now();
-    if (_enabled) {
+    if (_active) {
       final activelyPlaying = info.playing && !info.buffering;
       await _platform.setPlayback(
         playing: activelyPlaying,
@@ -160,6 +175,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
     _retryTimer?.cancel();
     _platformEvents?.cancel();
     unawaited(_platform.setEnabled(false));
+    if (isAndroid || isWindows) unawaited(_platform.setOverlayEnabled(false));
     _events.close();
   }
 
@@ -208,7 +224,8 @@ class TaskbarLyricsControls implements SystemMediaControls {
       _artUrl = url;
       _art = url.isEmpty ? null : await _download(url);
     }
-    if (generation == _generation && _enabled) await _platform.setArt(_art);
+    if (generation == _generation && _active && _enabled)
+      await _platform.setArt(_art);
   }
 
   Future<Uint8List?> _download(String url) async {
@@ -235,7 +252,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
     } catch (_) {
       return;
     }
-    if (generation != _generation || !_enabled) return;
+    if (generation != _generation || !_active) return;
     if (lyrics.isSynced) {
       _hasLyrics = true;
       _retryTimer?.cancel();
@@ -268,7 +285,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
     if (_retries >= retryDelays.length || (_retryTimer?.isActive ?? false))
       return;
     _retryTimer = Timer(retryDelays[_retries++], () {
-      if (generation == _generation && _enabled && !_hasLyrics)
+      if (generation == _generation && _active && !_hasLyrics)
         unawaited(_pushLyrics(track, generation));
     });
   }
@@ -283,7 +300,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
   /// App 内（歌词页、右栏）取到了某首歌的歌词：若正是任务栏上这首、且任务栏还没有歌词，立即补上。
   void lyricsCached(String trackId) {
     final track = _track;
-    if (!_enabled || _hasLyrics || track == null || track.id != trackId) return;
+    if (!_active || _hasLyrics || track == null || track.id != trackId) return;
     unawaited(_pushLyrics(track, _generation));
   }
 
@@ -298,7 +315,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
   /// 歌词加载器就绪（界面层首次绑定）后补推当前曲目的歌词。
   void lyricsSourceReady() {
     final track = _track;
-    if (_enabled && track != null) unawaited(_pushLyrics(track, _generation));
+    if (_active && track != null) unawaited(_pushLyrics(track, _generation));
   }
 
   void _onPlatformEvent(TaskbarLyricsEvent event) {

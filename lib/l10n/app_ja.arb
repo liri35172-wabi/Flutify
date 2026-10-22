@@ -322,6 +322,8 @@
   "settingsLyricsSourceDisabled": "「見つからない歌詞を補完」でオフ",
   "settingsLyricsSourceDrag": "ドラッグで並べ替え",
   "settingsTaskbarLyricsSection": "タスクバー歌詞",
+  "settingsFloatingLyrics": "フローティング歌詞",
+  "settingsFloatingLyricsSubtitle": "再生中の歌詞を他のアプリの上に表示します。ドラッグして移動できます。",
   "settingsTaskbarLyrics": "タスクバーに歌詞を表示",
   "settingsTaskbarLyricsSubtitle": "アイコンが中央揃えの場合は左端、左揃えの場合は通知領域の左に表示します。縦型タスクバーでは停止します。ホバーで再生操作、クリックで Flutify を開き、右クリックで歌詞を再読み込みできます",
   "settingsTaskbarLyricsColor": "文字色",

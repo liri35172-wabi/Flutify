@@ -555,6 +555,8 @@
   "settingsLyricsSourceDisabled": "已在「補全歌詞」中關閉",
   "settingsLyricsSourceDrag": "拖曳排序",
   "settingsTaskbarLyricsSection": "任務欄歌詞",
+  "settingsFloatingLyrics": "桌面歌詞浮窗",
+  "settingsFloatingLyricsSubtitle": "播放時將目前歌詞浮在其他應用上方，可拖曳調整位置。",
   "settingsTaskbarLyrics": "在任務欄顯示歌詞",
   "settingsTaskbarLyricsSubtitle": "任務欄圖標居中時顯示在左側，居左時顯示在系統托盤左邊；任務欄豎向時自動停用。懸停顯示播放控制，點按打開 Flutify，右鍵重新獲取歌詞",
   "settingsTaskbarLyricsColor": "文字顏色",

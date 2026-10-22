@@ -1089,6 +1089,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsTaskbarLyricsSection => 'タスクバー歌詞';
 
   @override
+  String get settingsFloatingLyrics => 'フローティング歌詞';
+
+  @override
+  String get settingsFloatingLyricsSubtitle =>
+      '再生中の歌詞を他のアプリの上に表示します。ドラッグして移動できます。';
+
+  @override
   String get settingsTaskbarLyrics => 'タスクバーに歌詞を表示';
 
   @override
