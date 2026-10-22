@@ -210,6 +210,7 @@ void FloatingLyricsWindow::SyncState() {
     style_ = shared_->overlay_style;
   }
   playing_ = shared_->playing;
+  transparent_background_ = shared_->overlay_transparent_background;
   anchor_ms_ = shared_->anchor_ms;
   anchor_tick_ = shared_->anchor_tick;
 }
@@ -299,13 +300,16 @@ void FloatingLyricsWindow::Render() {
   Gdiplus::GraphicsPath path;
   AddRoundRect(&path, pill, static_cast<float>(22 * scale_));
   const bool light_background = UsesLightBackground();
-  Gdiplus::SolidBrush background(light_background ? Gdiplus::Color(224, 245, 246, 250)
-                                                 : Gdiplus::Color(204, 20, 23, 30));
-  graphics.FillPath(&background, &path);
-  Gdiplus::Pen border(light_background ? Gdiplus::Color(80, 35, 38, 48)
-                                       : Gdiplus::Color(64, 255, 255, 255),
-                      static_cast<float>(scale_));
-  graphics.DrawPath(&border, &path);
+  if (!transparent_background_) {
+    // A softly tinted glass surface lets the game or desktop remain visible without
+    // the conspicuous opaque grey slab from the first build.
+    Gdiplus::LinearGradientBrush background(
+        pill, Gdiplus::Color(132, 20, 23, 30), Gdiplus::Color(112, 34, 37, 45),
+        Gdiplus::LinearGradientModeVertical);
+    graphics.FillPath(&background, &path);
+    Gdiplus::Pen border(Gdiplus::Color(48, 235, 238, 244), static_cast<float>(scale_));
+    graphics.DrawPath(&border, &path);
+  }
 
   const auto color = TextColor();
   const TaskbarLyricsPainter::Canvas canvas{&graphics, width_, height_, scale_, color, style_.opacity,

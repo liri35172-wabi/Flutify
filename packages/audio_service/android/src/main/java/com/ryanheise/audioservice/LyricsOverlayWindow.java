@@ -48,7 +48,7 @@ final class LyricsOverlayWindow {
         primary = new TextView(context);
         primary.setTextColor(textColor);
         // Keep lyrics readable over light or busy apps even when the surface is transparent.
-        primary.setShadowLayer(dp(3.5f), 0f, dp(1f), 0xF0000000);
+        primary.setShadowLayer(dp(1.25f), 0f, dp(1f), 0xA8000000);
         primary.setTextSize(18);
         primary.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         primary.setSingleLine(true);
@@ -62,7 +62,7 @@ final class LyricsOverlayWindow {
 
         translation = new TextView(context);
         translation.setTextColor(0xFFE7E9EF);
-        translation.setShadowLayer(dp(3.5f), 0f, dp(1f), 0xF0000000);
+        translation.setShadowLayer(dp(1.25f), 0f, dp(1f), 0xA8000000);
         translation.setTextSize(12);
         translation.setSingleLine(true);
         translation.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
@@ -122,9 +122,9 @@ final class LyricsOverlayWindow {
         primary.setTextSize(18f * this.fontScale / 100f);
         boolean lightText = usesLightText(textColor);
         int edgeColor = lightText ? 0xF0000000 : 0xF0FFFFFF;
-        primary.setShadowLayer(dp(3.5f), 0f, dp(1f), edgeColor);
+        primary.setShadowLayer(dp(1.25f), 0f, dp(1f), (edgeColor & 0x00FFFFFF) | 0xA8000000);
         translation.setTextColor(lightText ? 0xFFE7E9EF : 0xFF252A32);
-        translation.setShadowLayer(dp(3.5f), 0f, dp(1f), edgeColor);
+        translation.setShadowLayer(dp(1.25f), 0f, dp(1f), (edgeColor & 0x00FFFFFF) | 0xA8000000);
         translation.setTextSize(12f * this.fontScale / 100f);
         root.setBackground(transparentBackground ? null : background());
     }

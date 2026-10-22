@@ -179,6 +179,10 @@ void TaskbarLyrics::OnMethodCall(const flutter::MethodCall<EncodableValue>& call
       } else {
         shared_.style_version++;
       }
+    } else if (method == "setOverlayOptions") {
+      if (args) {
+        shared_.overlay_transparent_background = GetBool(*args, "transparentBackground");
+      }
     } else if (method == "setTrack") {
       shared_.has_track = args != nullptr;
       shared_.title = args ? GetText(*args, "title") : L"";

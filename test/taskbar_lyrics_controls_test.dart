@@ -179,6 +179,20 @@ void main() {
     expect(platform.calls, contains('overlayStyle:accent:120'));
   });
 
+  test('Windows 透明背景选项传给原生浮窗', () async {
+    final platform = _FakePlatform();
+    final controls = TaskbarLyricsControls(platform, isWindows: true);
+    addTearDown(controls.dispose);
+    controls.configure(
+      enabled: false,
+      overlayEnabled: true,
+      overlayTransparentBackground: true,
+      style: style,
+    );
+    await settle();
+    expect(platform.calls, contains('overlayOptions:false:true'));
+  });
+
   test('关闭时不向原生推送曲目', () async {
     await controls.setTrack(track);
     await controls.setPlayback(

@@ -152,7 +152,7 @@ class TaskbarLyricsControls implements SystemMediaControls {
     if (overlayStyleChanged && _active) {
       unawaited(_platform.setOverlayStyle(overlayStyle));
     }
-    if (isAndroid && (overlayChanged || overlayOptionsChanged)) {
+    if ((isAndroid || isWindows) && (overlayChanged || overlayOptionsChanged)) {
       unawaited(
         _platform.setOverlayOptions(
           clickThrough: overlayClickThrough,

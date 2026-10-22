@@ -176,8 +176,17 @@ void TaskbarLyricsPainter::DrawText(const Canvas& canvas, const std::wstring& te
                                     int alpha) {
   alpha = alpha * canvas.opacity / 100;
   if (text.empty() || alpha <= 2) return;
-  SolidBrush brush(Color(static_cast<BYTE>((std::min)(alpha, 255)), canvas.color.GetR(), canvas.color.GetG(),
-                         canvas.color.GetB()));
+  const BYTE visible_alpha = static_cast<BYTE>((std::min)(alpha, 255));
+  if (canvas.floating_overlay) {
+    const int luminance = canvas.color.GetR() * 299 + canvas.color.GetG() * 587 + canvas.color.GetB() * 114;
+    const BYTE shade = luminance >= 128000 ? 0 : 255;
+    SolidBrush shadow(Color(static_cast<BYTE>(visible_alpha * 0.68), shade, shade, shade));
+    RectF shadow_rect(rect.X + static_cast<float>(canvas.scale), rect.Y + static_cast<float>(canvas.scale),
+                      rect.Width, rect.Height);
+    canvas.graphics->DrawString(text.c_str(), static_cast<INT>(text.size()), font, shadow_rect,
+                                 text_format_.get(), &shadow);
+  }
+  SolidBrush brush(Color(visible_alpha, canvas.color.GetR(), canvas.color.GetG(), canvas.color.GetB()));
   canvas.graphics->DrawString(text.c_str(), static_cast<INT>(text.size()), font, rect, text_format_.get(), &brush);
 }
 

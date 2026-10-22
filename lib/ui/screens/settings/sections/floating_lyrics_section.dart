@@ -117,7 +117,7 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
       fontSize: 16 * prefs.floatingLyricsFontScale / 100,
       fontWeight: FontWeight.w600,
       shadows: const [
-        Shadow(color: Color(0xE6000000), blurRadius: 5, offset: Offset(0, 1)),
+        Shadow(color: Color(0x88000000), blurRadius: 1.4, offset: Offset(0, 1)),
       ],
     );
     return SettingsSection(
@@ -142,18 +142,12 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
               height: 68,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                color: prefs.floatingLyricsTransparent
+                    ? Colors.transparent
+                    : const Color(0x99212630),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF20242D),
-                    Color(0xFF777A80),
-                    Color(0xFFE7E8EA),
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
                 ),
               ),
               child: Column(
@@ -231,7 +225,7 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
             ),
           ),
         ],
-        if (Platform.isAndroid) ...[
+        if (Platform.isAndroid)
           SettingsSwitchTile(
             title: l10n.settingsFloatingLyricsClickThrough,
             subtitle: l10n.settingsFloatingLyricsClickThroughSubtitle,
@@ -239,6 +233,7 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
             onChanged: (value) =>
                 update((p) => p.copyWith(floatingLyricsClickThrough: value)),
           ),
+        if (Platform.isAndroid || Platform.isWindows)
           SettingsSwitchTile(
             title: l10n.settingsFloatingLyricsTransparent,
             subtitle: l10n.settingsFloatingLyricsTransparentSubtitle,
@@ -246,7 +241,6 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
             onChanged: (value) =>
                 update((p) => p.copyWith(floatingLyricsTransparent: value)),
           ),
-        ],
       ],
     );
   }
