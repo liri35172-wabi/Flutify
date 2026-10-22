@@ -23,6 +23,8 @@ constexpr float kMinScale = 0.72f;
 // 歌词字号（点，乘以任务栏缩放）：当前句 / 下一句。
 constexpr double kBigPt = 10.5;
 constexpr double kSmallPt = 7.7;
+constexpr double kOverlayBigPt = 15.0;
+constexpr double kOverlaySmallPt = 10.5;
 
 std::wstring FontPath(const wchar_t* file) {
   wchar_t exe[MAX_PATH];
@@ -196,7 +198,8 @@ bool TaskbarLyricsPainter::NeedsWrap(const Canvas& canvas, const std::wstring& c
 bool TaskbarLyricsPainter::WrapNeeded(const Canvas& canvas, const std::wstring& current) {
   const float pad = static_cast<float>(8 * canvas.scale);
   const float avail = canvas.width - pad * 2;
-  Font* big = FontFor(current, kBigPt * canvas.scale * canvas.font_scale, true);
+  const double base_pt = canvas.floating_overlay ? kOverlayBigPt : kBigPt;
+  Font* big = FontFor(current, base_pt * canvas.scale * canvas.font_scale, true);
   return MeasureWidth(canvas.graphics, current, big) * kMinScale > avail && current.size() > 4;
 }
 
@@ -204,14 +207,42 @@ void TaskbarLyricsPainter::PaintLyrics(const Canvas& canvas, const std::wstring&
                                        const std::wstring& current, const std::wstring& next,
                                        const std::wstring& current_translation, float progress) {
   TrimCaches();
-  const double big_pt = kBigPt * canvas.scale * canvas.font_scale;
-  const double small_pt = kSmallPt * canvas.scale * canvas.font_scale;
+  const double big_pt = (canvas.floating_overlay ? kOverlayBigPt : kBigPt) *
+                        canvas.scale * canvas.font_scale;
+  const double small_pt = (canvas.floating_overlay ? kOverlaySmallPt : kSmallPt) *
+                          canvas.scale * canvas.font_scale;
   const float pad = static_cast<float>(8 * canvas.scale);
   const float avail = canvas.width - pad * 2;
 
   if (!current_translation.empty()) {
-    // 双语：原文在上（大 / 亮）、译文在下（小 / 暗）铺满整高，无上滚；
-    // 两行同时逐级缩小，仍放不下由省略号裁切（DrawText 的 TrimmingEllipsis）
+    // 双语：在浮窗里按实际字高紧凑堆叠，避免两行被拉到容器上下两端。
+    // 任务栏仍使用原有的均分布局。
+    if (canvas.floating_overlay) {
+      double original_pt = big_pt * 0.95;
+      double translation_pt = small_pt;
+      const double floor_pt = small_pt * 0.78;
+      Font* ofont = nullptr;
+      Font* tfont = nullptr;
+      for (;;) {
+        ofont = FontFor(current, original_pt, true);
+        tfont = FontFor(current_translation, translation_pt, false);
+        const bool fits = MeasureWidth(canvas.graphics, current, ofont) <= avail &&
+                          MeasureWidth(canvas.graphics, current_translation, tfont) <= avail;
+        if (fits || original_pt <= floor_pt) break;
+        original_pt -= 0.5;
+        translation_pt = (std::max)(floor_pt, translation_pt - 0.25);
+      }
+      const float primary_h = static_cast<float>(original_pt * kPointToPixel * 1.45);
+      const float translation_h = static_cast<float>(translation_pt * kPointToPixel * 1.45);
+      const float gap = static_cast<float>(3 * canvas.scale);
+      const float block_h = primary_h + gap + translation_h;
+      const float block_top = (canvas.height - block_h) / 2.0f;
+      DrawText(canvas, current, ofont, RectF(pad, block_top, avail, primary_h), 255);
+      DrawText(canvas, current_translation, tfont,
+               RectF(pad, block_top + primary_h + gap, avail, translation_h), 215);
+      return;
+    }
+    // 任务栏双语：沿用原有均分布局。
     const float top_h = canvas.height * 0.62f;
     double original_pt = big_pt * 0.95;
     double translation_pt = small_pt;
@@ -253,7 +284,7 @@ void TaskbarLyricsPainter::PaintLyrics(const Canvas& canvas, const std::wstring&
   const float width = MeasureWidth(canvas.graphics, current, FontFor(current, big_pt, true));
   const double scale = width > avail && width > 1 ? (std::max)(static_cast<double>(kMinScale), static_cast<double>(avail / width)) : 1.0;
   // 三行胶片：上一句 / 当前句 / 下一句，整体向上平移一个槽位
-  const float slot = canvas.height * 0.60f;
+  const float slot = canvas.height * (canvas.floating_overlay ? 0.46f : 0.60f);
   const float offset = slot * progress;
   DrawFilmLine(canvas, previous, 0 - offset, slot, big_pt, small_pt, 1.0);
   DrawFilmLine(canvas, current, slot - offset, slot, big_pt, small_pt, scale);

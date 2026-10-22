@@ -2030,4 +2030,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsAnimDebugBackgroundSubtitle =>
       'The lyrics background stays on a still frame';
+
+  @override
+  String get settingsFloatingLyricsClickThrough => 'Click-through';
+
+  @override
+  String get settingsFloatingLyricsClickThroughSubtitle =>
+      'Pass taps to the game underneath. Turn this off first when you want to drag the lyrics window.';
+
+  @override
+  String get settingsFloatingLyricsTransparent => 'Transparent background';
+
+  @override
+  String get settingsFloatingLyricsTransparentSubtitle =>
+      'Hide the dark panel and leave the lyrics text visible.';
 }

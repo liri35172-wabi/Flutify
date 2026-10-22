@@ -41,6 +41,14 @@ class MainActivity : AudioServiceActivity() {
                             }
                         }
                     }
+                    "setOverlayOptions" -> {
+                        val values = call.arguments as? Map<*, *>
+                        AudioService.setFloatingLyricsOptions(
+                            values?.get("clickThrough") as? Boolean == true,
+                            values?.get("transparentBackground") as? Boolean == true
+                        )
+                        result.success(null)
+                    }
                     "setOverlayEnabled" -> {
                         val enabled = call.arguments as? Boolean == true
                         val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)

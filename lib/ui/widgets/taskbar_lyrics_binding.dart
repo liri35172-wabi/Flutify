@@ -98,6 +98,8 @@ class _TaskbarLyricsBindingState extends State<TaskbarLyricsBinding> {
       enabled: prefs.taskbarLyrics && (controls.isFlyme || !controls.isAndroid),
       overlayEnabled:
           prefs.floatingLyrics && (controls.isAndroid || controls.isWindows),
+      overlayClickThrough: prefs.floatingLyricsClickThrough,
+      overlayTransparentBackground: prefs.floatingLyricsTransparent,
       bilingual: prefs.lyricsBilingual,
       locale: Localizations.localeOf(context).toLanguageTag(),
       style: TaskbarLyricsStyle(

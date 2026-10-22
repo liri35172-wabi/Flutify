@@ -22,6 +22,8 @@ final class LyricsOverlayWindow {
     private final TextView translation;
     private final WindowManager.LayoutParams params;
     private boolean attached;
+    private boolean clickThrough;
+    private boolean transparentBackground;
     private float downRawX;
     private float downRawY;
     private int downX;
@@ -43,19 +45,28 @@ final class LyricsOverlayWindow {
 
         primary = new TextView(context);
         primary.setTextColor(Color.WHITE);
+        // Keep lyrics readable over light or busy apps even when the surface is transparent.
+        primary.setShadowLayer(dp(3.5f), 0f, dp(1f), 0xF0000000);
         primary.setTextSize(16);
         primary.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         primary.setSingleLine(true);
-        primary.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        primary.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+        primary.setMarqueeRepeatLimit(-1);
+        primary.setSelected(true);
+        primary.setMaxWidth(maxTextWidth());
         primary.setGravity(Gravity.CENTER);
         root.addView(primary, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         translation = new TextView(context);
         translation.setTextColor(0xFFD8D8D8);
+        translation.setShadowLayer(dp(3.5f), 0f, dp(1f), 0xF0000000);
         translation.setTextSize(12);
         translation.setSingleLine(true);
-        translation.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        translation.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+        translation.setMarqueeRepeatLimit(-1);
+        translation.setSelected(true);
+        translation.setMaxWidth(maxTextWidth());
         translation.setGravity(Gravity.CENTER);
         root.addView(translation, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -76,6 +87,32 @@ final class LyricsOverlayWindow {
         root.setOnTouchListener(this::onTouch);
     }
 
+    /** Changes overlay interaction and appearance without resetting its saved position. */
+    void setOptions(boolean clickThrough, boolean transparentBackground) {
+        boolean changed = this.clickThrough != clickThrough
+                || this.transparentBackground != transparentBackground;
+        this.clickThrough = clickThrough;
+        this.transparentBackground = transparentBackground;
+        if (changed) {
+            root.setBackground(transparentBackground ? null : background());
+            root.setClickable(!clickThrough);
+        }
+        int flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+        if (clickThrough) flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+        params.flags = flags;
+        // Android 12+ blocks touches through highly-obscuring application overlays.
+        params.alpha = clickThrough ? 0.65f : 1f;
+        if (changed && attached) {
+            try {
+                windowManager.updateViewLayout(root, params);
+            } catch (RuntimeException ignored) {
+                attached = false;
+            }
+        }
+    }
+
     void show(String text, String translatedText) {
         if (text == null || text.trim().isEmpty()) {
             hide();
@@ -92,8 +129,8 @@ final class LyricsOverlayWindow {
             }
         }
         String nextTranslation = translatedText == null ? "" : translatedText.trim();
-        if (!text.equals(lastPrimary)) primary.setText(text);
-        if (!nextTranslation.equals(lastTranslation)) translation.setText(nextTranslation);
+        if (!text.equals(lastPrimary)) setMarqueeText(primary, text);
+        if (!nextTranslation.equals(lastTranslation)) setMarqueeText(translation, nextTranslation);
         translation.setVisibility(nextTranslation.isEmpty() ? View.GONE : View.VISIBLE);
         lastPrimary = text;
         lastTranslation = nextTranslation;
@@ -143,6 +180,17 @@ final class LyricsOverlayWindow {
             default:
                 return false;
         }
+    }
+
+    private int maxTextWidth() {
+        int available = context.getResources().getDisplayMetrics().widthPixels - dp(48);
+        return Math.max(dp(120), Math.min(dp(360), available));
+    }
+
+    private void setMarqueeText(TextView textView, String text) {
+        textView.setSelected(false);
+        textView.setText(text);
+        textView.setSelected(true);
     }
 
     private GradientDrawable background() {

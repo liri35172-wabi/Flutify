@@ -309,7 +309,7 @@ void FloatingLyricsWindow::Render() {
 
   const auto color = TextColor();
   const TaskbarLyricsPainter::Canvas canvas{&graphics, width_, height_, scale_, color, style_.opacity,
-                                            style_.font_scale / 100.0};
+                                            style_.font_scale / 100.0, true};
   painter_->PaintLyrics(canvas, previous, current, next, translation, eased);
   graphics.Flush(Gdiplus::FlushIntentionSync);
   Push();

@@ -119,6 +119,8 @@ public class AudioService extends MediaBrowserServiceCompat {
 
     // Optional floating lyrics overlay, hosted by this already-running media service.
     private static boolean floatingLyricsEnabled;
+    private static boolean floatingLyricsClickThrough;
+    private static boolean floatingLyricsTransparent;
     private static String[] floatingLyricTranslations = new String[0];
     private static String floatingDisplayedLine = "";
 
@@ -166,6 +168,15 @@ public class AudioService extends MediaBrowserServiceCompat {
     public static void setFloatingLyricsEnabled(boolean enabled) {
         synchronized (AudioService.class) {
             floatingLyricsEnabled = enabled;
+        }
+        AudioService service = instance;
+        if (service != null) service.refreshFloatingLyrics(true);
+    }
+
+    public static void setFloatingLyricsOptions(boolean clickThrough, boolean transparent) {
+        synchronized (AudioService.class) {
+            floatingLyricsClickThrough = clickThrough;
+            floatingLyricsTransparent = transparent;
         }
         AudioService service = instance;
         if (service != null) service.refreshFloatingLyrics(true);
@@ -821,9 +832,13 @@ public class AudioService extends MediaBrowserServiceCompat {
         String nextLine = "";
         String nextTranslation = "";
         boolean enabled;
+        boolean clickThrough;
+        boolean transparent;
         boolean keepUpdating;
         synchronized (AudioService.class) {
             enabled = floatingLyricsEnabled;
+            clickThrough = floatingLyricsClickThrough;
+            transparent = floatingLyricsTransparent;
             if (enabled && flymeLyricTimes.length > 0 && flymeLyricTexts.length > 0) {
                 long position = flymePlaybackPositionMs;
                 if (flymePlaybackPlaying) {
@@ -846,8 +861,12 @@ public class AudioService extends MediaBrowserServiceCompat {
         }
 
         boolean permissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this);
+        if (lyricsOverlayWindow != null) {
+            lyricsOverlayWindow.setOptions(clickThrough, transparent);
+        }
         if (enabled && permissionGranted && !nextLine.isEmpty()) {
             if (lyricsOverlayWindow == null) lyricsOverlayWindow = new LyricsOverlayWindow(this);
+            lyricsOverlayWindow.setOptions(clickThrough, transparent);
             if (force || !nextLine.equals(floatingDisplayedLine)) {
                 lyricsOverlayWindow.show(nextLine, nextTranslation);
                 floatingDisplayedLine = nextLine;

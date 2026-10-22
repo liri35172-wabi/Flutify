@@ -39,6 +39,8 @@ class TaskbarLyricsControls implements SystemMediaControls {
 
   bool _enabled = false;
   bool _overlayEnabled = false;
+  bool _overlayClickThrough = false;
+  bool _overlayTransparentBackground = false;
   TaskbarLyricsStyle? _style;
   MediaTrackInfo? _track;
   MediaPlaybackInfo? _playback;
@@ -91,6 +93,8 @@ class TaskbarLyricsControls implements SystemMediaControls {
   void configure({
     required bool enabled,
     bool overlayEnabled = false,
+    bool overlayClickThrough = false,
+    bool overlayTransparentBackground = false,
     required TaskbarLyricsStyle style,
     bool bilingual = true,
     String locale = 'zh-Hans',
@@ -124,12 +128,25 @@ class TaskbarLyricsControls implements SystemMediaControls {
     final wasActive = _active;
     final taskbarChanged = enabled != _enabled;
     final overlayChanged = overlayEnabled != _overlayEnabled;
-    if (!taskbarChanged && !overlayChanged) return;
+    final overlayOptionsChanged =
+        overlayClickThrough != _overlayClickThrough ||
+        overlayTransparentBackground != _overlayTransparentBackground;
+    if (!taskbarChanged && !overlayChanged && !overlayOptionsChanged) return;
     _enabled = enabled;
     _overlayEnabled = overlayEnabled;
+    _overlayClickThrough = overlayClickThrough;
+    _overlayTransparentBackground = overlayTransparentBackground;
     if (taskbarChanged) unawaited(_platform.setEnabled(enabled));
     if (overlayChanged && (isAndroid || isWindows)) {
       unawaited(_platform.setOverlayEnabled(overlayEnabled));
+    }
+    if (isAndroid && (overlayChanged || overlayOptionsChanged)) {
+      unawaited(
+        _platform.setOverlayOptions(
+          clickThrough: overlayClickThrough,
+          transparentBackground: overlayTransparentBackground,
+        ),
+      );
     }
     if (!wasActive && _active) {
       unawaited(_pushAll());

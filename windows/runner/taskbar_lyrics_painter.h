@@ -26,6 +26,7 @@ class TaskbarLyricsPainter {
     Gdiplus::Color color;  // 文字颜色（不含整体不透明度）
     int opacity;           // 15 ~ 100
     double font_scale;     // 歌词字号倍率（用户设置，0.8 ~ 1.3）
+    bool floating_overlay = false;  // 独立桌面浮窗使用更大的字号和紧凑行距
   };
 
   // 控制条各区域（客户区坐标），用于命中测试。

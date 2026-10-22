@@ -956,6 +956,9 @@
   "settingsAnimDebugGlass": "關閉玻璃背景模糊",
   "settingsAnimDebugGlassSubtitle": "玻璃卡片與按鈕不再每幀模糊下方畫面",
   "settingsAnimDebugBackground": "關閉流動背景動畫",
-  "settingsAnimDebugBackgroundSubtitle": "歌詞背景停在靜態畫面"
-
+  "settingsAnimDebugBackgroundSubtitle": "歌詞背景停在靜態畫面",
+  "settingsFloatingLyricsClickThrough": "觸控穿透",
+  "settingsFloatingLyricsClickThroughSubtitle": "開啟後，觸控會交給下層遊戲；要移動歌詞窗，請先關閉此項再拖曳。",
+  "settingsFloatingLyricsTransparent": "透明背景",
+  "settingsFloatingLyricsTransparentSubtitle": "隱藏深色底板，只保留歌詞文字。"
 }

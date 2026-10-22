@@ -30,6 +30,12 @@ class _FakePlatform implements TaskbarLyricsPlatform {
       calls.add('overlay:$enabled');
 
   @override
+  Future<void> setOverlayOptions({
+    required bool clickThrough,
+    required bool transparentBackground,
+  }) async => calls.add('overlayOptions:$clickThrough:$transparentBackground');
+
+  @override
   Future<void> setStyle(TaskbarLyricsStyle style) async =>
       calls.add('style:${style.mode.name}');
 

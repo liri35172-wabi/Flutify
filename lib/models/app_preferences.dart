@@ -108,6 +108,8 @@ class AppPreferences {
 
   /// Android: show the current lyric line in a draggable overlay above other apps.
   final bool floatingLyrics;
+  final bool floatingLyricsClickThrough;
+  final bool floatingLyricsTransparent;
   final TaskbarLyricsColor taskbarLyricsColor;
 
   /// [TaskbarLyricsColor.custom] 时的颜色（ARGB）。
@@ -152,6 +154,8 @@ class AppPreferences {
     this.lyricsBilingual = false,
     this.taskbarLyrics = false,
     this.floatingLyrics = false,
+    this.floatingLyricsClickThrough = false,
+    this.floatingLyricsTransparent = false,
     this.taskbarLyricsColor = TaskbarLyricsColor.auto,
     this.taskbarLyricsCustomColor = defaultTaskbarLyricsCustomColor,
     this.taskbarLyricsOpacity = 100,
@@ -206,6 +210,8 @@ class AppPreferences {
     bool? lyricsBilingual,
     bool? taskbarLyrics,
     bool? floatingLyrics,
+    bool? floatingLyricsClickThrough,
+    bool? floatingLyricsTransparent,
     TaskbarLyricsColor? taskbarLyricsColor,
     int? taskbarLyricsCustomColor,
     int? taskbarLyricsOpacity,
@@ -257,6 +263,10 @@ class AppPreferences {
       lyricsBilingual: lyricsBilingual ?? this.lyricsBilingual,
       taskbarLyrics: taskbarLyrics ?? this.taskbarLyrics,
       floatingLyrics: floatingLyrics ?? this.floatingLyrics,
+      floatingLyricsClickThrough:
+          floatingLyricsClickThrough ?? this.floatingLyricsClickThrough,
+      floatingLyricsTransparent:
+          floatingLyricsTransparent ?? this.floatingLyricsTransparent,
       taskbarLyricsColor: taskbarLyricsColor ?? this.taskbarLyricsColor,
       taskbarLyricsCustomColor:
           taskbarLyricsCustomColor ?? this.taskbarLyricsCustomColor,
@@ -298,6 +308,8 @@ class AppPreferences {
     'lyricsBilingual': lyricsBilingual,
     'taskbarLyrics': taskbarLyrics,
     'floatingLyrics': floatingLyrics,
+    'floatingLyricsClickThrough': floatingLyricsClickThrough,
+    'floatingLyricsTransparent': floatingLyricsTransparent,
     'taskbarLyricsColor': taskbarLyricsColor.name,
     'taskbarLyricsCustomColor': taskbarLyricsCustomColor,
     'taskbarLyricsOpacity': taskbarLyricsOpacity,
@@ -407,6 +419,14 @@ class AppPreferences {
       lyricsBilingual: flag(json['lyricsBilingual'], d.lyricsBilingual),
       taskbarLyrics: flag(json['taskbarLyrics'], d.taskbarLyrics),
       floatingLyrics: flag(json['floatingLyrics'], d.floatingLyrics),
+      floatingLyricsClickThrough: flag(
+        json['floatingLyricsClickThrough'],
+        d.floatingLyricsClickThrough,
+      ),
+      floatingLyricsTransparent: flag(
+        json['floatingLyricsTransparent'],
+        d.floatingLyricsTransparent,
+      ),
       taskbarLyricsColor: pick(
         TaskbarLyricsColor.values,
         json['taskbarLyricsColor'],
@@ -478,6 +498,8 @@ class AppPreferences {
       other.lyricsBilingual == lyricsBilingual &&
       other.taskbarLyrics == taskbarLyrics &&
       other.floatingLyrics == floatingLyrics &&
+      other.floatingLyricsClickThrough == floatingLyricsClickThrough &&
+      other.floatingLyricsTransparent == floatingLyricsTransparent &&
       other.taskbarLyricsColor == taskbarLyricsColor &&
       other.taskbarLyricsCustomColor == taskbarLyricsCustomColor &&
       other.taskbarLyricsOpacity == taskbarLyricsOpacity &&
@@ -516,6 +538,8 @@ class AppPreferences {
     lyricsBilingual,
     taskbarLyrics,
     floatingLyrics,
+    floatingLyricsClickThrough,
+    floatingLyricsTransparent,
     taskbarLyricsColor,
     taskbarLyricsCustomColor,
     taskbarLyricsOpacity,

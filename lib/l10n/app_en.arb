@@ -679,6 +679,9 @@
   "settingsAnimDebugGlass": "Turn off glass background blur",
   "settingsAnimDebugGlassSubtitle": "Glass cards and buttons stop blurring what's behind them every frame",
   "settingsAnimDebugBackground": "Turn off flowing background",
-  "settingsAnimDebugBackgroundSubtitle": "The lyrics background stays on a still frame"
-
+  "settingsAnimDebugBackgroundSubtitle": "The lyrics background stays on a still frame",
+  "settingsFloatingLyricsClickThrough": "Click-through",
+  "settingsFloatingLyricsClickThroughSubtitle": "Pass taps to the game underneath. Turn this off first when you want to drag the lyrics window.",
+  "settingsFloatingLyricsTransparent": "Transparent background",
+  "settingsFloatingLyricsTransparentSubtitle": "Hide the dark panel and leave the lyrics text visible."
 }

@@ -92,9 +92,14 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
   @override
   Widget build(BuildContext context) {
     if (!_available(context)) return const SizedBox.shrink();
-    final prefs = context.select<PreferencesProvider, bool>(
-      (provider) => provider.prefs.floatingLyrics,
+    final preferences = context.select<PreferencesProvider, (bool, bool, bool)>(
+      (provider) => (
+        provider.prefs.floatingLyrics,
+        provider.prefs.floatingLyricsClickThrough,
+        provider.prefs.floatingLyricsTransparent,
+      ),
     );
+    final (enabled, clickThrough, transparent) = preferences;
     final l10n = context.l10n;
     return SettingsSection(
       title: l10n.settingsFloatingLyrics,
@@ -102,7 +107,7 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
         SettingsSwitchTile(
           title: l10n.settingsFloatingLyrics,
           subtitle: l10n.settingsFloatingLyricsSubtitle,
-          value: prefs,
+          value: enabled,
           onChanged: (enabled) {
             if (enabled) {
               unawaited(_enable(context));
@@ -115,6 +120,30 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
             }
           },
         ),
+        if (Platform.isAndroid) ...[
+          SettingsSwitchTile(
+            title: l10n.settingsFloatingLyricsClickThrough,
+            subtitle: l10n.settingsFloatingLyricsClickThroughSubtitle,
+            value: clickThrough,
+            onChanged: (value) {
+              final provider = context.read<PreferencesProvider>();
+              provider.update(
+                provider.prefs.copyWith(floatingLyricsClickThrough: value),
+              );
+            },
+          ),
+          SettingsSwitchTile(
+            title: l10n.settingsFloatingLyricsTransparent,
+            subtitle: l10n.settingsFloatingLyricsTransparentSubtitle,
+            value: transparent,
+            onChanged: (value) {
+              final provider = context.read<PreferencesProvider>();
+              provider.update(
+                provider.prefs.copyWith(floatingLyricsTransparent: value),
+              );
+            },
+          ),
+        ],
       ],
     );
   }

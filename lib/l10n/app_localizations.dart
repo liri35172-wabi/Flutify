@@ -3652,6 +3652,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'歌词背景停在静态画面'**
   String get settingsAnimDebugBackgroundSubtitle;
+
+  /// No description provided for @settingsFloatingLyricsClickThrough.
+  ///
+  /// In zh, this message translates to:
+  /// **'触控穿透'**
+  String get settingsFloatingLyricsClickThrough;
+
+  /// No description provided for @settingsFloatingLyricsClickThroughSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后，触摸会交给下层游戏；要移动歌词窗，请先关闭此项再拖动。'**
+  String get settingsFloatingLyricsClickThroughSubtitle;
+
+  /// No description provided for @settingsFloatingLyricsTransparent.
+  ///
+  /// In zh, this message translates to:
+  /// **'透明背景'**
+  String get settingsFloatingLyricsTransparent;
+
+  /// No description provided for @settingsFloatingLyricsTransparentSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏深色底板，只保留歌词文字。'**
+  String get settingsFloatingLyricsTransparentSubtitle;
 }
 
 class _AppLocalizationsDelegate

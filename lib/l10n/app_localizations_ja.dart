@@ -1943,4 +1943,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsAnimDebugBackgroundSubtitle => '歌詞の背景が静止画のままになります';
+
+  @override
+  String get settingsFloatingLyricsClickThrough => 'タッチを透過';
+
+  @override
+  String get settingsFloatingLyricsClickThroughSubtitle =>
+      'オンにするとタッチ操作を下のゲームに渡します。歌詞ウィンドウを動かすには、先にオフにしてからドラッグしてください。';
+
+  @override
+  String get settingsFloatingLyricsTransparent => '背景を透明にする';
+
+  @override
+  String get settingsFloatingLyricsTransparentSubtitle =>
+      '暗い背景パネルを隠し、歌詞だけを表示します。';
 }

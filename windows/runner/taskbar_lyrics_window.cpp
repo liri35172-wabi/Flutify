@@ -675,7 +675,7 @@ void TaskbarLyricsWindow::Render() {
   g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
   g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
   const TaskbarLyricsPainter::Canvas canvas{&g, w, h, scale_, color, style_.opacity,
-                                                style_.font_scale / 100.0};
+                                                style_.font_scale / 100.0, false};
   if (control) {
     layout_ = painter_->PaintControl(canvas, title_.empty() ? L"Flutify" : title_, artist_, art_.get(), playing_,
                                      hovered_button_);

@@ -679,6 +679,9 @@
   "settingsAnimDebugGlass": "ガラスの背景ぼかしをオフ",
   "settingsAnimDebugGlassSubtitle": "ガラスのカードやボタンが毎フレーム背面をぼかさなくなります",
   "settingsAnimDebugBackground": "流れる背景をオフ",
-  "settingsAnimDebugBackgroundSubtitle": "歌詞の背景が静止画のままになります"
-
+  "settingsAnimDebugBackgroundSubtitle": "歌詞の背景が静止画のままになります",
+  "settingsFloatingLyricsClickThrough": "タッチを透過",
+  "settingsFloatingLyricsClickThroughSubtitle": "オンにするとタッチ操作を下のゲームに渡します。歌詞ウィンドウを動かすには、先にオフにしてからドラッグしてください。",
+  "settingsFloatingLyricsTransparent": "背景を透明にする",
+  "settingsFloatingLyricsTransparentSubtitle": "暗い背景パネルを隠し、歌詞だけを表示します。"
 }

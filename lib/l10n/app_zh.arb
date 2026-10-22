@@ -973,6 +973,9 @@
   "settingsAnimDebugGlass": "关闭玻璃背景模糊",
   "settingsAnimDebugGlassSubtitle": "玻璃卡片与按钮不再每帧模糊下方画面",
   "settingsAnimDebugBackground": "关闭流动背景动画",
-  "settingsAnimDebugBackgroundSubtitle": "歌词背景停在静态画面"
-
+  "settingsAnimDebugBackgroundSubtitle": "歌词背景停在静态画面",
+  "settingsFloatingLyricsClickThrough": "触控穿透",
+  "settingsFloatingLyricsClickThroughSubtitle": "开启后，触摸会交给下层游戏；要移动歌词窗，请先关闭此项再拖动。",
+  "settingsFloatingLyricsTransparent": "透明背景",
+  "settingsFloatingLyricsTransparentSubtitle": "隐藏深色底板，只保留歌词文字。"
 }

@@ -1919,6 +1919,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAnimDebugBackgroundSubtitle => '歌词背景停在静态画面';
+
+  @override
+  String get settingsFloatingLyricsClickThrough => '触控穿透';
+
+  @override
+  String get settingsFloatingLyricsClickThroughSubtitle =>
+      '开启后，触摸会交给下层游戏；要移动歌词窗，请先关闭此项再拖动。';
+
+  @override
+  String get settingsFloatingLyricsTransparent => '透明背景';
+
+  @override
+  String get settingsFloatingLyricsTransparentSubtitle => '隐藏深色底板，只保留歌词文字。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3835,4 +3848,17 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsAnimDebugBackgroundSubtitle => '歌詞背景停在靜態畫面';
+
+  @override
+  String get settingsFloatingLyricsClickThrough => '觸控穿透';
+
+  @override
+  String get settingsFloatingLyricsClickThroughSubtitle =>
+      '開啟後，觸控會交給下層遊戲；要移動歌詞窗，請先關閉此項再拖曳。';
+
+  @override
+  String get settingsFloatingLyricsTransparent => '透明背景';
+
+  @override
+  String get settingsFloatingLyricsTransparentSubtitle => '隱藏深色底板，只保留歌詞文字。';
 }
