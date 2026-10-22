@@ -39,15 +39,11 @@ node --test tool/test_self_test_workflow.cjs tool/test_self_test_scope.cjs tool/
 | `ANDROID_KEY_PASSWORD` | 私钥密码 |
 | `ANDROID_SIGNING_CERT_SHA256` | 构建后验证的证书指纹 |
 
-固定 beta 证书 SHA-256：
+### Fork 测试版的应用身份与密钥
 
-```text
-f342b46d13f500863b6ed4987ae78e5e57d6f8f53690e6e79fa33f17871f2715
-```
+此 fork 的 Release APK 使用独立包名 `com.flutify.music.flutify_app.fork`，避免覆盖原先安装的普通版 `com.flutify.music.flutify_app`；Debug 仍使用 `.flyme_test` 后缀。两款 Release 应用的数据互相独立，不会自动迁移。当前安装普通版的证书私钥没有找回，因此不能用新密钥对它做原地升级。
 
-此次创建的本机备份是仓库目录下的 `.signing/flutify-beta.jks` 和 `.signing/signing.json`。后者包含密码；两者均被 Git 忽略，必须一起保存到可靠的私密备份中。GitHub Secrets 不能导出原值。不要重新生成或轮换密钥来处理普通构建故障。
-
-此前 beta 的旧密钥没有备份，因此旧签名不同的安装需要卸载后安装一次。从这把固定密钥签署的版本开始，后续版本可覆盖升级。
+为 fork 测试版创建一把长期固定的 keystore，并在自己控制的安全位置加密备份 keystore 和密码。然后在 GitHub 仓库的 **Settings → Secrets and variables → Actions** 配置上表五项 Secrets。不要把 keystore 或密码提交到仓库、发到聊天或放进构建产物。确认私密备份和 Secrets 都准备好后，再运行 Build；签名校验会拒绝缺失或不匹配的证书。后续构建必须持续使用同一把密钥。
 
 本地 release 构建可以配置环境变量 `ANDROID_KEYSTORE_PATH`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`；也可以在已被忽略的 `android/key.properties` 中设置 `storeFile`、`storePassword`、`keyAlias`、`keyPassword`。`storeFile` 相对 `android/` 解析，或使用绝对路径；Windows 属性文件中的路径建议使用 `/`。
 

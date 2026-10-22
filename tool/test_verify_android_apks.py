@@ -1,6 +1,16 @@
 import unittest
 
-from verify_android_apks import verify_certificate
+from verify_android_apks import verify_application_id, verify_certificate
+
+
+class PackageIdentityTest(unittest.TestCase):
+    def test_expected_fork_package_is_accepted(self):
+        verify_application_id("package: name='com.flutify.music.flutify_app.fork' versionCode='7'")
+
+    def test_ordinary_package_and_missing_package_are_rejected(self):
+        for metadata in ("package: name='com.flutify.music.flutify_app' versionCode='7'", "no package metadata"):
+            with self.subTest(metadata=metadata), self.assertRaises(ValueError):
+                verify_application_id(metadata)
 
 
 class CertificateTest(unittest.TestCase):

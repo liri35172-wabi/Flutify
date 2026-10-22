@@ -61,10 +61,16 @@ android {
 
     buildTypes {
         getByName("debug") {
+            // Keep the existing Flyme/debug install identity unchanged.
             applicationIdSuffix = ".flyme_test"
             versionNameSuffix = "-flyme-test"
+            manifestPlaceholders["appLabel"] = "Flutify · Flyme test"
         }
         release {
+            // The old ordinary package may use an unrecoverable certificate. A new ID
+            // lets a fixed-key fork build coexist without replacing or clearing it.
+            applicationIdSuffix = ".fork"
+            manifestPlaceholders["appLabel"] = "Flutify · Fork test"
             signingConfig = signingConfigs.getByName("release")
         }
     }

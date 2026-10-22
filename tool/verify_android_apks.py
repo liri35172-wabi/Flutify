@@ -18,6 +18,16 @@ def verify_certificate(output, expected):
         raise ValueError(f'signing certificate mismatch: expected {expected}, got {certificates}')
 
 
+EXPECTED_APPLICATION_ID = 'com.flutify.music.flutify_app.fork'
+
+
+def verify_application_id(metadata, expected=EXPECTED_APPLICATION_ID):
+    match = re.search(r"^package: name='([^']+)'", metadata, re.MULTILINE)
+    if match is None or match[1] != expected:
+        actual = match[1] if match is not None else 'missing'
+        raise ValueError(f'applicationId mismatch: expected {expected}, got {actual}')
+
+
 def verify(directory, build_number):
     expected = os.environ['ANDROID_SIGNING_CERT_SHA256'].replace(':', '').lower()
     if not re.fullmatch('[0-9a-f]{64}', expected):
@@ -44,6 +54,10 @@ def verify(directory, build_number):
             raise ValueError(f'{name}: {error}; verifier output: {output}') from error
         metadata = subprocess.check_output(
             [str(build_tools / ('aapt.exe' if os.name == 'nt' else 'aapt')), 'dump', 'badging', str(apk)], text=True)
+        try:
+            verify_application_id(metadata)
+        except ValueError as error:
+            raise ValueError(f'{name}: {error}') from error
         code = re.search(r"versionCode='(\d+)'", metadata)
         if code is None or int(code[1]) != build_number + abi_offset:
             raise ValueError(f'{name}: unexpected versionCode')
