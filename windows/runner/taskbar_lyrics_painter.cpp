@@ -177,7 +177,7 @@ void TaskbarLyricsPainter::DrawText(const Canvas& canvas, const std::wstring& te
   alpha = alpha * canvas.opacity / 100;
   if (text.empty() || alpha <= 2) return;
   const BYTE visible_alpha = static_cast<BYTE>((std::min)(alpha, 255));
-  if (canvas.floating_overlay && canvas.dual_contrast_outline) {
+  if (canvas.dual_contrast_outline) {
     // Auto cannot inspect a different app's pixels. A crisp two-tone edge keeps white
     // lyrics legible over both light and dark content without a broad, blurry shadow.
     const int offsets[8][2] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}};

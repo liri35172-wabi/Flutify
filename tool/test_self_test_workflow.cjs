@@ -68,7 +68,10 @@ test('Android tests release builds using a disposable key and verifies all four 
   assert.match(android, /python3 tool\/verify_android_apks\.py build\/app\/outputs\/flutter-apk/);
   assert.match(android, /if: always\(\)\n        run: rm -f "\$RUNNER_TEMP\/flutify-self-test\.p12"/);
   assert.match(android, /Flutify-self-test-/);
-  assert.match(android, /name: self-test-android/);
+  for (const abi of ['armeabi-v7a', 'arm64-v8a', 'x86_64', 'universal']) {
+    assert.match(android, new RegExp(`name: self-test-android-${abi}`));
+  }
+  assert.equal((android.match(/uses: actions\/upload-artifact@v4/g) || []).length, 4);
   assert.match(android, /if-no-files-found: error/);
   assert.match(android, /retention-days: 7/);
 });

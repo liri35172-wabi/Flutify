@@ -38,7 +38,7 @@ test('Linux tests, builds and packages a .deb and a portable tarball using the v
 test('release waits for all platforms and includes their packages in checksums', () => {
   const release = job('release');
   assert.match(release, /needs: \[prepare, android, windows, macos, linux\]/);
-  assert.match(release, /pattern: '\{android,windows-\*,macos,linux\}'/);
+  assert.match(release, /pattern: '\{android-\*,windows-\*,macos,linux\}'/);
   assert.match(release, /merge-multiple: true/);
   assert.match(release, /android-universal\.apk macos\.zip linux-x64\.deb linux-x64\.tar\.gz; do/);
   assert.match(release, /-eq 11/);

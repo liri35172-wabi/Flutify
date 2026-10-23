@@ -54,7 +54,6 @@ class FloatingLyricsWindow {
   std::wstring title_;
   std::wstring artist_;
   std::vector<taskbar_lyrics::LyricLine> lines_;
-  bool bilingual_overlay_ = false;
   bool playing_ = false;
   bool transparent_background_ = false;
   int64_t anchor_ms_ = 0;

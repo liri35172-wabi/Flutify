@@ -10,7 +10,7 @@ constexpr wchar_t kOverlayClass[] = L"FlutifyFloatingLyricsOverlay";
 constexpr UINT_PTR kTimerId = 1;
 constexpr UINT kWakeMessage = WM_APP + 2;
 constexpr int64_t kLeadMs = 300;
-constexpr ULONGLONG kAnimationMs = 260;
+constexpr ULONGLONG kAnimationMs = 300;
 
 void AddRoundRect(Gdiplus::GraphicsPath* path, const Gdiplus::RectF& rect, float radius) {
   const float diameter = radius * 2;
@@ -187,7 +187,7 @@ void FloatingLyricsWindow::Tick() {
 
   Render();
   const ULONGLONG now = GetTickCount64();
-  const bool animating = display_index_ != -2 && now - anim_start_ < kAnimationMs + 40;
+  const bool animating = display_index_ != -2 && now - anim_start_ < kAnimationMs + 60;
   SetInterval(animating ? 16 : (playing_ && !lines_.empty() ? 100 : 250));
 }
 
@@ -208,8 +208,6 @@ void FloatingLyricsWindow::SyncState() {
   if (shared_->lyrics_version != lyrics_version_) {
     lyrics_version_ = shared_->lyrics_version;
     lines_ = shared_->lines;
-    bilingual_overlay_ = std::any_of(lines_.begin(), lines_.end(),
-                                     [](const auto& line) { return !line.translation.empty(); });
     display_index_ = -2;
     last_current_.clear();
     last_translation_.clear();
@@ -346,11 +344,12 @@ void FloatingLyricsWindow::Render() {
   }
 
   const auto color = TextColor();
+  // Reuse the taskbar's lyric sizing, bilingual layout, and three-line transition.
+  // The floating window keeps only its thin contrast outline for arbitrary app backgrounds.
   const TaskbarLyricsPainter::Canvas canvas{&graphics, width_, height_, scale_, color, style_.opacity,
-                                            style_.font_scale / 100.0, true,
-                                            true};
+                                            style_.font_scale / 100.0, false, true};
   painter_->PaintLyrics(canvas, previous, current, next, translation,
-                        previous_translation, next_translation, bilingual_overlay_, eased);
+                        previous_translation, next_translation, false, eased);
   graphics.Flush(Gdiplus::FlushIntentionSync);
   Push();
 }
