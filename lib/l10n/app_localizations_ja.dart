@@ -606,6 +606,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get lyricsTitle => '歌詞';
 
   @override
+  String get playerShowArtwork => 'アルバムアートワークを表示';
+
+  @override
   String get lyricsNotPlaying => '再生していません';
 
   @override

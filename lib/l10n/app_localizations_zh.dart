@@ -613,6 +613,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lyricsTitle => '歌词';
 
   @override
+  String get playerShowArtwork => '打开专辑封面';
+
+  @override
   String get lyricsNotPlaying => '未在播放';
 
   @override
@@ -2558,6 +2561,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get lyricsTitle => '歌詞';
+
+  @override
+  String get playerShowArtwork => '開啟專輯封面';
 
   @override
   String get lyricsNotPlaying => '未在播放';

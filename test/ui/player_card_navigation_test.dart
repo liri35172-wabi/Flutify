@@ -269,15 +269,15 @@ void main() {
       final session = await _open(tester, width: width);
       final header = find.byKey(const ValueKey('player-card-title'));
       final device = _inPlayer(find.byIcon(Icons.devices_rounded));
-      final deviceText = _inPlayer(find.text('正在本设备上收听'));
-      final lyrics = _inPlayer(find.byTooltip('歌词'));
+      final queue = _inPlayer(find.byTooltip('播放队列'));
       for (final fraction in [.25, .5, .75]) {
         await tester.pump(const Duration(seconds: 4));
         await _frames(tester, 4);
         expect(header.hitTestable(), findsNothing);
-        final label = tester.getRect(deviceText);
-        final gapStart = label.right + 12;
-        final gapEnd = tester.getRect(lyrics).left - 8;
+        // The artwork shortcut and lyrics button occupy the old device-to-lyrics
+        // gap. Probe the real blank strip after the last footer button instead.
+        final gapStart = tester.getRect(queue).right + 1;
+        final gapEnd = tester.getRect(find.byType(FullPlayerSheet)).right - 13;
         expect(gapEnd, greaterThan(gapStart));
         final point = Offset(
           gapStart + (gapEnd - gapStart) * fraction,

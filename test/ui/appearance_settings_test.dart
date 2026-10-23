@@ -8,6 +8,7 @@ import 'package:flutify_app/services/eme/eme_player.dart';
 import 'package:flutify_app/services/storage_service.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/immersive_lyrics_screen.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
 import 'package:flutify_app/ui/screens/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -170,7 +171,18 @@ void main() {
       await tester.tap(find.byTooltip('沉浸式歌词').first);
       await settle(tester);
       expect(find.byType(ImmersiveLyricsScreen), findsOneWidget);
-      expect(find.text('Immersive first line'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(LyricsView),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Text &&
+                widget.data == 'Immersive first line' &&
+                widget.style?.fontSize == 30,
+          ),
+        ),
+        findsOneWidget,
+      );
       expect(find.byTooltip('退出全屏歌词（Esc）'), findsOneWidget);
 
       // Controls must remain reachable in the minimum window and a short wide window.

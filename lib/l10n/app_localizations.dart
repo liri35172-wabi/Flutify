@@ -1193,6 +1193,12 @@ abstract class AppLocalizations {
   /// **'歌词'**
   String get lyricsTitle;
 
+  /// Open the large album artwork from the lyrics player view.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开专辑封面'**
+  String get playerShowArtwork;
+
   /// No description provided for @lyricsNotPlaying.
   ///
   /// In zh, this message translates to:

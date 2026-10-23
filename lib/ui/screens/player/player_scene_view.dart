@@ -27,6 +27,8 @@ import 'lyrics/glass_icon_button.dart';
 import 'lyrics/lyrics_backdrop.dart';
 import 'lyrics/lyrics_view.dart';
 import 'lyrics/lyrics_translation_controls.dart';
+import 'lyrics/current_lyrics_preview.dart';
+import 'lyrics/floating_lyrics_quick_toggle.dart';
 import 'queue_list.dart';
 import 'player_destinations_sheet.dart';
 import 'player_expansion.dart';
@@ -289,7 +291,26 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
             translation: widget.controlsOnLeft && _view == PlayerView.lyrics
                 ? const LyricsTranslationToggle()
                 : null,
+            floatingLyrics: const FloatingLyricsQuickToggle(),
+            artworkShortcut: _view == PlayerView.lyrics
+                ? IconButton(
+                    key: const ValueKey('lyrics-artwork-shortcut'),
+                    tooltip: context.l10n.playerShowArtwork,
+                    onPressed: () => _toggle(PlayerView.artwork),
+                    icon: CoverImage(
+                      url: track.coverUrl,
+                      size: 30,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  )
+                : null,
           ),
+        ),
+        artworkPreview: CurrentLyricsPreview(
+          key: ValueKey((track.id, remote)),
+          track: track,
+          remote: remote,
+          onTap: () => _toggle(PlayerView.lyrics),
         ),
         artworkBuilder: (context, size, progress) => PlayerArtworkHero(
           imageUrl: track.coverUrl,
@@ -298,7 +319,8 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
             builder: (context, expandVal, _) {
               // 无论是展开卡片内的大封面，还是取消歌词/队列后回到封面视图，
               // 都不自动播放 Canvas，而是在放大封面的右下角提供鼠标悬浮才显示的播放/停止 Canvas 按钮
-              final isEnlarged = (progress == 0 && _view == PlayerView.artwork) ||
+              final isEnlarged =
+                  (progress == 0 && _view == PlayerView.artwork) ||
                   (widget.controlsOnLeft && expandVal > 0.5);
               final canvasActive = _canvasPlaying;
               return MouseRegion(
@@ -324,6 +346,7 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
                           child: FittedBox(
                             child: SwipeableArtwork(
                               url: track.coverUrl,
+                              trackKey: track.id,
                               size: 400,
                               child: canvasActive
                                   ? CanvasArtwork(
@@ -748,6 +771,9 @@ class _BottomBar extends StatelessWidget {
   final double? lyricsProgress;
   final Widget? translation;
   final Widget? pin;
+  final Widget? floatingLyrics;
+  final Widget? artworkShortcut;
+
   /// 非空时设备入口在卡片底部就地展开设备列表，而不是弹出浮层。
   final ValueNotifier<bool>? devicesOpen;
 
@@ -757,6 +783,8 @@ class _BottomBar extends StatelessWidget {
     this.lyricsProgress,
     this.translation,
     this.pin,
+    this.floatingLyrics,
+    this.artworkShortcut,
     this.devicesOpen,
   });
 
@@ -869,6 +897,8 @@ class _BottomBar extends StatelessWidget {
           ),
           ?pin,
           ?translation,
+          ?floatingLyrics,
+          ?artworkShortcut,
           toggle(
             PlayerView.lyrics,
             Icons.lyrics_outlined,

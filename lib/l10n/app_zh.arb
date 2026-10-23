@@ -372,6 +372,8 @@
   },
   "queueEmpty": "队列中暂无待播歌曲",
   "lyricsTitle": "歌词",
+  "playerShowArtwork": "打开专辑封面",
+  "@playerShowArtwork": {"description": "Open the large album artwork from the lyrics player view."},
   "lyricsNotPlaying": "未在播放",
   "lyricsNothingPlayingMessage": "播放一首歌曲，即可在这里查看歌词。",
   "lyricsUnavailableTitle": "暂无歌词",

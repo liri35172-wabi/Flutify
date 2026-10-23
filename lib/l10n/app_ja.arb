@@ -172,6 +172,7 @@
   "queueNextFrom": "「{name}」から次に再生",
   "queueEmpty": "次に再生する曲はありません",
   "lyricsTitle": "歌詞",
+  "playerShowArtwork": "アルバムアートワークを表示",
   "lyricsNotPlaying": "再生していません",
   "lyricsNothingPlayingMessage": "曲を再生すると、ここに歌詞が表示されます。",
   "lyricsUnavailableTitle": "歌詞がありません",

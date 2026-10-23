@@ -278,6 +278,17 @@ void main() {
         findsOneWidget,
       );
       expect(find.byTooltip('全屏歌词'), findsNothing);
+      final artworkShortcut = find.byKey(
+        const ValueKey('lyrics-artwork-shortcut'),
+      );
+      expect(artworkShortcut, findsOneWidget);
+      await tester.tap(artworkShortcut);
+      await settle(tester);
+      expect(
+        find.descendant(of: player, matching: find.byType(SwipeableArtwork)),
+        findsOneWidget,
+        reason: 'the thumbnail in the lyrics controls opens the large artwork',
+      );
 
       // 再点一次当前视图的按钮回到封面
       await tester.tap(
@@ -609,69 +620,67 @@ void main() {
   });
 
   for (final closeMethod in ['button', 'back', 'drag']) {
-    testWidgets(
-      'android $closeMethod collapse lands on the track playing now, '
-      'not the one the player opened with',
-      (tester) async {
-        debugDefaultTargetPlatformOverride = TargetPlatform.android;
-        addTearDown(() => debugDefaultTargetPlatformOverride = null);
-        final playback = await pumpPlaying(tester);
-        await tester.tap(find.byType(MiniPlayer));
-        await settle(tester);
-        await tester.tap(
-          find.descendant(
-            of: find.byType(FullPlayerSheet),
-            matching: find.byTooltip('歌词'),
-          ),
-        );
-        await settle(tester);
-        // The track changes while the full-screen player covers the pill.
-        await playback.nextTrack();
-        await settle(tester);
-        expect(playback.currentTrack?.id, 'synthetic-2');
+    testWidgets('android $closeMethod collapse lands on the track playing now, '
+        'not the one the player opened with', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      final playback = await pumpPlaying(tester);
+      await tester.tap(find.byType(MiniPlayer));
+      await settle(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(FullPlayerSheet),
+          matching: find.byTooltip('歌词'),
+        ),
+      );
+      await settle(tester);
+      // The track changes while the full-screen player covers the pill.
+      await playback.nextTrack();
+      await settle(tester);
+      expect(playback.currentTrack?.id, 'synthetic-2');
 
-        final close = find.byIcon(Icons.keyboard_arrow_down_rounded);
-        switch (closeMethod) {
-          case 'button':
-            await tester.tap(close);
-          case 'back':
-            await tester.binding.handlePopRoute();
-          case 'drag':
-            await tester.drag(close, const Offset(0, 200));
-        }
-        await tester.pump();
+      final close = find.byIcon(Icons.keyboard_arrow_down_rounded);
+      switch (closeMethod) {
+        case 'button':
+          await tester.tap(close);
+        case 'back':
+          await tester.binding.handlePopRoute();
+        case 'drag':
+          await tester.drag(close, const Offset(0, 200));
+      }
+      await tester.pump();
 
-        // The pill that the surface collapses into must already show the
-        // current track on every frame, not only after the route is gone.
-        final compact = find.byKey(const ValueKey('player-expansion-compact'));
-        for (var frame = 0; frame < 8; frame++) {
-          await tester.pump(const Duration(milliseconds: 50));
-          if (compact.evaluate().isEmpty) break;
-          expect(
-            find.descendant(of: compact, matching: find.text('Synthetic One')),
-            findsNothing,
-            reason: 'stale track in the collapsing pill at frame $frame',
-          );
-          expect(
-            find.descendant(of: compact, matching: find.text('Synthetic Two')),
-            findsWidgets,
-            reason: 'current track missing in the collapsing pill at frame '
-                '$frame',
-          );
-        }
-        await settle(tester);
-        expect(find.byType(FullPlayerSheet), findsNothing);
+      // The pill that the surface collapses into must already show the
+      // current track on every frame, not only after the route is gone.
+      final compact = find.byKey(const ValueKey('player-expansion-compact'));
+      for (var frame = 0; frame < 8; frame++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        if (compact.evaluate().isEmpty) break;
         expect(
-          find.descendant(
-            of: find.byType(MiniPlayer),
-            matching: find.text('Synthetic Two'),
-          ),
-          findsWidgets,
+          find.descendant(of: compact, matching: find.text('Synthetic One')),
+          findsNothing,
+          reason: 'stale track in the collapsing pill at frame $frame',
         );
-        debugDefaultTargetPlatformOverride = null;
-        expect(tester.takeException(), isNull);
-      },
-    );
+        expect(
+          find.descendant(of: compact, matching: find.text('Synthetic Two')),
+          findsWidgets,
+          reason:
+              'current track missing in the collapsing pill at frame '
+              '$frame',
+        );
+      }
+      await settle(tester);
+      expect(find.byType(FullPlayerSheet), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(MiniPlayer),
+          matching: find.text('Synthetic Two'),
+        ),
+        findsWidgets,
+      );
+      debugDefaultTargetPlatformOverride = null;
+      expect(tester.takeException(), isNull);
+    });
   }
 
   for (final closeMethod in ['button', 'back', 'drag']) {
@@ -840,6 +849,40 @@ void main() {
     await tester.drag(find.byType(SwipeableArtwork), const Offset(-20, 0));
     await settle(tester);
     expect(playback.currentTrack?.id, 'synthetic-2');
+  });
+
+  testWidgets('track changes during artwork drag reset the outgoing offset', (
+    tester,
+  ) async {
+    final playback = await pumpPlaying(tester);
+    await tester.tap(find.byType(MiniPlayer));
+    await settle(tester);
+    final artwork = find.byType(SwipeableArtwork);
+    final center = tester.getCenter(artwork);
+    final gesture = await tester.startGesture(center);
+    await gesture.moveBy(const Offset(-24, 0));
+    await tester.pump(const Duration(milliseconds: 16));
+    await gesture.moveBy(const Offset(-116, 0));
+    await tester.pump(const Duration(milliseconds: 16));
+    final transforms = find.descendant(
+      of: artwork,
+      matching: find.byType(Transform),
+    );
+    double translatedX() => transforms
+        .evaluate()
+        .map(
+          (element) => tester.widget<Transform>(find.byWidget(element.widget)),
+        )
+        .map((transform) => transform.transform.getTranslation().x)
+        .firstWhere((x) => x != 0, orElse: () => 0);
+    expect(translatedX(), lessThan(0));
+
+    await playback.nextTrack();
+    await settle(tester);
+    await gesture.up();
+    await settle(tester);
+    expect(playback.currentTrack?.id, 'synthetic-2');
+    expect(translatedX(), closeTo(0, 0.01));
   });
 
   testWidgets('swiping lyrics down removes the sheet and its modal barrier', (

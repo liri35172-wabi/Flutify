@@ -17,12 +17,14 @@ import '../../../widgets/cover_image.dart';
 class SwipeableArtwork extends StatefulWidget {
   final String url;
   final double size;
+  final String? trackKey;
   final Widget? child;
 
   const SwipeableArtwork({
     super.key,
     required this.url,
     required this.size,
+    this.trackKey,
     this.child,
   });
 
@@ -33,14 +35,30 @@ class SwipeableArtwork extends StatefulWidget {
 class _SwipeableArtworkState extends State<SwipeableArtwork> {
   double _dx = 0;
   bool _dragging = false;
+  bool _ignoreCurrentDrag = false;
+
+  @override
+  void didUpdateWidget(covariant SwipeableArtwork oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url || oldWidget.trackKey != widget.trackKey) {
+      _ignoreCurrentDrag = _dragging;
+      _dx = 0;
+      _dragging = false;
+    }
+  }
 
   void _onUpdate(DragUpdateDetails details) {
+    if (_ignoreCurrentDrag) return;
     setState(
       () => _dx = (_dx + details.delta.dx).clamp(-widget.size, widget.size),
     );
   }
 
   void _onEnd(DragEndDetails details) {
+    if (_ignoreCurrentDrag) {
+      _ignoreCurrentDrag = false;
+      return;
+    }
     final velocity = details.primaryVelocity ?? 0;
     final threshold = widget.size * 0.25;
     final next = _dx < -threshold || velocity < -500;
@@ -75,7 +93,10 @@ class _SwipeableArtworkState extends State<SwipeableArtwork> {
     return Semantics(
       hint: context.l10n.playerSwipeHint,
       child: GestureDetector(
-        onHorizontalDragStart: (_) => setState(() => _dragging = true),
+        onHorizontalDragStart: (_) => setState(() {
+          _ignoreCurrentDrag = false;
+          _dragging = true;
+        }),
         onHorizontalDragUpdate: _onUpdate,
         onHorizontalDragEnd: _onEnd,
         onHorizontalDragCancel: () => setState(() {
@@ -83,6 +104,7 @@ class _SwipeableArtworkState extends State<SwipeableArtwork> {
           _dx = 0;
         }),
         child: TweenAnimationBuilder<double>(
+          key: ValueKey((widget.trackKey, widget.url)),
           tween: Tween(end: _dx),
           // 拖动中直接跟手；松手后以回弹曲线归位
           duration: _dragging

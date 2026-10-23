@@ -10,6 +10,7 @@ import 'package:flutify_app/services/storage_service.dart';
 import 'package:flutify_app/ui/screens/detail/widgets/collection_hero.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_backdrop.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
 import 'package:flutify_app/ui/screens/player/queue_list.dart';
 import 'package:flutify_app/ui/shell/desktop/now_playing_details.dart';
 import 'package:flutify_app/ui/shell/desktop/now_playing_panel.dart';
@@ -118,7 +119,13 @@ void main() {
     // 播放器内嵌歌词
     await tester.tap(find.byTooltip('歌词'));
     await settle(tester);
-    expect(find.text('First synthetic line'), findsOneWidget);
+    // The artwork preview remains mounted but transparent during the page
+    // transition, so scope this assertion to the destination lyrics view.
+    final firstLine = find.descendant(
+      of: find.byType(LyricsView),
+      matching: find.text('First synthetic line'),
+    );
+    expect(firstLine, findsOneWidget);
     // 手机只保留内嵌歌词：流动背景和玻璃控制区，不再重复打开全屏面板。
     expect(find.byType(LyricsBackdrop), findsOneWidget);
     // Playback controls plus the source-translation toolbar button.
@@ -130,7 +137,6 @@ void main() {
     expect(find.byType(AppleMusicBackground), findsOneWidget);
     expect(find.byType(ImageFiltered), findsNothing);
     // 0:00 时当前行保持清晰。
-    final firstLine = find.text('First synthetic line');
     expect(
       find.ancestor(
         of: firstLine,

@@ -632,6 +632,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lyricsTitle => 'Lyrics';
 
   @override
+  String get playerShowArtwork => 'Show album artwork';
+
+  @override
   String get lyricsNotPlaying => 'Not playing';
 
   @override

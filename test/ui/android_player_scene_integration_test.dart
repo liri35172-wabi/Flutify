@@ -211,25 +211,13 @@ void main() {
           findsOneWidget,
           reason: 'the bottom lyrics/device/queue row survives folding',
         );
-        final deviceButton = tester.getRect(
-          find
-              .ancestor(
-                of: find.descendant(
-                  of: player,
-                  matching: find.byIcon(Icons.devices_rounded),
-                ),
-                matching: find.byType(InkWell),
-              )
-              .first,
+        final queueButton = tester.getRect(
+          find.descendant(of: player, matching: find.byTooltip('播放队列')),
         );
-        final lyricsButton = tester.getRect(
-          find.descendant(of: player, matching: find.byTooltip('歌词')),
-        );
+        final footerRight = tester.getRect(player).right - 12;
+        expect(footerRight, greaterThan(queueButton.right + 1));
         await tester.tapAt(
-          Offset(
-            (deviceButton.right + lyricsButton.left) / 2,
-            lyricsButton.center.dy,
-          ),
+          Offset(queueButton.right + 6, queueButton.center.dy),
         );
         await _frames(tester, 4);
         expect(

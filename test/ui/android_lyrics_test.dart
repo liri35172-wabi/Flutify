@@ -341,9 +341,13 @@ void main() {
             await tester.pump(const Duration(milliseconds: 100));
           }
         }
+        Finder lyricText(String text) => find.descendant(
+          of: find.byType(LyricsView),
+          matching: find.text(text),
+        );
         expect(find.byType(BreathingDots), findsOneWidget);
-        expect(find.text('First words'), findsOneWidget);
-        expect(find.text('第一句歌词'), findsOneWidget);
+        expect(lyricText('First words'), findsOneWidget);
+        expect(lyricText('第一句歌词'), findsOneWidget);
         final buttonRect = tester.getRect(find.byType(LyricsTranslationButton));
         if (sheet == 'lyrics sheet') {
           final title = find.descendant(
@@ -380,8 +384,8 @@ void main() {
         for (var frame = 0; frame < 8; frame++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
-        expect(find.text('First words'), findsOneWidget);
-        expect(find.text('第一句歌词'), findsNothing);
+        expect(lyricText('First words'), findsOneWidget);
+        expect(lyricText('第一句歌词'), findsNothing);
         playback.positionNotifier.value = const Duration(seconds: 9);
         for (var frame = 0; frame < 8; frame++) {
           await tester.pump(const Duration(milliseconds: 100));

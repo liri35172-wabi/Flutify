@@ -219,6 +219,7 @@
   "queueNextFrom": "Next from: {name}",
   "queueEmpty": "Nothing queued up next",
   "lyricsTitle": "Lyrics",
+  "playerShowArtwork": "Show album artwork",
   "lyricsNotPlaying": "Not playing",
   "lyricsNothingPlayingMessage": "Play a song to see its lyrics here.",
   "lyricsUnavailableTitle": "Lyrics aren't available",

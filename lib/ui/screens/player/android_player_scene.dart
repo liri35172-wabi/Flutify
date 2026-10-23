@@ -28,6 +28,7 @@ class AndroidPlayerScene extends StatefulWidget {
     this.controlsHeightReduction = 0,
     this.footerHeightReduction = 0,
     required this.artworkBuilder,
+    this.artworkPreview,
     required this.lyrics,
     required this.translation,
     required this.queue,
@@ -68,6 +69,7 @@ class AndroidPlayerScene extends StatefulWidget {
   final double footerHeightReduction;
   final Widget Function(BuildContext context, double size, double progress)
   artworkBuilder;
+  final Widget? artworkPreview;
   final Widget lyrics;
   final Widget translation;
   final Widget queue;
@@ -565,6 +567,24 @@ class _AndroidPlayerSceneState extends State<AndroidPlayerScene>
                                                 ),
                                           ),
                                         ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              slot(
+                                PlayerSceneSlot.artworkPreview,
+                                ExcludeFocus(
+                                  excluding: progress != 0,
+                                  child: ExcludeSemantics(
+                                    excluding: progress != 0,
+                                    child: IgnorePointer(
+                                      ignoring: progress != 0,
+                                      child: Opacity(
+                                        opacity: 1 - progress,
+                                        child:
+                                            widget.artworkPreview ??
+                                            const SizedBox.shrink(),
                                       ),
                                     ),
                                   ),

@@ -11,6 +11,7 @@ enum PlayerSceneSlot {
   controls,
   footer,
   artwork,
+  artworkPreview,
   lyrics,
   toolbar,
   surface,
@@ -252,13 +253,26 @@ class PlayerLyricsLayout extends MultiChildLayoutDelegate {
       0.0,
       (landscape ? size.height - 16 : detailTitleY - 8) - contentTop,
     );
+    final hasArtworkPreview = hasChild(PlayerSceneSlot.artworkPreview);
+    const previewGap = 12.0;
+    const maxPreviewHeight = 82.0;
     final largeSize = math.min(
       math.min(contentWidth * 0.86, 400.0),
-      contentHeight * 0.9,
+      hasArtworkPreview
+          ? math.max(0.0, contentHeight - maxPreviewHeight - previewGap) * 0.9
+          : contentHeight * 0.9,
     );
+    final previewExtent = hasArtworkPreview
+        ? math.min(
+            maxPreviewHeight,
+            math.max(0.0, contentHeight - largeSize - previewGap),
+          )
+        : 0.0;
+    final groupHeight =
+        largeSize + (previewExtent > 0 ? previewGap + previewExtent : 0);
     final large = Rect.fromLTWH(
       contentLeft + (contentWidth - largeSize) / 2,
-      contentTop + (contentHeight - largeSize) / 2,
+      contentTop + (contentHeight - groupHeight) / 2,
       largeSize,
       largeSize,
     );
@@ -286,6 +300,17 @@ class PlayerLyricsLayout extends MultiChildLayoutDelegate {
     )!.shift(Offset(0, hiddenOffset));
     layoutChild(PlayerSceneSlot.artwork, BoxConstraints.tight(artwork.size));
     _position(PlayerSceneSlot.artwork, artwork.topLeft);
+    final preview = Rect.fromLTWH(
+      large.left,
+      large.bottom + previewGap,
+      large.width,
+      previewExtent,
+    ).shift(Offset(0, hiddenOffset));
+    layoutChild(
+      PlayerSceneSlot.artworkPreview,
+      BoxConstraints.tight(preview.size),
+    );
+    _position(PlayerSceneSlot.artworkPreview, preview.topLeft);
 
     final toolbar = layoutChild(
       PlayerSceneSlot.toolbar,
