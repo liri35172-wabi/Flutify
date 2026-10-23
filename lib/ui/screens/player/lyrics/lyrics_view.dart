@@ -130,6 +130,7 @@ class _LyricsViewState extends State<LyricsView>
   double _translationScrollStart = 0;
   double _translationScrollDelta = 0;
   bool _translationFramePending = false;
+  bool _skipTranslationReflowForFocusChange = false;
   int _loadRevision = 0;
   List<GlobalKey> _lineKeys = const [];
   final GlobalKey _introKey = GlobalKey();
@@ -509,10 +510,24 @@ class _LyricsViewState extends State<LyricsView>
     final gap = _currentGap?.entry;
     final focusChanged = focus != _renderedFocus;
     final gapChanged = gap != _renderedGap;
-    if (index == oldIndex &&
-        (!widget.appleMusicStyle || (!focusChanged && !gapChanged))) {
-      return;
+    final positionChanged =
+        index != oldIndex ||
+        (widget.appleMusicStyle && (focusChanged || gapChanged));
+    final rebaseTranslationAnchor =
+        !widget.appleMusicStyle &&
+        _translationReveal.isAnimating &&
+        !_browsing &&
+        positionChanged;
+    if (rebaseTranslationAnchor) {
+      // The next layout belongs to a different focused row. Don't apply the
+      // previous row's in-flight translation anchor during that layout; the
+      // post-frame callback below rebases it against the new row.
+      _skipTranslationReflowForFocusChange = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _skipTranslationReflowForFocusChange = false;
+      });
     }
+    if (!positionChanged) return;
     final before = widget.appleMusicStyle && focusChanged
         ? _captureRows()
         : null;
@@ -582,6 +597,10 @@ class _LyricsViewState extends State<LyricsView>
   }
 
   double? _translationLayoutTarget() {
+    if (_skipTranslationReflowForFocusChange) {
+      _translationFramePending = false;
+      return null;
+    }
     if (!_translationFramePending && !_gapReflowPending) return null;
     _translationFramePending = false;
     _gapReflowPending = false;
@@ -975,6 +994,12 @@ class _LyricsViewState extends State<LyricsView>
                             i,
                             LyricLineView(
                               appleMusicStyle: widget.appleMusicStyle,
+                              horizontalTicker:
+                                  !kIsWeb &&
+                                  defaultTargetPlatform ==
+                                      TargetPlatform.android &&
+                                  _isSynced &&
+                                  !_browsing,
                               text: lyrics.lines[i].words,
                               translation: _translationIsCurrent
                                   ? _visibleTranslations?.elementAtOrNull(i)
@@ -992,20 +1017,20 @@ class _LyricsViewState extends State<LyricsView>
                             ),
                           ),
                         ),
-                      KeyedSubtree(
-                        key: _sourceKey,
-                        child: _movingRow(
-                          lyrics.lines.length,
-                          _sourceLabel(
-                            context,
-                            lyrics.provider,
-                            fontSize: fontSize,
-                            centered: centered,
-                          ),
+                    KeyedSubtree(
+                      key: _sourceKey,
+                      child: _movingRow(
+                        lyrics.lines.length,
+                        _sourceLabel(
+                          context,
+                          lyrics.provider,
+                          fontSize: fontSize,
+                          centered: centered,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

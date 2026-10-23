@@ -565,7 +565,11 @@ void main() {
     final scrollable = tester.state<ScrollableState>(
       find.descendant(
         of: find.byType(LyricsView),
-        matching: find.byType(Scrollable),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
       ),
     );
     final start = scrollable.position.pixels;
@@ -754,7 +758,11 @@ void main() {
       final scrollable = tester.state<ScrollableState>(
         find.descendant(
           of: find.byType(LyricsView),
-          matching: find.byType(Scrollable),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Scrollable &&
+                widget.axisDirection == AxisDirection.down,
+          ),
         ),
       );
       final browsedOffset = scrollable.position.pixels;

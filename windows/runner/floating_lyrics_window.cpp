@@ -21,6 +21,18 @@ void AddRoundRect(Gdiplus::GraphicsPath* path, const Gdiplus::RectF& rect, float
   path->CloseFigure();
 }
 
+bool SystemHighContrastEnabled() {
+  HIGHCONTRASTW contrast{};
+  contrast.cbSize = sizeof(contrast);
+  return SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(contrast), &contrast, 0) &&
+         (contrast.dwFlags & HCF_HIGHCONTRASTON) != 0;
+}
+
+Gdiplus::Color PairedSystemColor(int index) {
+  const COLORREF color = GetSysColor(index);
+  return Gdiplus::Color(255, GetRValue(color), GetGValue(color), GetBValue(color));
+}
+
 bool RegisterWindowClass(const wchar_t* name, WNDPROC procedure, HINSTANCE instance, HCURSOR cursor = nullptr) {
   WNDCLASSW window_class{};
   window_class.lpfnWndProc = procedure;
@@ -229,6 +241,14 @@ int64_t FloatingLyricsWindow::PositionMs() const {
   return anchor_ms_ + static_cast<int64_t>(GetTickCount64() - anchor_tick_);
 }
 
+bool FloatingLyricsWindow::IsHighContrastAuto() const {
+  return style_.mode == taskbar_lyrics::ColorMode::kAuto && SystemHighContrastEnabled();
+}
+
+Gdiplus::Color FloatingLyricsWindow::HighContrastBackgroundColor() const {
+  return PairedSystemColor(COLOR_WINDOW);
+}
+
 bool FloatingLyricsWindow::UsesLightBackground() const {
   using taskbar_lyrics::ColorMode;
   if (style_.mode == ColorMode::kBlack) return true;
@@ -254,6 +274,9 @@ Gdiplus::Color FloatingLyricsWindow::TextColor() const {
     case ColorMode::kCustom:
       return Gdiplus::Color(style_.custom);
     case ColorMode::kAuto:
+      // Unlike taskbar Auto (which samples its own taskbar surface), a floating window
+      // must not capture arbitrary apps; its normal-mode dual outline supplies local contrast.
+      return IsHighContrastAuto() ? PairedSystemColor(COLOR_WINDOWTEXT) : Gdiplus::Color(kWhite);
     default:
       return Gdiplus::Color(kWhite);
   }
@@ -293,6 +316,7 @@ void FloatingLyricsWindow::Render() {
   }
 
   const ULONGLONG now = GetTickCount64();
+  const bool high_contrast = IsHighContrastAuto();
   if (index != display_index_) {
     const bool has_outgoing = display_index_ != -2 && !last_current_.empty();
     const bool primary_changed = current != last_current_;
@@ -319,11 +343,18 @@ void FloatingLyricsWindow::Render() {
   const float eased = 1.0f - std::pow(1.0f - progress, 3.0f);
   last_current_ = current;
   last_translation_ = translation;
+  if (high_contrast) {
+    // A high-contrast overlay uses one foreground/background pair and no fading rows.
+    previous.clear();
+    next.clear();
+    previous_translation.clear();
+    next_translation.clear();
+  }
 
   if (!EnsureSurface(width_, height_)) return;
   Gdiplus::Bitmap bitmap(width_, height_, width_ * 4, PixelFormat32bppPARGB, static_cast<BYTE*>(surface_bits_));
   Gdiplus::Graphics graphics(&bitmap);
-  graphics.Clear(Gdiplus::Color(0, 0, 0, 0));
+  graphics.Clear(high_contrast ? HighContrastBackgroundColor() : Gdiplus::Color(0, 0, 0, 0));
   graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
   graphics.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAlias);
   graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
@@ -332,7 +363,9 @@ void FloatingLyricsWindow::Render() {
   const Gdiplus::RectF pill(margin, margin, width_ - 2 * margin, height_ - 2 * margin);
   Gdiplus::GraphicsPath path;
   AddRoundRect(&path, pill, static_cast<float>(22 * scale_));
-  if (!transparent_background_) {
+  if (high_contrast) {
+    // The paired system background must remain solid; transparency/alpha can reduce contrast.
+  } else if (!transparent_background_) {
     // A softly tinted glass surface lets the game or desktop remain visible without
     // the conspicuous opaque grey slab from the first build.
     Gdiplus::LinearGradientBrush background(
@@ -344,10 +377,12 @@ void FloatingLyricsWindow::Render() {
   }
 
   const auto color = TextColor();
-  // Reuse the taskbar's lyric sizing, bilingual layout, and three-line transition.
-  // The floating window keeps only its thin contrast outline for arbitrary app backgrounds.
-  const TaskbarLyricsPainter::Canvas canvas{&graphics, width_, height_, scale_, color, style_.opacity,
-                                            style_.font_scale / 100.0, false, true};
+  // Reuse the taskbar painter and its bilingual layout/transition, with the floating-window
+  // size preset so lyrics stay comfortably readable at the user-requested desktop scale.
+  // Auto uses a local dual outline instead of sampling arbitrary desktop pixels.
+  const TaskbarLyricsPainter::Canvas canvas{&graphics, width_, height_, scale_, color,
+                                            high_contrast ? 100 : style_.opacity,
+                                            style_.font_scale / 100.0, true, !high_contrast, high_contrast};
   painter_->PaintLyrics(canvas, previous, current, next, translation,
                         previous_translation, next_translation, false, eased);
   graphics.Flush(Gdiplus::FlushIntentionSync);

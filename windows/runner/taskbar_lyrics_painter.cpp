@@ -23,8 +23,8 @@ constexpr float kMinScale = 0.72f;
 // 歌词字号（点，乘以任务栏缩放）：当前句 / 下一句。
 constexpr double kBigPt = 10.5;
 constexpr double kSmallPt = 7.7;
-constexpr double kOverlayBigPt = 15.0;
-constexpr double kOverlaySmallPt = 10.5;
+constexpr double kOverlayBigPt = 18.0;
+constexpr double kOverlaySmallPt = 12.6;
 
 std::wstring FontPath(const wchar_t* file) {
   wchar_t exe[MAX_PATH];
@@ -174,13 +174,14 @@ float TaskbarLyricsPainter::MeasureWidth(Graphics* g, const std::wstring& text, 
 
 void TaskbarLyricsPainter::DrawText(const Canvas& canvas, const std::wstring& text, Font* font, const RectF& rect,
                                     int alpha) {
-  alpha = alpha * canvas.opacity / 100;
+  alpha = canvas.high_contrast ? 255 : alpha * canvas.opacity / 100;
   if (text.empty() || alpha <= 2) return;
   const BYTE visible_alpha = static_cast<BYTE>((std::min)(alpha, 255));
-  if (canvas.dual_contrast_outline) {
+  if (canvas.dual_contrast_outline && !canvas.high_contrast) {
     // Auto cannot inspect a different app's pixels. A crisp two-tone edge keeps white
     // lyrics legible over both light and dark content without a broad, blurry shadow.
-    const int offsets[8][2] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}};
+    const int offsets[16][2] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1},
+                                 {-2, -1}, {-1, -2}, {1, -2}, {2, -1}, {2, 1}, {1, 2}, {-1, 2}, {-2, 1}};
     const auto draw_outline = [&](BYTE red, BYTE green, BYTE blue, float radius, BYTE alpha) {
       SolidBrush outline(Color(static_cast<BYTE>(visible_alpha * alpha / 255), red, green, blue));
       for (const auto& offset : offsets) {
@@ -190,9 +191,9 @@ void TaskbarLyricsPainter::DrawText(const Canvas& canvas, const std::wstring& te
                                      text_format_.get(), &outline);
       }
     };
-    draw_outline(255, 255, 255, 1.7f, 205);  // outer light halo
-    draw_outline(0, 0, 0, 0.9f, 235);         // inner dark edge
-  } else if (canvas.floating_overlay) {
+    draw_outline(255, 255, 255, 2.2f, 220);  // broad outer light rim
+    draw_outline(0, 0, 0, 1.25f, 245);        // firm inner dark edge
+  } else if (canvas.floating_overlay && !canvas.high_contrast) {
     const int luminance = canvas.color.GetR() * 299 + canvas.color.GetG() * 587 + canvas.color.GetB() * 114;
     const BYTE shade = luminance >= 128000 ? 0 : 255;
     SolidBrush shadow(Color(static_cast<BYTE>(visible_alpha * 0.68), shade, shade, shade));

@@ -38,6 +38,8 @@ class FloatingLyricsWindow {
   void PlaceInitial();
   Gdiplus::Color TextColor() const;
   bool UsesLightBackground() const;
+  bool IsHighContrastAuto() const;
+  Gdiplus::Color HighContrastBackgroundColor() const;
   int64_t PositionMs() const;
 
   HWND app_window_;
