@@ -12,6 +12,7 @@ import '../../../../models/track.dart';
 import '../../../../providers/connect_provider.dart';
 import '../../../../providers/playback_provider.dart';
 import '../../../../providers/spotify_provider.dart';
+import 'lyric_line_view.dart';
 
 /// A small, tappable lyric excerpt shown beneath the large player artwork.
 /// It reads the same lyric cache and playback position as the full lyrics view.
@@ -200,23 +201,40 @@ class _LyricPreviewLine extends StatelessWidget {
       height: 24,
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          line.words,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: primary ? 14 : 12,
-            fontWeight: primary ? FontWeight.w600 : FontWeight.w400,
-            shadows: const [
-              Shadow(
-                color: Colors.black45,
-                blurRadius: 5,
-                offset: Offset(0, 1),
+        child: primary
+            ? OnePassLyricTicker(
+                text: line.words,
+                textAlign: TextAlign.start,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black45,
+                      blurRadius: 5,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+              )
+            : Text(
+                line.words,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black45,
+                      blurRadius: 5,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
       ),
     ),
   );

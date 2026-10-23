@@ -291,7 +291,7 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
             translation: widget.controlsOnLeft && _view == PlayerView.lyrics
                 ? const LyricsTranslationToggle()
                 : null,
-            floatingLyrics: const FloatingLyricsQuickToggle(),
+            floatingLyrics: const FloatingLyricsQuickToggle(buttonSize: 48),
           ),
         ),
         artworkPreview: CurrentLyricsPreview(

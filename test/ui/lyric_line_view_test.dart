@@ -108,6 +108,45 @@ void main() {
     },
   );
 
+  testWidgets('timed ticker finishes within the supplied lyric window', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(180, 300);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      wrap(
+        const SizedBox(
+          width: 160,
+          height: 30,
+          child: OnePassLyricTicker(
+            text: 'An unusually long English lyric that needs room to finish',
+            style: TextStyle(fontSize: 20),
+            textAlign: TextAlign.start,
+            duration: Duration(milliseconds: 800),
+            startDelay: Duration.zero,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final scrollable = find.byType(Scrollable);
+    expect(scrollable, findsOneWidget);
+    final state = tester.state<ScrollableState>(scrollable);
+    expect(state.position.maxScrollExtent, greaterThan(0));
+    // Flush the zero-delay start before measuring the timed animation.
+    await tester.pump(Duration.zero);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(state.position.pixels, greaterThan(0));
+    expect(state.position.pixels, lessThan(state.position.maxScrollExtent));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(state.position.pixels, closeTo(state.position.maxScrollExtent, 0.1));
+    final end = state.position.pixels;
+    await tester.pump(const Duration(seconds: 2));
+    expect(state.position.pixels, closeTo(end, 0.1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('focus opacity animation does not reset the one-pass ticker', (
     tester,
   ) async {

@@ -126,6 +126,7 @@ public class AudioService extends MediaBrowserServiceCompat {
     private static int floatingLyricsFontScale = 100;
     private static String[] floatingLyricTranslations = new String[0];
     private static String floatingDisplayedLine = "";
+    private static int floatingDisplayedIndex = -1;
 
     /** Called only by Flutify's Meizu-specific Flutter bridge. */
     public static void setFlymeLyricsEnabled(boolean enabled) {
@@ -147,6 +148,8 @@ public class AudioService extends MediaBrowserServiceCompat {
             flymeLyricTimes = timesMs == null ? new long[0] : timesMs.clone();
             flymeLyricTexts = texts == null ? new String[0] : texts.clone();
             floatingLyricTranslations = translations == null ? new String[0] : translations.clone();
+            floatingDisplayedLine = "";
+            floatingDisplayedIndex = -1;
         }
         AudioService service = instance;
         if (service != null) {
@@ -846,6 +849,8 @@ public class AudioService extends MediaBrowserServiceCompat {
         floatingLyricsHandler.removeCallbacks(floatingLyricsUpdater);
         String nextLine = "";
         String nextTranslation = "";
+        int nextLineIndex = -1;
+        long remainingMs = 6000L;
         boolean enabled;
         boolean clickThrough;
         boolean transparent;
@@ -866,9 +871,15 @@ public class AudioService extends MediaBrowserServiceCompat {
                     lineIndex = i;
                 }
                 if (lineIndex >= 0) {
+                    nextLineIndex = lineIndex;
                     nextLine = flymeLyricTexts[lineIndex].trim();
                     if (lineIndex < floatingLyricTranslations.length) {
                         nextTranslation = floatingLyricTranslations[lineIndex].trim();
+                    }
+                    if (lineIndex + 1 < count) {
+                        // Finish the reveal slightly before the next timestamp; do not
+                        // postpone the timestamp or desynchronize the lyric itself.
+                        remainingMs = Math.max(50L, flymeLyricTimes[lineIndex + 1] - position - 120L);
                     }
                 }
             }
@@ -884,13 +895,16 @@ public class AudioService extends MediaBrowserServiceCompat {
             if (lyricsOverlayWindow == null) lyricsOverlayWindow = new LyricsOverlayWindow(this);
             lyricsOverlayWindow.setOptions(clickThrough, transparent);
             lyricsOverlayWindow.setStyle(floatingLyricsColor, floatingLyricsFontScale, floatingLyricsAuto);
-            if (force || !nextLine.equals(floatingDisplayedLine)) {
-                lyricsOverlayWindow.show(nextLine, nextTranslation);
+            if (force || nextLineIndex != floatingDisplayedIndex
+                    || !nextLine.equals(floatingDisplayedLine)) {
+                lyricsOverlayWindow.show(nextLine, nextTranslation, remainingMs);
                 floatingDisplayedLine = nextLine;
+                floatingDisplayedIndex = nextLineIndex;
             }
         } else {
             if (lyricsOverlayWindow != null) lyricsOverlayWindow.hide();
             floatingDisplayedLine = "";
+            floatingDisplayedIndex = -1;
         }
         if (keepUpdating) floatingLyricsHandler.postDelayed(floatingLyricsUpdater, 250L);
     }

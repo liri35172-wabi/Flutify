@@ -1,5 +1,6 @@
 package com.ryanheise.audioservice;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -8,10 +9,12 @@ import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.text.Layout;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.LinearInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -22,6 +25,8 @@ final class LyricsOverlayWindow {
     private final LinearLayout root;
     private final TextView primary;
     private final TextView translation;
+    private final OnePassTicker primaryTicker;
+    private final OnePassTicker translationTicker;
     private final WindowManager.LayoutParams params;
     private boolean attached;
     private boolean clickThrough;
@@ -53,11 +58,11 @@ final class LyricsOverlayWindow {
         primary.setTextSize(18);
         primary.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         primary.setSingleLine(true);
-        primary.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
-        primary.setMarqueeRepeatLimit(-1);
-        primary.setSelected(true);
+        primary.setHorizontallyScrolling(true);
+        primary.setEllipsize(null);
         primary.setMaxWidth(maxTextWidth());
-        primary.setGravity(Gravity.CENTER);
+        primary.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        primaryTicker = new OnePassTicker(primary);
         root.addView(primary, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -65,11 +70,11 @@ final class LyricsOverlayWindow {
         translation.setTextColor(0xFFE7E9EF);
         translation.setTextSize(12);
         translation.setSingleLine(true);
-        translation.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
-        translation.setMarqueeRepeatLimit(-1);
-        translation.setSelected(true);
+        translation.setHorizontallyScrolling(true);
+        translation.setEllipsize(null);
         translation.setMaxWidth(maxTextWidth());
-        translation.setGravity(Gravity.CENTER);
+        translation.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        translationTicker = new OnePassTicker(translation);
         root.addView(translation, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -128,7 +133,7 @@ final class LyricsOverlayWindow {
         root.setBackground(transparentBackground ? null : background());
     }
 
-    void show(String text, String translatedText) {
+    void show(String text, String translatedText, long remainingMs) {
         if (text == null || text.trim().isEmpty()) {
             hide();
             return;
@@ -144,8 +149,8 @@ final class LyricsOverlayWindow {
             }
         }
         String nextTranslation = translatedText == null ? "" : translatedText.trim();
-        if (!text.equals(lastPrimary)) setMarqueeText(primary, text);
-        if (!nextTranslation.equals(lastTranslation)) setMarqueeText(translation, nextTranslation);
+        primaryTicker.show(text, remainingMs);
+        translationTicker.show(nextTranslation, remainingMs);
         translation.setVisibility(nextTranslation.isEmpty() ? View.GONE : View.VISIBLE);
         lastPrimary = text;
         lastTranslation = nextTranslation;
@@ -157,6 +162,8 @@ final class LyricsOverlayWindow {
     }
 
     void hide() {
+        primaryTicker.cancel();
+        translationTicker.cancel();
         if (!attached) return;
         try {
             windowManager.removeView(root);
@@ -244,10 +251,55 @@ final class LyricsOverlayWindow {
         return Math.max(dp(120), Math.min(dp(360), available));
     }
 
-    private void setMarqueeText(TextView textView, String text) {
-        textView.setSelected(false);
-        textView.setText(text);
-        textView.setSelected(true);
+    /** A single bounded pass to the actual text end; unlike TextView marquee it never loops. */
+    private static final class OnePassTicker {
+        private final TextView view;
+        private ValueAnimator animator;
+        private Runnable pendingStart;
+        private int generation;
+
+        OnePassTicker(TextView view) {
+            this.view = view;
+        }
+
+        void show(String text, long remainingMs) {
+            cancel();
+            final int token = generation;
+            view.setText(text);
+            view.scrollTo(0, 0);
+            pendingStart = () -> {
+                pendingStart = null;
+                if (token != generation || text.isEmpty()) return;
+                Layout layout = view.getLayout();
+                if (layout == null || layout.getLineCount() == 0) return;
+                int viewport = view.getWidth() - view.getCompoundPaddingLeft()
+                        - view.getCompoundPaddingRight();
+                int distance = (int) Math.ceil(layout.getLineRight(0) - layout.getLineLeft(0) - viewport);
+                if (distance <= 1) return;
+                ValueAnimator next = ValueAnimator.ofInt(0, distance);
+                animator = next;
+                next.setDuration(Math.max(50L, remainingMs));
+                next.setInterpolator(new LinearInterpolator());
+                next.addUpdateListener(value -> {
+                    if (token == generation) view.scrollTo((int) value.getAnimatedValue(), 0);
+                });
+                next.start();
+            };
+            view.post(pendingStart);
+        }
+
+        void cancel() {
+            generation++;
+            if (pendingStart != null) {
+                view.removeCallbacks(pendingStart);
+                pendingStart = null;
+            }
+            if (animator != null) {
+                animator.cancel();
+                animator = null;
+            }
+            view.scrollTo(0, 0);
+        }
     }
 
     private GradientDrawable background() {

@@ -10,6 +10,7 @@ import '../screens/player/device_picker_sheet.dart';
 import '../../core/theme/flutify_tokens.dart';
 import '../screens/player/full_player_sheet.dart';
 import '../screens/player/immersive_lyrics_screen.dart';
+import '../screens/player/lyrics/floating_lyrics_quick_toggle.dart';
 import '../screens/player/queue_sheet.dart';
 import '../shell/shell_layout_controller.dart';
 import 'connect/connect_actions.dart';
@@ -241,17 +242,43 @@ class AttachedStripShape extends OutlinedBorder {
     return Path()
       // 左上：从左上角尖沿胶囊底角圆弧下卷到 (left+c, top+c)
       ..moveTo(rect.left, rect.top)
-      ..arcTo(Rect.fromCircle(center: Offset(rect.left + c, rect.top), radius: c), pi, -pi / 2, false)
+      ..arcTo(
+        Rect.fromCircle(center: Offset(rect.left + c, rect.top), radius: c),
+        pi,
+        -pi / 2,
+        false,
+      )
       // 中段顶边：贴在胶囊底缘
       ..lineTo(rect.right - c, rect.top + c)
       // 右上：沿胶囊底角圆弧上卷到右上角尖
-      ..arcTo(Rect.fromCircle(center: Offset(rect.right - c, rect.top), radius: c), pi / 2, -pi / 2, false)
+      ..arcTo(
+        Rect.fromCircle(center: Offset(rect.right - c, rect.top), radius: c),
+        pi / 2,
+        -pi / 2,
+        false,
+      )
       ..lineTo(rect.right, rect.bottom - c)
       // 右下外圆角
-      ..arcTo(Rect.fromCircle(center: Offset(rect.right - c, rect.bottom - c), radius: c), 0, pi / 2, false)
+      ..arcTo(
+        Rect.fromCircle(
+          center: Offset(rect.right - c, rect.bottom - c),
+          radius: c,
+        ),
+        0,
+        pi / 2,
+        false,
+      )
       ..lineTo(rect.left + c, rect.bottom)
       // 左下外圆角
-      ..arcTo(Rect.fromCircle(center: Offset(rect.left + c, rect.bottom - c), radius: c), pi / 2, pi / 2, false)
+      ..arcTo(
+        Rect.fromCircle(
+          center: Offset(rect.left + c, rect.bottom - c),
+          radius: c,
+        ),
+        pi / 2,
+        pi / 2,
+        false,
+      )
       ..close();
   }
 
@@ -380,7 +407,12 @@ class _HoverLink extends StatefulWidget {
   final bool marquee;
   final VoidCallback? onTap;
 
-  const _HoverLink({required this.text, this.style, this.marquee = false, this.onTap});
+  const _HoverLink({
+    required this.text,
+    this.style,
+    this.marquee = false,
+    this.onTap,
+  });
 
   @override
   State<_HoverLink> createState() => _HoverLinkState();
@@ -403,13 +435,17 @@ class _HoverLinkState extends State<_HoverLink> {
             ? MarqueeText(
                 text: widget.text,
                 style: widget.style?.copyWith(
-                  decoration: _hover && widget.onTap != null ? TextDecoration.underline : null,
+                  decoration: _hover && widget.onTap != null
+                      ? TextDecoration.underline
+                      : null,
                 ),
               )
             : Text(
                 widget.text,
                 style: widget.style?.copyWith(
-                  decoration: _hover && widget.onTap != null ? TextDecoration.underline : null,
+                  decoration: _hover && widget.onTap != null
+                      ? TextDecoration.underline
+                      : null,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -478,6 +514,13 @@ class _RightControls extends StatelessWidget {
         tooltip: context.l10n.lyricsImmersive,
         style: _barIconStyle,
         onPressed: () => ImmersiveLyricsScreen.open(context),
+      ),
+      FloatingLyricsQuickToggle(
+        buttonSize: buttonSize,
+        iconSize: 20,
+        buttonStyle: _barIconStyle,
+        activeColor: colorScheme.primary,
+        inactiveColor: colorScheme.onSurfaceVariant,
       ),
     ];
 

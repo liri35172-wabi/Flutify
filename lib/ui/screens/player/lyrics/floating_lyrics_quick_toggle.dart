@@ -13,7 +13,20 @@ import '../../../../services/taskbar_lyrics/taskbar_lyrics_controls.dart';
 /// not need a permission prompt. The native binding remains the sole owner of
 /// starting/stopping the overlay, so this button cannot create a second path.
 class FloatingLyricsQuickToggle extends StatefulWidget {
-  const FloatingLyricsQuickToggle({super.key});
+  const FloatingLyricsQuickToggle({
+    super.key,
+    this.buttonSize = 44,
+    this.iconSize = 22,
+    this.buttonStyle,
+    this.activeColor,
+    this.inactiveColor,
+  });
+
+  final double buttonSize;
+  final double iconSize;
+  final ButtonStyle? buttonStyle;
+  final Color? activeColor;
+  final Color? inactiveColor;
 
   @override
   State<FloatingLyricsQuickToggle> createState() =>
@@ -98,14 +111,20 @@ class _FloatingLyricsQuickToggleState extends State<FloatingLyricsQuickToggle>
       tooltip: context.l10n.settingsFloatingLyrics,
       isSelected: enabled,
       visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      constraints: BoxConstraints.tightFor(
+        width: widget.buttonSize,
+        height: widget.buttonSize,
+      ),
+      style: widget.buttonStyle,
       onPressed: _waitingForPermission
           ? null
           : () => unawaited(_toggle(enabled, controls)),
       icon: Icon(
         enabled ? Icons.subtitles_rounded : Icons.subtitles_outlined,
-        size: 22,
-        color: enabled ? primary : Colors.white70,
+        size: widget.iconSize,
+        color: enabled
+            ? (widget.activeColor ?? primary)
+            : (widget.inactiveColor ?? Colors.white70),
       ),
     );
   }

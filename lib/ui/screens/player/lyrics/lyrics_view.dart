@@ -1046,6 +1046,19 @@ class _LyricsViewState extends State<LyricsView>
                                   _isSynced &&
                                   !_browsing,
                               text: lyrics.lines[i].words,
+                              tickerDuration:
+                                  _isSynced && i + 1 < lyrics.lines.length
+                                  ? Duration(
+                                      // Budget only the time left on the same
+                                      // lead-adjusted clock that advances focus.
+                                      milliseconds:
+                                          (lyrics.lines[i + 1].startTimeMs -
+                                                  _lookupMs -
+                                                  80)
+                                              .clamp(50, 120000)
+                                              .toInt(),
+                                    )
+                                  : null,
                               translation: _translationIsCurrent
                                   ? _visibleTranslations?.elementAtOrNull(i)
                                   : null,

@@ -40,6 +40,10 @@ class LyricLineView extends StatelessWidget {
   /// The full-view vertical lyric list and other rows remain unchanged.
   final bool horizontalTicker;
 
+  /// For synchronized lyrics, the line's remaining display window. The active
+  /// ticker uses this to reveal the tail before the next timestamp arrives.
+  final Duration? tickerDuration;
+
   const LyricLineView({
     super.key,
     required this.text,
@@ -53,6 +57,7 @@ class LyricLineView extends StatelessWidget {
     this.centered = false,
     this.appleMusicStyle = false,
     this.horizontalTicker = false,
+    this.tickerDuration,
   });
 
   static const double _maxBlur = 3.5;
@@ -115,6 +120,7 @@ class LyricLineView extends StatelessWidget {
                 fontSize: fontSize,
                 centered: centered,
                 horizontalTicker: horizontalTicker && isActive,
+                tickerDuration: tickerDuration,
                 tickerMotionEnabled:
                     !MediaQuery.disableAnimationsOf(context) &&
                     !DebugToggles.of(
@@ -162,6 +168,7 @@ class _LineText extends StatelessWidget {
   final double fontSize;
   final bool centered;
   final bool horizontalTicker;
+  final Duration? tickerDuration;
   final bool tickerMotionEnabled;
 
   const _LineText({
@@ -172,6 +179,7 @@ class _LineText extends StatelessWidget {
     required this.fontSize,
     required this.centered,
     required this.horizontalTicker,
+    required this.tickerDuration,
     required this.tickerMotionEnabled,
   });
 
@@ -197,11 +205,15 @@ class _LineText extends StatelessWidget {
         );
         final displayedText = isInterlude ? '•  •  •' : text;
         if (horizontalTicker && !isInterlude) {
-          return _OnePassLyricTicker(
+          return OnePassLyricTicker(
             text: displayedText,
             style: style,
             textAlign: centered ? TextAlign.center : TextAlign.start,
             motionEnabled: tickerMotionEnabled,
+            duration: tickerDuration,
+            startDelay: tickerDuration == null
+                ? const Duration(milliseconds: 350)
+                : Duration.zero,
           );
         }
         return Text(
@@ -265,35 +277,42 @@ class _LineText extends StatelessWidget {
 /// A single leftward pass for the active phone lyric; it never loops or reverses.
 ///
 /// The native Flyme notification ticker is a separate OS-owned surface and is untouched.
-class _OnePassLyricTicker extends StatefulWidget {
+class OnePassLyricTicker extends StatefulWidget {
   final String text;
   final TextStyle style;
   final TextAlign textAlign;
   final bool motionEnabled;
+  final Duration? duration;
+  final Duration startDelay;
 
-  const _OnePassLyricTicker({
+  const OnePassLyricTicker({
+    super.key,
     required this.text,
     required this.style,
     required this.textAlign,
-    required this.motionEnabled,
+    this.motionEnabled = true,
+    this.duration,
+    this.startDelay = const Duration(milliseconds: 350),
   });
 
   @override
-  State<_OnePassLyricTicker> createState() => _OnePassLyricTickerState();
+  State<OnePassLyricTicker> createState() => _OnePassLyricTickerState();
 }
 
-class _OnePassLyricTickerState extends State<_OnePassLyricTicker> {
+class _OnePassLyricTickerState extends State<OnePassLyricTicker> {
   final ScrollController _scroll = ScrollController();
   Timer? _delay;
   bool _started = false;
   double? _scheduledExtent;
 
   @override
-  void didUpdateWidget(covariant _OnePassLyricTicker oldWidget) {
+  void didUpdateWidget(covariant OnePassLyricTicker oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.text != widget.text ||
         !_sameTextMetrics(oldWidget.style, widget.style) ||
-        oldWidget.motionEnabled != widget.motionEnabled) {
+        oldWidget.motionEnabled != widget.motionEnabled ||
+        oldWidget.duration != widget.duration ||
+        oldWidget.startDelay != widget.startDelay) {
       _resetPass();
     }
   }
@@ -338,16 +357,22 @@ class _OnePassLyricTickerState extends State<_OnePassLyricTicker> {
     }
     _scheduledExtent = extent;
     _delay?.cancel();
-    _delay = Timer(const Duration(milliseconds: 350), () {
+    _delay = Timer(widget.startDelay, () {
       if (!mounted || !_scroll.hasClients) return;
       final remaining =
           _scroll.position.maxScrollExtent - _scroll.position.pixels;
       if (remaining <= 1) return;
       _started = true;
-      final milliseconds = (remaining / 34 * 1000).round().clamp(900, 6000);
+      final duration =
+          widget.duration ??
+          Duration(
+            milliseconds: (remaining / 34 * 1000).round().clamp(900, 6000),
+          );
       _scroll.animateTo(
         _scroll.position.maxScrollExtent,
-        duration: Duration(milliseconds: milliseconds),
+        duration: Duration(
+          milliseconds: duration.inMilliseconds.clamp(50, 120000),
+        ),
         curve: Curves.linear,
       );
     });
