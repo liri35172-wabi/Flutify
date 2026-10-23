@@ -393,7 +393,9 @@ class _GlassCapsule extends StatelessWidget {
     return LiquidGlass(
       backdrop: false,
       borderRadius: BorderRadius.circular(height / 2),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      // Each 48px button is flush with a semicircular end cap, so their hover
+      // circles and the capsule hairline share the same centers.
+      padding: EdgeInsets.zero,
       child: SizedBox(
         height: height,
         child: Row(mainAxisSize: MainAxisSize.min, children: children),
@@ -419,7 +421,12 @@ class _CapsuleIcon extends StatelessWidget {
       icon: Icon(icon, size: 24),
       color: Colors.white,
       tooltip: tooltip,
-      padding: EdgeInsets.zero,
+      style: IconButton.styleFrom(
+        shape: const CircleBorder(),
+        fixedSize: const Size.square(48),
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
       constraints: const BoxConstraints.tightFor(width: 48, height: 48),
       onPressed: onPressed,
     );

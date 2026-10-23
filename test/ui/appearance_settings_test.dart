@@ -8,9 +8,11 @@ import 'package:flutify_app/services/eme/eme_player.dart';
 import 'package:flutify_app/services/storage_service.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/immersive_lyrics_screen.dart';
+import 'package:flutify_app/ui/shell/desktop/desktop_window.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
 import 'package:flutify_app/ui/screens/settings/settings_screen.dart';
+import 'package:flutify_app/ui/widgets/liquid_glass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -142,6 +144,7 @@ void main() {
   testWidgets(
     'desktop: immersive lyrics opens from the player bar and closes with Esc',
     (tester) async {
+      addTearDown(() => DesktopWindow.debugEnabledOverride = null);
       await pumpApp(
         tester,
         const Size(1440, 900),
@@ -183,7 +186,40 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byTooltip('退出全屏歌词（Esc）'), findsOneWidget);
+      final close = find.byTooltip('退出全屏歌词（Esc）');
+      expect(close, findsOneWidget);
+      // Enable the second desktop action after screen initialization; the real
+      // desktop flag normally comes from startup and the test needn't resize a
+      // native window just to verify the capsule's circular hit geometry.
+      DesktopWindow.debugEnabledOverride = true;
+      // ignore: invalid_use_of_protected_member
+      tester.state<State>(find.byType(ImmersiveLyricsScreen)).setState(() {});
+      await tester.pump();
+      final capsule = find
+          .ancestor(of: close, matching: find.byType(LiquidGlass))
+          .first;
+      final capsuleButtons = find.descendant(
+        of: capsule,
+        matching: find.byType(IconButton),
+      );
+      expect(capsuleButtons, findsNWidgets(2));
+      final closeRect = tester.getRect(capsuleButtons.first);
+      final fullscreenRect = tester.getRect(capsuleButtons.last);
+      final capsuleRect = tester.getRect(capsule);
+      expect(capsuleRect.size, const Size(96, 48));
+      expect(closeRect.size, const Size(48, 48));
+      expect(fullscreenRect.size, const Size(48, 48));
+      expect(closeRect.center.dx, capsuleRect.left + 24);
+      expect(fullscreenRect.center.dx, capsuleRect.right - 24);
+      expect(closeRect.center.dy, capsuleRect.center.dy);
+      expect(fullscreenRect.center.dy, capsuleRect.center.dy);
+      for (final finder in [capsuleButtons.first, capsuleButtons.last]) {
+        final button = tester.widget<IconButton>(finder);
+        expect(
+          button.style?.shape?.resolve({WidgetState.hovered}),
+          isA<CircleBorder>(),
+        );
+      }
 
       // Controls must remain reachable in the minimum window and a short wide window.
       for (final size in [const Size(360, 600), const Size(1000, 600)]) {

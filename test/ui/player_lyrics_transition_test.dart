@@ -321,11 +321,19 @@ void main() {
     );
     expect(tester.widget<Opacity>(toolbarOpacity).opacity, 1);
     await tester.pump(const Duration(milliseconds: 160));
-    expect(
-      tester.widget<Opacity>(toolbarOpacity).opacity,
-      inExclusiveRange(0, 0.5),
+    expect(tester.widget<Opacity>(toolbarOpacity).opacity, lessThan(0.5));
+    await tester.pump(const Duration(milliseconds: 260));
+    final spring = tester.widget<Transform>(
+      find.byKey(const ValueKey('lyrics-return-spring')),
     );
-    await tester.pump(PlayerLyricsMotion.artworkReturnDuration);
+    expect(spring.transform.getMaxScaleOnAxis(), greaterThan(1));
+    expect(
+      tester.getRect(cover).width,
+      greaterThan(startCover.width),
+      reason: 'the artwork briefly overshoots before its spring-like landing',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(milliseconds: 140));
     expect(tester.getRect(cover), startCover);
     expect(tester.takeException(), isNull);
   });

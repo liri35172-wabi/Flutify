@@ -6,11 +6,13 @@ import 'package:flutter/gestures.dart';
 
 /// Shared Apple-style timing for the Android player's coordinated transitions.
 abstract final class PlayerLyricsMotion {
-  // Responsive takeoff with a long, gentle landing; no bounce or second easing
-  // on any component. The scene's geometry receives this already-eased value.
+  // Responsive takeoff with a long, gentle landing on entry.
   static const curve = Cubic(0.22, 0.8, 0.22, 1);
+  // A restrained overshoot gives the return flight a spring-like settle rather
+  // than making the controls disappear sooner on an otherwise linear path.
+  static const artworkReturnCurve = Cubic(0.34, 1.38, 0.64, 1);
   static const duration = Duration(milliseconds: 640);
-  static const artworkReturnDuration = Duration(milliseconds: 420);
+  static const artworkReturnDuration = Duration(milliseconds: 560);
   static const chromeDuration = Duration(milliseconds: 300);
   static const foldCurve = Cubic(0.32, 0.72, 0, 1);
   static const foldDuration = Duration(milliseconds: 420);
@@ -51,10 +53,52 @@ class PlayerLyricsController extends ChangeNotifier {
   bool _interactionSuspended = false;
   bool _pinned = false;
   bool _disposed = false;
+  double? _artworkReturnStartValue;
+  double? _artworkReturnStartProgress;
+  double? _layoutRetargetStartValue;
+  double? _layoutRetargetStartProgress;
+  double? _layoutRetargetTarget;
 
   bool get controlsVisible => !_idle;
   double get lyricsProgress =>
       (transition.value - queueTransition.value).clamp(0.0, 1.0);
+
+  double get _rawArtworkReturnProgress {
+    final startValue = _artworkReturnStartValue;
+    final startProgress = _artworkReturnStartProgress;
+    if (startValue == null || startProgress == null || startValue <= 0) {
+      return transition.value;
+    }
+    final t = ((startValue - transition.value) / startValue).clamp(0.0, 1.0);
+    return startProgress *
+        (1 - PlayerLyricsMotion.artworkReturnCurve.transform(t));
+  }
+
+  /// Geometry stays bounded while pane weights remain on the shared controller.
+  /// A retarget maps the controller's remaining travel onto the visible layout
+  /// so interrupting the spring does not introduce a handoff jump.
+  double get layoutProgress {
+    final startValue = _layoutRetargetStartValue;
+    final startProgress = _layoutRetargetStartProgress;
+    final target = _layoutRetargetTarget;
+    if (startValue != null && startProgress != null && target != null) {
+      final span = target - startValue;
+      if (span.abs() < 0.000001) return target.clamp(0.0, 1.0);
+      final t = ((transition.value - startValue) / span).clamp(0.0, 1.0);
+      return (startProgress + (target - startProgress) * t).clamp(0.0, 1.0);
+    }
+    return _rawArtworkReturnProgress.clamp(0.0, 1.0);
+  }
+
+  /// Normalized amount of the return spring's overshoot, for a subtle visual
+  /// settle that cannot create negative sizes or opacity values.
+  double get artworkReturnBounce {
+    if (_artworkReturnStartValue == null) return 0;
+    return (-_rawArtworkReturnProgress / 0.05).clamp(0.0, 1.0);
+  }
+
+  double get layoutLyricsProgress =>
+      (layoutProgress - queueTransition.value).clamp(0.0, 1.0);
 
   void configure({
     required bool reduceMotion,
@@ -68,6 +112,11 @@ class PlayerLyricsController extends ChangeNotifier {
     _accessibleNavigation = accessibleNavigation;
     _gestureStartedFolded = false;
     if (reduceMotion) {
+      _artworkReturnStartValue = null;
+      _artworkReturnStartProgress = null;
+      _layoutRetargetStartValue = null;
+      _layoutRetargetStartProgress = null;
+      _layoutRetargetTarget = null;
       transition.value = _lyrics || _queue ? 1 : 0;
       queueTransition.value = _queue ? 1 : 0;
       chrome.value = _idle ? 0 : 1;
@@ -86,8 +135,32 @@ class PlayerLyricsController extends ChangeNotifier {
     if (_lyrics == lyrics && _queue == queue) return;
     final queueFlight = queue || _queue;
     final returningToArtwork = _lyrics && !lyrics && !queue;
-    // The controls card should clear the lyrics page sooner on the way back
-    // than it takes to build the expanded lyrics layout.
+    final targetLayoutProgress = lyrics || queue ? 1.0 : 0.0;
+    final visibleProgress = layoutProgress;
+    if (returningToArtwork) {
+      _layoutRetargetStartValue = null;
+      _layoutRetargetStartProgress = null;
+      _layoutRetargetTarget = null;
+      _artworkReturnStartValue = transition.value;
+      _artworkReturnStartProgress = visibleProgress;
+    } else if (_artworkReturnStartValue != null ||
+        _layoutRetargetStartValue != null) {
+      // Keep the actual pane-weight controller untouched. Retarget just the
+      // geometry from its current visible point toward the new destination.
+      _artworkReturnStartValue = null;
+      _artworkReturnStartProgress = null;
+      _layoutRetargetStartValue = transition.value;
+      _layoutRetargetStartProgress = visibleProgress;
+      _layoutRetargetTarget = targetLayoutProgress;
+    } else {
+      _artworkReturnStartValue = null;
+      _artworkReturnStartProgress = null;
+      _layoutRetargetStartValue = null;
+      _layoutRetargetStartProgress = null;
+      _layoutRetargetTarget = null;
+    }
+    // Keep the pane-weight controller bounded and linear on return; only the
+    // shared layout receives a restrained overshoot before settling at artwork.
     // A footer onTap changes views after pointer-down. Retain
     // that gesture's origin even with reduced motion, where chrome snaps to 1.
     // Another held finger cannot reopen the queue card either.
@@ -122,6 +195,8 @@ class PlayerLyricsController extends ChangeNotifier {
         : PlayerLyricsMotion.duration;
     final curve = queueFlight
         ? PlayerQueueMotion.curve
+        : returningToArtwork
+        ? Curves.linear
         : PlayerLyricsMotion.curve;
     // Easing the controller itself starts every reversal at its current value.
     // Switching between forward/reverse CurvedAnimations can otherwise jump.
