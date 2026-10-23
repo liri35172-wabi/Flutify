@@ -685,7 +685,7 @@
   "settingsFloatingLyricsTransparent": "背景を透明にする",
   "settingsFloatingLyricsTransparentSubtitle": "暗い背景パネルを隠し、歌詞だけを表示します。",
   "settingsFloatingLyricsColor": "歌詞の色",
-  "settingsFloatingLyricsAutoColorSubtitle": "自動では白い歌詞に明暗の細い縁取りを付けます。背景には適応しますが、他のアプリの画面は読み取りません。",
+  "settingsFloatingLyricsAutoColorSubtitle": "自動では白い歌詞に控えめな影を付けます。他のアプリの画面は読み取りません。",
   "settingsFlymeLyricsUnavailable": "ステータスバー歌詞は対応する Meizu/Flyme 端末でのみ使えます。フローティング歌詞は別途利用できます。",
   "settingsFloatingLyricsCustomColor": "カスタム歌詞色",
   "settingsFloatingLyricsFontSize": "歌詞の文字サイズ"

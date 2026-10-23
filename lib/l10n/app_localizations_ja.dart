@@ -1963,7 +1963,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsFloatingLyricsAutoColorSubtitle =>
-      '自動では白い歌詞に明暗の細い縁取りを付けます。背景には適応しますが、他のアプリの画面は読み取りません。';
+      '自動では白い歌詞に控えめな影を付けます。他のアプリの画面は読み取りません。';
 
   @override
   String get settingsFlymeLyricsUnavailable =>

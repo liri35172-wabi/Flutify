@@ -10,21 +10,27 @@ const taskbar = readFileSync(join(__dirname, '../windows/runner/taskbar_lyrics_w
 test('floating desktop lyrics use taskbar typography and animation timing', () => {
   assert.match(floating, /kAnimationMs = 300/);
   assert.match(floating, /kAnimationMs \+ 60/);
-  assert.match(floating, /style_\.font_scale \/ 100\.0, true, !high_contrast, high_contrast/);
+  assert.match(floating, /style_\.font_scale \/ 100\.0, true, high_contrast/);
   assert.match(painter, /constexpr double kOverlayBigPt = 18\.0/);
   assert.match(painter, /constexpr double kOverlaySmallPt = 12\.6/);
   assert.match(painter, /canvas\.floating_overlay \? kOverlayBigPt : kBigPt/);
   assert.match(floating, /next_translation, false, eased\)/);
-  assert.match(painter, /if \(canvas\.dual_contrast_outline && !canvas\.high_contrast\)/);
+  assert.match(painter, /if \(canvas\.floating_overlay && !canvas\.high_contrast\)/);
 });
 
 
-test('floating Auto lyrics retain a local dual outline without screen sampling', () => {
+test('floating Auto lyrics use a light local shadow without screen sampling', () => {
   assert.match(floating, /case ColorMode::kAuto:[\s\S]*?return IsHighContrastAuto\(\) \? PairedSystemColor\(COLOR_WINDOWTEXT\) : Gdiplus::Color\(kWhite\);/);
-  assert.match(floating, /true, !high_contrast, high_contrast/);
-  assert.match(painter, /if \(canvas\.dual_contrast_outline && !canvas\.high_contrast\)/);
-  assert.match(painter, /draw_outline\(255, 255, 255, 2\.2f, 220\)/);
-  assert.match(painter, /draw_outline\(0, 0, 0, 1\.25f, 245\)/);
+  assert.match(floating, /true, high_contrast/);
+  assert.match(painter, /if \(canvas\.floating_overlay && !canvas\.high_contrast\)/);
+  assert.match(painter, /kOverlayShadowOpacity = 0\.24/);
+  assert.match(painter, /RectF shadow_rect\(rect\.X \+ offset, rect\.Y \+ offset/);
+  assert.match(painter, /kOverlaySecondaryAlpha = 160/);
+  assert.match(painter, /canvas\.floating_overlay \? kOverlaySecondaryAlpha : 185/);
+  assert.match(painter, /const int translation_alpha = canvas\.floating_overlay \? kOverlaySecondaryAlpha : 215/);
+  assert.match(painter, /draw_row\(previous, current, ofont, block_top, primary_h, travel_primary, 255\)/);
+  assert.match(painter, /travel_translation, translation_alpha\)/);
+  assert.doesNotMatch(painter, /dual_contrast_outline|draw_outline|strokeWidth|PaintingStyle::stroke/);
   assert.match(taskbar, /if \(style_\.mode == ColorMode::kAuto \|\| style_\.mode == ColorMode::kAccent\) SampleBackground\(\)/);
   assert.match(taskbar, /case ColorMode::kAuto:[\s\S]*?dark_text_ \? kDark : kWhite/);
   assert.doesNotMatch(taskbar, /dual_contrast_outline/);

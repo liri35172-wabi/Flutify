@@ -3686,7 +3686,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsFloatingLyricsAutoColorSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'自动模式使用白字和清晰的黑白细描边，适配明暗背景；不会读取其他应用的画面。'**
+  /// **'自动模式使用白字与轻微阴影；不会读取其他应用的画面。'**
   String get settingsFloatingLyricsAutoColorSubtitle;
 
   /// No description provided for @settingsFlymeLyricsUnavailable.

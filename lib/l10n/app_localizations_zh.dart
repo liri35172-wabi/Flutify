@@ -1938,7 +1938,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsFloatingLyricsAutoColorSubtitle =>
-      '自动模式使用白字和清晰的黑白细描边，适配明暗背景；不会读取其他应用的画面。';
+      '自动模式使用白字与轻微阴影；不会读取其他应用的画面。';
 
   @override
   String get settingsFlymeLyricsUnavailable =>
@@ -3884,7 +3884,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsFloatingLyricsAutoColorSubtitle =>
-      '自動模式使用白字與清晰的黑白細描邊，適配明暗背景；不會讀取其他應用的畫面。';
+      '自動模式使用白字與輕微陰影；不會讀取其他應用的畫面。';
 
   @override
   String get settingsFlymeLyricsUnavailable =>

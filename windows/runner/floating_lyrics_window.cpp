@@ -275,7 +275,7 @@ Gdiplus::Color FloatingLyricsWindow::TextColor() const {
       return Gdiplus::Color(style_.custom);
     case ColorMode::kAuto:
       // Unlike taskbar Auto (which samples its own taskbar surface), a floating window
-      // must not capture arbitrary apps; its normal-mode dual outline supplies local contrast.
+      // must not capture arbitrary apps; its lyric color stays local and uses a light shadow.
       return IsHighContrastAuto() ? PairedSystemColor(COLOR_WINDOWTEXT) : Gdiplus::Color(kWhite);
     default:
       return Gdiplus::Color(kWhite);
@@ -379,10 +379,10 @@ void FloatingLyricsWindow::Render() {
   const auto color = TextColor();
   // Reuse the taskbar painter and its bilingual layout/transition, with the floating-window
   // size preset so lyrics stay comfortably readable at the user-requested desktop scale.
-  // Auto uses a local dual outline instead of sampling arbitrary desktop pixels.
+  // Auto uses a restrained local shadow; it never samples arbitrary desktop pixels.
   const TaskbarLyricsPainter::Canvas canvas{&graphics, width_, height_, scale_, color,
                                             high_contrast ? 100 : style_.opacity,
-                                            style_.font_scale / 100.0, true, !high_contrast, high_contrast};
+                                            style_.font_scale / 100.0, true, high_contrast};
   painter_->PaintLyrics(canvas, previous, current, next, translation,
                         previous_translation, next_translation, false, eased);
   graphics.Flush(Gdiplus::FlushIntentionSync);

@@ -163,6 +163,8 @@ class _LyricsViewState extends State<LyricsView>
   bool _userScrolling = false;
   bool _pendingAnchor = false;
   bool _gapReflowPending = false;
+  int? _gapReflowAnchorIndex;
+  double? _gapReflowAnchorReveal;
   bool _appActive = true;
   bool _tickerEnabled = true;
 
@@ -268,6 +270,8 @@ class _LyricsViewState extends State<LyricsView>
     _browsing = false;
     _pendingAnchor = false;
     _gapReflowPending = false;
+    _gapReflowAnchorIndex = null;
+    _gapReflowAnchorReveal = null;
     _translationReveal.stop();
     _translationLyrics = null;
     _translationTrackUri = null;
@@ -536,6 +540,21 @@ class _LyricsViewState extends State<LyricsView>
     // that layout, without restarting the running per-row cascade.
     if (widget.appleMusicStyle && gapChanged && !focusChanged) {
       _gapReflowPending = true;
+      _gapReflowAnchorIndex = null;
+      _gapReflowAnchorReveal = null;
+      final anchor = _renderedFocus;
+      if (anchor != null && anchor >= 0 && anchor < _lineKeys.length) {
+        final box = _boxOf(_lineKeys[anchor]);
+        final viewport = box == null
+            ? null
+            : RenderAbstractViewport.maybeOf(box);
+        if (viewport != null) {
+          _gapReflowAnchorIndex = anchor;
+          _gapReflowAnchorReveal = viewport
+              .getOffsetToReveal(box!, 0, rect: Rect.zero)
+              .offset;
+        }
+      }
     }
     setState(() => _activeIndex = index);
     if (!_browsing && (!widget.appleMusicStyle || focusChanged)) {
@@ -603,12 +622,38 @@ class _LyricsViewState extends State<LyricsView>
     }
     if (!_translationFramePending && !_gapReflowPending) return null;
     _translationFramePending = false;
+    final gapReflow = _gapReflowPending;
     _gapReflowPending = false;
+    final anchorIndex = _gapReflowAnchorIndex;
+    final anchorReveal = _gapReflowAnchorReveal;
+    _gapReflowAnchorIndex = null;
+    _gapReflowAnchorReveal = null;
     if (!mounted || _browsing || !_isSynced) return null;
     if (widget.appleMusicStyle &&
         (!_interactionActive || _touches.isNotEmpty || _userScrolling)) {
       _pendingAnchor = true;
       return null;
+    }
+    if (gapReflow &&
+        anchorIndex != null &&
+        anchorReveal != null &&
+        _scroll.hasClients) {
+      final position = _scroll.position;
+      final box = _boxOf(_lineKeys[anchorIndex]);
+      final viewport = box == null ? null : RenderAbstractViewport.maybeOf(box);
+      if (viewport != null) {
+        final newReveal = viewport
+            .getOffsetToReveal(box!, 0, rect: Rect.zero)
+            .offset;
+        if (_translationReveal.isAnimating) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _translationReveal.isAnimating) {
+              _animateTranslationTo(_translationTarget);
+            }
+          });
+        }
+        return position.pixels + newReveal - anchorReveal;
+      }
     }
     final target = _activeScrollTarget();
     if (target == null) return null;

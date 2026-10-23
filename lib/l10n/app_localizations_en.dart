@@ -2050,7 +2050,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsFloatingLyricsAutoColorSubtitle =>
-      'Auto uses white lyrics with a crisp dark-and-light outline for contrast; it does not read other apps’ screens.';
+      'Auto uses white lyrics with a subtle shadow; it does not read other apps’ screens.';
 
   @override
   String get settingsFlymeLyricsUnavailable =>

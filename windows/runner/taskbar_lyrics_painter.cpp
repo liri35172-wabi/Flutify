@@ -25,6 +25,8 @@ constexpr double kBigPt = 10.5;
 constexpr double kSmallPt = 7.7;
 constexpr double kOverlayBigPt = 18.0;
 constexpr double kOverlaySmallPt = 12.6;
+constexpr int kOverlaySecondaryAlpha = 160;
+constexpr double kOverlayShadowOpacity = 0.24;
 
 std::wstring FontPath(const wchar_t* file) {
   wchar_t exe[MAX_PATH];
@@ -177,28 +179,14 @@ void TaskbarLyricsPainter::DrawText(const Canvas& canvas, const std::wstring& te
   alpha = canvas.high_contrast ? 255 : alpha * canvas.opacity / 100;
   if (text.empty() || alpha <= 2) return;
   const BYTE visible_alpha = static_cast<BYTE>((std::min)(alpha, 255));
-  if (canvas.dual_contrast_outline && !canvas.high_contrast) {
-    // Auto cannot inspect a different app's pixels. A crisp two-tone edge keeps white
-    // lyrics legible over both light and dark content without a broad, blurry shadow.
-    const int offsets[16][2] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1},
-                                 {-2, -1}, {-1, -2}, {1, -2}, {2, -1}, {2, 1}, {1, 2}, {-1, 2}, {-2, 1}};
-    const auto draw_outline = [&](BYTE red, BYTE green, BYTE blue, float radius, BYTE alpha) {
-      SolidBrush outline(Color(static_cast<BYTE>(visible_alpha * alpha / 255), red, green, blue));
-      for (const auto& offset : offsets) {
-        RectF shifted(rect.X + static_cast<float>(offset[0] * radius * canvas.scale),
-                      rect.Y + static_cast<float>(offset[1] * radius * canvas.scale), rect.Width, rect.Height);
-        canvas.graphics->DrawString(text.c_str(), static_cast<INT>(text.size()), font, shifted,
-                                     text_format_.get(), &outline);
-      }
-    };
-    draw_outline(255, 255, 255, 2.2f, 220);  // broad outer light rim
-    draw_outline(0, 0, 0, 1.25f, 245);        // firm inner dark edge
-  } else if (canvas.floating_overlay && !canvas.high_contrast) {
+  if (canvas.floating_overlay && !canvas.high_contrast) {
+    // A single low-opacity, one-pixel shadow adds separation without filling glyph counters.
+    // It uses only the chosen lyric color; the floating overlay never samples other windows.
     const int luminance = canvas.color.GetR() * 299 + canvas.color.GetG() * 587 + canvas.color.GetB() * 114;
     const BYTE shade = luminance >= 128000 ? 0 : 255;
-    SolidBrush shadow(Color(static_cast<BYTE>(visible_alpha * 0.68), shade, shade, shade));
-    RectF shadow_rect(rect.X + static_cast<float>(canvas.scale), rect.Y + static_cast<float>(canvas.scale),
-                      rect.Width, rect.Height);
+    SolidBrush shadow(Color(static_cast<BYTE>(visible_alpha * kOverlayShadowOpacity), shade, shade, shade));
+    const float offset = static_cast<float>(canvas.scale);
+    RectF shadow_rect(rect.X + offset, rect.Y + offset, rect.Width, rect.Height);
     canvas.graphics->DrawString(text.c_str(), static_cast<INT>(text.size()), font, shadow_rect,
                                  text_format_.get(), &shadow);
   }
@@ -299,8 +287,9 @@ void TaskbarLyricsPainter::PaintLyrics(const Canvas& canvas, const std::wstring&
         g->Restore(state);
       };
       draw_row(previous, current, ofont, block_top, primary_h, travel_primary, 255);
+      const int translation_alpha = canvas.floating_overlay ? kOverlaySecondaryAlpha : 215;
       draw_row(previous_translation, current_translation, tfont,
-               block_top + primary_h + row_gap, translation_h, travel_translation, 215);
+               block_top + primary_h + row_gap, translation_h, travel_translation, translation_alpha);
       return;
   }
 
@@ -322,7 +311,8 @@ void TaskbarLyricsPainter::PaintLyrics(const Canvas& canvas, const std::wstring&
       translation_pt = (std::max)(floor_pt, translation_pt - 0.25);
     }
     DrawText(canvas, current, ofont, RectF(pad, 0, avail, top_h), 255);
-    DrawText(canvas, current_translation, tfont, RectF(pad, top_h, avail, canvas.height - top_h), 185);
+    const int translation_alpha = canvas.floating_overlay ? kOverlaySecondaryAlpha : 185;
+    DrawText(canvas, current_translation, tfont, RectF(pad, top_h, avail, canvas.height - top_h), translation_alpha);
     return;
   }
 

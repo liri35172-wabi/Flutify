@@ -27,7 +27,6 @@ class TaskbarLyricsPainter {
     int opacity;           // 15 ~ 100
     double font_scale;     // 歌词字号倍率（用户设置，0.8 ~ 1.3）
     bool floating_overlay = false;  // 独立桌面浮窗使用更大的字号和紧凑行距
-    bool dual_contrast_outline = false;  // 浮窗各颜色均加清晰黑白双描边；不读取底层应用画面
     bool high_contrast = false;  // 使用 Windows 配对系统色时不透明绘制，避免 alpha 混色
   };
 

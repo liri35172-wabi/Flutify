@@ -155,7 +155,7 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
                   const SizedBox(height: 2),
                   FloatingLyricsPreviewText(
                     text: '敬你的沉默 和每一聲怒吼',
-                    color: lyricColor.withValues(alpha: 0.88),
+                    color: lyricColor.withValues(alpha: 0.62),
                     fontSize: 10 * prefs.floatingLyricsFontScale / 100,
                     fontWeight: FontWeight.w400,
                   ),
