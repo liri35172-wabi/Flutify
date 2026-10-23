@@ -278,16 +278,22 @@ void main() {
         findsOneWidget,
       );
       expect(find.byTooltip('全屏歌词'), findsNothing);
-      final artworkShortcut = find.byKey(
-        const ValueKey('lyrics-artwork-shortcut'),
+      expect(
+        find.byKey(const ValueKey('lyrics-artwork-shortcut')),
+        findsNothing,
       );
-      expect(artworkShortcut, findsOneWidget);
-      await tester.tap(artworkShortcut);
+      final smallCover = find.descendant(
+        of: player,
+        matching: find.byType(SwipeableArtwork),
+      );
+      expect(smallCover, findsOneWidget);
+      final smallCoverRect = tester.getRect(smallCover);
+      await tester.tapAt(smallCoverRect.center);
       await settle(tester);
       expect(
-        find.descendant(of: player, matching: find.byType(SwipeableArtwork)),
-        findsOneWidget,
-        reason: 'the thumbnail in the lyrics controls opens the large artwork',
+        tester.getRect(smallCover).width,
+        greaterThan(smallCoverRect.width),
+        reason: 'the original small cover returns to the artwork view',
       );
 
       // 再点一次当前视图的按钮回到封面

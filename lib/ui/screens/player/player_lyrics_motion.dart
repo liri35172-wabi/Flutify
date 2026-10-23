@@ -10,6 +10,7 @@ abstract final class PlayerLyricsMotion {
   // on any component. The scene's geometry receives this already-eased value.
   static const curve = Cubic(0.22, 0.8, 0.22, 1);
   static const duration = Duration(milliseconds: 640);
+  static const artworkReturnDuration = Duration(milliseconds: 420);
   static const chromeDuration = Duration(milliseconds: 300);
   static const foldCurve = Cubic(0.32, 0.72, 0, 1);
   static const foldDuration = Duration(milliseconds: 420);
@@ -84,6 +85,9 @@ class PlayerLyricsController extends ChangeNotifier {
     assert(!lyrics || !queue);
     if (_lyrics == lyrics && _queue == queue) return;
     final queueFlight = queue || _queue;
+    final returningToArtwork = _lyrics && !lyrics && !queue;
+    // The controls card should clear the lyrics page sooner on the way back
+    // than it takes to build the expanded lyrics layout.
     // A footer onTap changes views after pointer-down. Retain
     // that gesture's origin even with reduced motion, where chrome snaps to 1.
     // Another held finger cannot reopen the queue card either.
@@ -113,6 +117,8 @@ class PlayerLyricsController extends ChangeNotifier {
         ? Duration.zero
         : queueFlight
         ? PlayerQueueMotion.duration
+        : returningToArtwork
+        ? PlayerLyricsMotion.artworkReturnDuration
         : PlayerLyricsMotion.duration;
     final curve = queueFlight
         ? PlayerQueueMotion.curve

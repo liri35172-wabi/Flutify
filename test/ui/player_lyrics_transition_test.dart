@@ -325,7 +325,7 @@ void main() {
       tester.widget<Opacity>(toolbarOpacity).opacity,
       inExclusiveRange(0, 0.5),
     );
-    await tester.pump(const Duration(milliseconds: 481));
+    await tester.pump(PlayerLyricsMotion.artworkReturnDuration);
     expect(tester.getRect(cover), startCover);
     expect(tester.takeException(), isNull);
   });

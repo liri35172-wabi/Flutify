@@ -292,18 +292,6 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
                 ? const LyricsTranslationToggle()
                 : null,
             floatingLyrics: const FloatingLyricsQuickToggle(),
-            artworkShortcut: _view == PlayerView.lyrics
-                ? IconButton(
-                    key: const ValueKey('lyrics-artwork-shortcut'),
-                    tooltip: context.l10n.playerShowArtwork,
-                    onPressed: () => _toggle(PlayerView.artwork),
-                    icon: CoverImage(
-                      url: track.coverUrl,
-                      size: 30,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  )
-                : null,
           ),
         ),
         artworkPreview: CurrentLyricsPreview(
@@ -772,7 +760,6 @@ class _BottomBar extends StatelessWidget {
   final Widget? translation;
   final Widget? pin;
   final Widget? floatingLyrics;
-  final Widget? artworkShortcut;
 
   /// 非空时设备入口在卡片底部就地展开设备列表，而不是弹出浮层。
   final ValueNotifier<bool>? devicesOpen;
@@ -784,7 +771,6 @@ class _BottomBar extends StatelessWidget {
     this.translation,
     this.pin,
     this.floatingLyrics,
-    this.artworkShortcut,
     this.devicesOpen,
   });
 
@@ -898,7 +884,6 @@ class _BottomBar extends StatelessWidget {
           ?pin,
           ?translation,
           ?floatingLyrics,
-          ?artworkShortcut,
           toggle(
             PlayerView.lyrics,
             Icons.lyrics_outlined,
