@@ -135,8 +135,9 @@ class _RemoteRightControls extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Keep all three actions in the remote bar; omit only the optional
+        // Keep the three established remote actions; omit only the optional
         // volume slider when the right-hand column is genuinely too narrow.
+        // Queue and sleep-timer controls remain scoped to local playback.
         const controlGap = 4.0;
         final actionWidth = 3 * _buttonSize + 2 * controlGap;
         final showSlider =

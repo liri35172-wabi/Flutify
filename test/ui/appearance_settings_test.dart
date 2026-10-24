@@ -174,6 +174,13 @@ void main() {
       await tester.tap(find.byTooltip('沉浸式歌词').first);
       await settle(tester);
       expect(find.byType(ImmersiveLyricsScreen), findsOneWidget);
+      final translation = find.byType(LyricsTranslationToggle);
+      expect(translation, findsOneWidget);
+      expect(find.byType(LyricsTranslationButton), findsNothing);
+      final translationButton = tester.widget<IconButton>(
+        find.descendant(of: translation, matching: find.byType(IconButton)),
+      );
+      expect(translationButton.onPressed, isNotNull);
       expect(
         find.descendant(
           of: find.byType(LyricsView),

@@ -18,6 +18,7 @@ class LyricsGlassControls extends StatelessWidget {
   final bool full;
   final double maxWidth;
   final Widget? bottom;
+  final Widget? translation;
 
   /// 见 [LiquidGlass.backdrop]：下方没有歌词滑过（宽屏沉浸式左栏）时传 false。
   final bool backdrop;
@@ -27,6 +28,7 @@ class LyricsGlassControls extends StatelessWidget {
     this.full = false,
     this.maxWidth = 520,
     this.bottom,
+    this.translation,
     this.backdrop = true,
   });
 
@@ -53,7 +55,22 @@ class LyricsGlassControls extends StatelessWidget {
   }
 
   List<Widget> _local() {
-    final gap = full ? 20.0 : 28.0;
+    final gap = translation != null ? 16.0 : (full ? 20.0 : 28.0);
+    final transport = Row(
+      mainAxisAlignment: full
+          ? MainAxisAlignment.spaceEvenly
+          : MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (full) const ShuffleButton(),
+        const SkipButton(next: false, size: 32),
+        SizedBox(width: full ? 0 : gap),
+        const PlayPauseButton(size: 56, iconSize: 32),
+        SizedBox(width: full ? 0 : gap),
+        const SkipButton(next: true, size: 32),
+        if (full) const RepeatButton(),
+      ],
+    );
     return [
       const PlaybackScrubber(
         compact: true,
@@ -62,20 +79,7 @@ class LyricsGlassControls extends StatelessWidget {
         labelColor: Colors.white60,
       ),
       const SizedBox(height: 2),
-      Row(
-        mainAxisAlignment: full
-            ? MainAxisAlignment.spaceEvenly
-            : MainAxisAlignment.center,
-        children: [
-          if (full) const ShuffleButton(),
-          const SkipButton(next: false, size: 32),
-          SizedBox(width: full ? 0 : gap),
-          const PlayPauseButton(size: 56, iconSize: 32),
-          SizedBox(width: full ? 0 : gap),
-          const SkipButton(next: true, size: 32),
-          if (full) const RepeatButton(),
-        ],
-      ),
+      _withTranslation(transport),
     ];
   }
 
@@ -86,9 +90,39 @@ class LyricsGlassControls extends StatelessWidget {
       labelColor: Colors.white60,
     ),
     const SizedBox(height: 2),
-    RemoteTransportControls(
-      showModes: full,
-      style: full ? RemoteControlsStyle.glassFull : RemoteControlsStyle.glass,
+    _withTranslation(
+      RemoteTransportControls(
+        showModes: full,
+        style: full
+            ? RemoteControlsStyle.glassFull
+            : translation == null
+            ? RemoteControlsStyle.glass
+            : const RemoteControlsStyle(
+                foreground: Colors.white,
+                muted: Colors.white60,
+                playBackground: Colors.white,
+                playForeground: Colors.black,
+                skipSize: 22,
+                modeSize: 18,
+                playSize: 56,
+                playIconSize: 32,
+                gap: 16,
+              ),
+      ),
     ),
   ];
+
+  Widget _withTranslation(Widget transport) {
+    final toggle = translation;
+    if (toggle == null) return transport;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        transport,
+        const SizedBox(width: 8),
+        SizedBox.square(dimension: 44, child: toggle),
+      ],
+    );
+  }
 }

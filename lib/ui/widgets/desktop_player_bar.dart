@@ -592,9 +592,21 @@ class _VolumeControl extends StatelessWidget {
             width: sliderWidth,
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
-                trackHeight: 3.0,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 4),
+                trackHeight: PlaybackScrubber.compactTrackHeight,
+                thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: PlaybackScrubber.compactThumbRadius,
+                ),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
+                activeTrackColor: colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.78,
+                ),
+                inactiveTrackColor: colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.24,
+                ),
+                thumbColor: colorScheme.onSurfaceVariant,
+                overlayColor: colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.14,
+                ),
               ),
               child: Slider(
                 value: volume,

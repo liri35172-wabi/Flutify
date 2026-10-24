@@ -288,7 +288,7 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
                   )
                 : null,
             // 控制卡片在左时，翻译开关收进底栏（仅歌词视图），不再浮在歌词旁
-            translation: widget.controlsOnLeft && _view == PlayerView.lyrics
+            translation: _view == PlayerView.lyrics
                 ? const LyricsTranslationToggle()
                 : null,
             floatingLyrics: const FloatingLyricsQuickToggle(buttonSize: 44),
@@ -398,25 +398,17 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
           bottomInset: 24,
           lineCursor: widget.lyricsLineCursor ?? SystemMouseCursors.click,
         ),
-        translation: widget.controlsOnLeft
-            ? const SizedBox.shrink()
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const LyricsTranslationButton(),
-                  // 桌面对话框里额外提供沉浸式全屏歌词入口。
-                  if (widget.immersiveEntry &&
-                      MediaQuery.sizeOf(context).width >= 800) ...[
-                    const SizedBox(width: 8),
-                    GlassIconButton(
-                      icon: Icons.open_in_full_rounded,
-                      size: 36,
-                      tooltip: context.l10n.lyricsImmersive,
-                      onPressed: () => ImmersiveLyricsScreen.open(context),
-                    ),
-                  ],
-                ],
-              ),
+        // Translation lives in the lower playback controls on mobile and desktop;
+        // keep only the separate desktop immersive-mode shortcut up here.
+        translation:
+            widget.immersiveEntry && MediaQuery.sizeOf(context).width >= 800
+            ? GlassIconButton(
+                icon: Icons.open_in_full_rounded,
+                size: 36,
+                tooltip: context.l10n.lyricsImmersive,
+                onPressed: () => ImmersiveLyricsScreen.open(context),
+              )
+            : const SizedBox.shrink(),
         queue: const QueueList(horizontalPadding: 16),
       ),
     );

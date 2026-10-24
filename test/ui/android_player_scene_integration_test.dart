@@ -12,7 +12,6 @@ import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_channel.dart'
 import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_controls.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
-import 'package:flutify_app/ui/screens/player/lyrics/glass_icon_button.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyric_line_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
@@ -147,10 +146,10 @@ void main() {
         of: player,
         matching: find.byTooltip('歌词'),
       );
-      final translationButton = find.byType(LyricsTranslationButton);
+      final translationButton = find.byType(LyricsTranslationToggle);
       final translationIcon = find.descendant(
         of: translationButton,
-        matching: find.byType(GlassIconButton),
+        matching: find.byType(IconButton),
       );
       await tester.tap(lyricsButton);
       await _frames(tester);
@@ -183,10 +182,7 @@ void main() {
         await _frames(tester);
 
         expect(controller.lines, same(translations));
-        expect(
-          tester.widget<GlassIconButton>(translationIcon).selected,
-          isTrue,
-        );
+        expect(tester.widget<IconButton>(translationIcon).isSelected, isTrue);
         expect(find.text('第 0 行歌词译文'), findsOneWidget);
         expect(
           tester
@@ -205,7 +201,7 @@ void main() {
       expect(find.byType(LyricsView), findsNothing);
       await tester.tap(lyricsButton);
       await _frames(tester);
-      expect(tester.widget<GlassIconButton>(translationIcon).selected, isFalse);
+      expect(tester.widget<IconButton>(translationIcon).isSelected, isFalse);
       expect(find.text('第 0 行歌词译文'), findsNothing);
       await tester.tap(translationButton);
       await _frames(tester);
@@ -271,155 +267,151 @@ void main() {
   );
 
   for (final width in [320.0, 390.0, 430.0]) {
-    testWidgets(
-      'Android lyrics share the cover and keep the card low at $width',
-      (tester) async {
-        final playback = await _open(tester, width: width);
-        final player = find.byType(FullPlayerSheet);
-        await tester.tap(
-          find.descendant(of: player, matching: find.byTooltip('歌词')),
-        );
-        await _frames(tester);
-        final hero = find.descendant(of: player, matching: find.byType(Hero));
-        expect(hero, findsOneWidget);
-        expect(tester.getSize(hero).width, inInclusiveRange(56, 64));
-        final card = tester.getRect(
-          find.byKey(const ValueKey('lyrics-control-card')),
-        );
-        final translation = tester.getRect(
-          find.byType(LyricsTranslationButton),
-        );
-        expect(card.bottom, greaterThan(800));
-        expect(translation.bottom, closeTo(card.top - 8, 0.01));
-        final lyricsState = tester.state(find.byType(LyricsView));
-        final translationController = tester
-            .element(find.byType(LyricsTranslationButton))
-            .read<LyricsTranslationController>();
-        await tester.pump(const Duration(seconds: 4));
-        await _frames(tester, 5);
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsNothing,
-        );
-        expect(
-          find
-              .descendant(of: player, matching: find.byTooltip('歌词'))
-              .hitTestable(),
-          findsOneWidget,
-          reason: 'the bottom lyrics/device/queue row survives folding',
-        );
-        final queueButton = tester.getRect(
-          find.descendant(of: player, matching: find.byTooltip('播放队列')),
-        );
-        final footerRight = tester.getRect(player).right - 12;
-        expect(footerRight, greaterThan(queueButton.right + 1));
-        await tester.tapAt(
-          Offset(queueButton.right + 6, queueButton.center.dy),
-        );
-        await _frames(tester, 4);
-        expect(
-          tester.getRect(find.byKey(const ValueKey('lyrics-control-card'))),
-          card,
-        );
-        expect(tester.state(find.byType(LyricsView)), same(lyricsState));
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsOneWidget,
-          reason: 'the folded footer blank space still reveals the card',
-        );
-        await tester.pump(const Duration(seconds: 4));
-        await _frames(tester, 5);
-        playback.positionNotifier.value = const Duration(seconds: 24);
-        await _frames(tester, 4);
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsNothing,
-        );
-        final scrollable = tester.state<ScrollableState>(
-          find.descendant(
-            of: find.byType(LyricsView),
-            matching: find.byWidgetPredicate(
-              (widget) =>
-                  widget is Scrollable &&
-                  widget.axisDirection == AxisDirection.down,
-            ),
+    testWidgets('Android lyrics share the cover and keep the card low at $width', (
+      tester,
+    ) async {
+      final playback = await _open(tester, width: width);
+      final player = find.byType(FullPlayerSheet);
+      await tester.tap(
+        find.descendant(of: player, matching: find.byTooltip('歌词')),
+      );
+      await _frames(tester);
+      final hero = find.descendant(of: player, matching: find.byType(Hero));
+      expect(hero, findsOneWidget);
+      expect(tester.getSize(hero).width, inInclusiveRange(56, 64));
+      final card = tester.getRect(
+        find.byKey(const ValueKey('lyrics-control-card')),
+      );
+      final translation = tester.getRect(find.byType(LyricsTranslationToggle));
+      expect(card.bottom, greaterThan(800));
+      expect(translation.center.dy, greaterThan(card.center.dy));
+      expect(find.byType(LyricsTranslationButton), findsNothing);
+      final lyricsState = tester.state(find.byType(LyricsView));
+      final translationController = tester
+          .element(find.byType(LyricsTranslationToggle))
+          .read<LyricsTranslationController>();
+      await tester.pump(const Duration(seconds: 4));
+      await _frames(tester, 5);
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+      );
+      expect(
+        find
+            .descendant(of: player, matching: find.byTooltip('歌词'))
+            .hitTestable(),
+        findsOneWidget,
+        reason: 'the bottom lyrics/device/queue row survives folding',
+      );
+      final queueButton = tester.getRect(
+        find.descendant(of: player, matching: find.byTooltip('播放队列')),
+      );
+      final footerRight = tester.getRect(player).right - 12;
+      expect(footerRight, greaterThan(queueButton.right + 1));
+      await tester.tapAt(Offset(queueButton.right + 6, queueButton.center.dy));
+      await _frames(tester, 4);
+      expect(
+        tester.getRect(find.byKey(const ValueKey('lyrics-control-card'))),
+        card,
+      );
+      expect(tester.state(find.byType(LyricsView)), same(lyricsState));
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+        reason: 'the folded footer blank space still reveals the card',
+      );
+      await tester.pump(const Duration(seconds: 4));
+      await _frames(tester, 5);
+      playback.positionNotifier.value = const Duration(seconds: 24);
+      await _frames(tester, 4);
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+      );
+      final scrollable = tester.state<ScrollableState>(
+        find.descendant(
+          of: find.byType(LyricsView),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Scrollable &&
+                widget.axisDirection == AxisDirection.down,
           ),
-        );
-        final beforeUpwardSwipe = scrollable.position.pixels;
-        await tester.dragFrom(const Offset(100, 300), const Offset(0, -60));
-        await _frames(tester, 4);
-        expect(scrollable.position.pixels, greaterThan(beforeUpwardSwipe));
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsNothing,
-          reason: 'upward lyric browsing must leave the card folded',
-        );
-        final beforeDownwardSwipe = scrollable.position.pixels;
-        await tester.dragFrom(const Offset(100, 300), const Offset(0, 60));
-        await _frames(tester, 4);
-        expect(scrollable.position.pixels, lessThan(beforeDownwardSwipe));
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsOneWidget,
-        );
-        expect(tester.state(find.byType(LyricsView)), lyricsState);
-        expect(
-          tester
-              .element(find.byType(LyricsTranslationButton))
-              .read<LyricsTranslationController>(),
-          same(translationController),
-        );
-        final beforeActiveUpwardSwipe = scrollable.position.pixels;
-        await tester.dragFrom(const Offset(100, 300), const Offset(0, -60));
-        await _frames(tester, 5);
-        expect(
-          scrollable.position.pixels,
-          greaterThan(beforeActiveUpwardSwipe),
-        );
-        final foldedCard = tester.getRect(
-          find.byKey(const ValueKey('lyrics-control-card')),
-        );
-        expect(foldedCard.top, greaterThan(card.top));
-        expect(foldedCard.bottom, closeTo(card.bottom, 0.01));
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsNothing,
-          reason: 'upward lyric browsing actively folds a visible card',
-        );
-        expect(tester.state(find.byType(LyricsView)), lyricsState);
-        await tester.dragFrom(const Offset(100, 300), const Offset(0, 60));
-        await _frames(tester, 4);
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsOneWidget,
-        );
-        expect(tester.state(find.byType(LyricsView)), lyricsState);
-        expect(
-          tester
-              .element(find.byType(LyricsTranslationButton))
-              .read<LyricsTranslationController>(),
-          same(translationController),
-        );
-        await tester.pump(const Duration(milliseconds: 3500));
-        await _frames(tester, 5);
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsNothing,
-          reason: 'manual lyric browsing re-arms the next idle cycle',
-        );
-        playback.positionNotifier.value = const Duration(seconds: 32);
-        await _frames(tester, 4);
-        expect(
-          find.byType(LyricsTranslationButton).hitTestable(),
-          findsNothing,
-          reason: 'later playback updates must not wake the folded card',
-        );
-        expect(tester.takeException(), isNull);
-        await tester.pumpWidget(const SizedBox.shrink());
-        await _frames(tester);
-        debugDefaultTargetPlatformOverride = null;
-      },
-    );
+        ),
+      );
+      final beforeUpwardSwipe = scrollable.position.pixels;
+      await tester.dragFrom(const Offset(100, 300), const Offset(0, -60));
+      await _frames(tester, 4);
+      expect(scrollable.position.pixels, greaterThan(beforeUpwardSwipe));
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+        reason:
+            'the footer translation toggle remains available while browsing',
+      );
+      final beforeDownwardSwipe = scrollable.position.pixels;
+      await tester.dragFrom(const Offset(100, 300), const Offset(0, 60));
+      await _frames(tester, 4);
+      expect(scrollable.position.pixels, lessThan(beforeDownwardSwipe));
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.state(find.byType(LyricsView)), lyricsState);
+      expect(
+        tester
+            .element(find.byType(LyricsTranslationToggle))
+            .read<LyricsTranslationController>(),
+        same(translationController),
+      );
+      final beforeActiveUpwardSwipe = scrollable.position.pixels;
+      await tester.dragFrom(const Offset(100, 300), const Offset(0, -60));
+      await _frames(tester, 5);
+      expect(scrollable.position.pixels, greaterThan(beforeActiveUpwardSwipe));
+      final foldedCard = tester.getRect(
+        find.byKey(const ValueKey('lyrics-control-card')),
+      );
+      expect(foldedCard.top, greaterThan(card.top));
+      expect(foldedCard.bottom, closeTo(card.bottom, 0.01));
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+        reason:
+            'the lower translation control remains available while the lyric card folds',
+      );
+      expect(tester.state(find.byType(LyricsView)), lyricsState);
+      await tester.dragFrom(const Offset(100, 300), const Offset(0, 60));
+      await _frames(tester, 4);
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.state(find.byType(LyricsView)), lyricsState);
+      expect(
+        tester
+            .element(find.byType(LyricsTranslationToggle))
+            .read<LyricsTranslationController>(),
+        same(translationController),
+      );
+      await tester.pump(const Duration(milliseconds: 3500));
+      await _frames(tester, 5);
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+        reason:
+            'manual lyric browsing re-arms the next idle cycle without hiding the footer control',
+      );
+      playback.positionNotifier.value = const Duration(seconds: 32);
+      await _frames(tester, 4);
+      expect(
+        find.byType(LyricsTranslationToggle).hitTestable(),
+        findsOneWidget,
+        reason: 'later playback updates must not wake the folded card',
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _frames(tester);
+      debugDefaultTargetPlatformOverride = null;
+    });
   }
 
   testWidgets('large text and landscape keep lyrics and controls usable', (

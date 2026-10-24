@@ -335,7 +335,7 @@ void main() {
     }
 
     testWidgets(
-      'remote right controls keep status, device, and lyrics toggle',
+      'remote right controls keep status, device, and floating lyrics actions',
       (tester) async {
         final controls = TaskbarLyricsControls(
           _NoopTaskbarLyricsPlatform(),
@@ -357,20 +357,62 @@ void main() {
           expect(button, findsOneWidget);
           expect(tester.getSize(button), const Size.square(36));
         }
-        expect(
-          tester.getCenter(buttons[1]).dx - tester.getCenter(buttons[0]).dx,
-          40,
-        );
-        expect(
-          tester.getCenter(buttons[2]).dx - tester.getCenter(buttons[1]).dx,
-          40,
-        );
+        expect(find.byTooltip(zh.lyricsImmersive), findsNothing);
+        for (var i = 1; i < buttons.length; i++) {
+          expect(
+            tester.getCenter(buttons[i]).dx -
+                tester.getCenter(buttons[i - 1]).dx,
+            40,
+          );
+        }
         expect(find.byType(Slider), findsNWidgets(2));
         expect(tester.takeException(), isNull);
         await unmount(tester);
         controls.dispose();
       },
     );
+
+    testWidgets('desktop progress and volume sliders share geometry', (
+      tester,
+    ) async {
+      await pumpHost(
+        tester,
+        const Size(1280, 700),
+        const DesktopPlayerBar(),
+        cluster: syntheticCluster(withActive: false),
+      );
+      final playback = tester
+          .element(find.byType(Scaffold))
+          .read<PlaybackProvider>();
+      const track = SpotifyTrack(
+        id: 'slider-style-track',
+        name: 'Slider style',
+        durationMs: 240000,
+      );
+      await playback.playTrack(track, contextQueue: const [track]);
+      await tester.pump();
+
+      final sliders = find.byType(Slider);
+      expect(sliders, findsNWidgets(2));
+      final themes = <SliderThemeData>[];
+      for (var i = 0; i < 2; i++) {
+        final slider = sliders.at(i);
+        final theme = find.ancestor(
+          of: slider,
+          matching: find.byType(SliderTheme),
+        );
+        themes.add(tester.widget<SliderTheme>(theme.first).data);
+      }
+      final progressThumb = themes[0].thumbShape as RoundSliderThumbShape;
+      final volumeThumb = themes[1].thumbShape as RoundSliderThumbShape;
+      expect(themes[0].trackHeight, themes[1].trackHeight);
+      expect(progressThumb.enabledThumbRadius, volumeThumb.enabledThumbRadius);
+      final scheme = Theme.of(tester.element(sliders.first)).colorScheme;
+      expect(themes[0].activeTrackColor, scheme.onSurface);
+      expect(themes[1].activeTrackColor, isNot(themes[0].activeTrackColor));
+      expect(tester.takeException(), isNull);
+      await unmount(tester);
+    });
 
     testWidgets('local mode when there is no remote session', (tester) async {
       await pumpHost(

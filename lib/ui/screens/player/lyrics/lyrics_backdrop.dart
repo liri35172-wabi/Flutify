@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/debug_toggles.dart';
 import '../../../../core/theme/flutify_tokens.dart';
-import '../../../shell/desktop/desktop_window.dart';
 import '../../../widgets/liquid_artwork_background.dart';
 import '../../../widgets/apple_music_background.dart';
 
@@ -36,32 +35,11 @@ class LyricsBackdrop extends StatelessWidget {
         !context.tokens.powerSaving &&
         !reducedEffects &&
         !DebugToggles.of(context).isOff(DebugToggle.flowingBackground);
-    // 与 Android 原生背景同一配方：黑底、同样的旋转/饱和度/压暗/模糊。
-    // Windows 调整原生窗口尺寸期间暂停 30fps 封面相位更新，避免把连续背景重绘
-    // 叠加到系统全屏过渡上；窗口稳定后由原有相位继续，不改系统窗口切换顺序。
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final desktop =
-        !kIsWeb &&
-        switch (defaultTargetPlatform) {
-          TargetPlatform.windows ||
-          TargetPlatform.macOS ||
-          TargetPlatform.linux => true,
-          _ => false,
-        };
-    if (!desktop) {
-      return LiquidArtworkBackground(
-        imageUrl: imageUrl,
-        animate: animate,
-        dark: dark,
-      );
-    }
-    return ValueListenableBuilder<bool>(
-      valueListenable: DesktopWindow.fullscreenTransition,
-      builder: (context, transitioning, _) => LiquidArtworkBackground(
-        imageUrl: imageUrl,
-        animate: animate && !transitioning,
-        dark: dark,
-      ),
+    // 与 Android 原生背景同一配方：黑底、同样的旋转/饱和度/压暗/模糊
+    return LiquidArtworkBackground(
+      imageUrl: imageUrl,
+      animate: animate,
+      dark: Theme.of(context).brightness == Brightness.dark,
     );
   }
 }

@@ -90,7 +90,9 @@ class LyricsSheet extends StatelessWidget {
                   left: 16,
                   right: 16,
                   bottom: 16 + bottomSafe,
-                  child: const LyricsGlassControls(),
+                  child: const LyricsGlassControls(
+                    translation: LyricsTranslationToggle(),
+                  ),
                 ),
             ],
           ),
@@ -127,12 +129,6 @@ class _Header extends StatelessWidget {
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                if (track != null)
-                  const Positioned(
-                    top: 0,
-                    right: 0,
-                    child: LyricsTranslationButton(),
-                  ),
               ],
             ),
           ),

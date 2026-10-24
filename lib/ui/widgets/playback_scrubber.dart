@@ -16,6 +16,7 @@ import 'text_metrics.dart';
 class PlaybackScrubber extends StatefulWidget {
   /// true：桌面样式（时间在两侧，单行）；false：移动端样式（时间在下方）。
   final bool compact;
+
   /// Android shared-element morph: 0 = original detail, 1 = lyrics card.
   /// Null preserves the existing desktop/mobile layout and behavior.
   final double? compactProgress;
@@ -31,6 +32,9 @@ class PlaybackScrubber extends StatefulWidget {
     this.inactiveColor,
     this.labelColor,
   });
+
+  static const double compactTrackHeight = 3;
+  static const double compactThumbRadius = 5;
 
   static double expandedLabelHeight(BuildContext context) =>
       TextMetrics.lineHeight(
@@ -49,7 +53,9 @@ class _PlaybackScrubberState extends State<PlaybackScrubber> {
   @override
   Widget build(BuildContext context) {
     final playback = context.read<PlaybackProvider>();
-    final durationMs = context.select<PlaybackProvider, int>((p) => p.duration.inMilliseconds);
+    final durationMs = context.select<PlaybackProvider, int>(
+      (p) => p.duration.inMilliseconds,
+    );
     final colorScheme = Theme.of(context).colorScheme;
     final labelColor = widget.labelColor ?? colorScheme.onSurfaceVariant;
     final labelStyle = TextStyle(
@@ -60,12 +66,30 @@ class _PlaybackScrubberState extends State<PlaybackScrubber> {
 
     final compactness = widget.compactProgress ?? (widget.compact ? 1.0 : 0.0);
     final sliderTheme = SliderTheme.of(context).copyWith(
-      trackHeight: lerpDouble(3.5, 3, compactness),
-      thumbShape: RoundSliderThumbShape(enabledThumbRadius: lerpDouble(6, 5, compactness)!),
-      overlayShape: RoundSliderOverlayShape(overlayRadius: lerpDouble(14, 10, compactness)!),
-      activeTrackColor: widget.activeColor,
-      inactiveTrackColor: widget.inactiveColor,
-      thumbColor: widget.activeColor,
+      trackHeight: lerpDouble(
+        3.5,
+        PlaybackScrubber.compactTrackHeight,
+        compactness,
+      ),
+      thumbShape: RoundSliderThumbShape(
+        enabledThumbRadius: lerpDouble(
+          6,
+          PlaybackScrubber.compactThumbRadius,
+          compactness,
+        )!,
+      ),
+      overlayShape: RoundSliderOverlayShape(
+        overlayRadius: lerpDouble(14, 10, compactness)!,
+      ),
+      activeTrackColor:
+          widget.activeColor ?? (widget.compact ? colorScheme.onSurface : null),
+      inactiveTrackColor:
+          widget.inactiveColor ??
+          (widget.compact
+              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.52)
+              : null),
+      thumbColor:
+          widget.activeColor ?? (widget.compact ? colorScheme.onSurface : null),
     );
 
     return RepaintBoundary(
@@ -73,7 +97,8 @@ class _PlaybackScrubberState extends State<PlaybackScrubber> {
         valueListenable: playback.positionNotifier,
         builder: (context, position, _) {
           final maxMs = durationMs > 0 ? durationMs.toDouble() : 1.0;
-          final valueMs = (_dragValueMs ?? position.inMilliseconds.toDouble()).clamp(0.0, maxMs);
+          final valueMs = (_dragValueMs ?? position.inMilliseconds.toDouble())
+              .clamp(0.0, maxMs);
           final shown = Duration(milliseconds: valueMs.round());
 
           final slider = SliderTheme(
@@ -90,7 +115,9 @@ class _PlaybackScrubberState extends State<PlaybackScrubber> {
             ),
           );
 
-          final remaining = Duration(milliseconds: (durationMs - valueMs).round().clamp(0, durationMs));
+          final remaining = Duration(
+            milliseconds: (durationMs - valueMs).round().clamp(0, durationMs),
+          );
           if (widget.compactProgress != null) {
             return _MorphingScrubber(
               progress: compactness,
@@ -107,14 +134,21 @@ class _PlaybackScrubberState extends State<PlaybackScrubber> {
               children: [
                 SizedBox(
                   width: 40,
-                  child: Text(Formatters.formatDuration(shown), style: labelStyle, textAlign: TextAlign.right),
+                  child: Text(
+                    Formatters.formatDuration(shown),
+                    style: labelStyle,
+                    textAlign: TextAlign.right,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(child: slider),
                 const SizedBox(width: 8),
                 SizedBox(
                   width: 40,
-                  child: Text(Formatters.formatDurationMs(durationMs), style: labelStyle),
+                  child: Text(
+                    Formatters.formatDurationMs(durationMs),
+                    style: labelStyle,
+                  ),
                 ),
               ],
             );
@@ -130,7 +164,10 @@ class _PlaybackScrubberState extends State<PlaybackScrubber> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(Formatters.formatDuration(shown), style: labelStyle),
-                    Text('-${Formatters.formatDuration(remaining)}', style: labelStyle),
+                    Text(
+                      '-${Formatters.formatDuration(remaining)}',
+                      style: labelStyle,
+                    ),
                   ],
                 ),
               ),
@@ -186,14 +223,24 @@ class _MorphingScrubber extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Positioned(left: inset, right: inset, top: 0, height: 48, child: slider),
+              Positioned(
+                left: inset,
+                right: inset,
+                top: 0,
+                height: 48,
+                child: slider,
+              ),
               Positioned(
                 left: labelInset,
                 top: labelY,
                 width: side,
                 height: labelHeight,
                 child: Align(
-                  alignment: Alignment.lerp(Alignment.centerLeft, Alignment.centerRight, progress)!,
+                  alignment: Alignment.lerp(
+                    Alignment.centerLeft,
+                    Alignment.centerRight,
+                    progress,
+                  )!,
                   child: Text(elapsed, style: labelStyle, maxLines: 1),
                 ),
               ),
@@ -203,15 +250,25 @@ class _MorphingScrubber extends StatelessWidget {
                 width: side,
                 height: labelHeight,
                 child: Stack(
-                  alignment: Alignment.lerp(Alignment.centerRight, Alignment.centerLeft, progress)!,
+                  alignment: Alignment.lerp(
+                    Alignment.centerRight,
+                    Alignment.centerLeft,
+                    progress,
+                  )!,
                   children: [
                     ExcludeSemantics(
                       excluding: progress >= 0.5,
-                      child: Opacity(opacity: 1 - progress, child: Text(remaining, style: labelStyle, maxLines: 1)),
+                      child: Opacity(
+                        opacity: 1 - progress,
+                        child: Text(remaining, style: labelStyle, maxLines: 1),
+                      ),
                     ),
                     ExcludeSemantics(
                       excluding: progress < 0.5,
-                      child: Opacity(opacity: progress, child: Text(total, style: labelStyle, maxLines: 1)),
+                      child: Opacity(
+                        opacity: progress,
+                        child: Text(total, style: labelStyle, maxLines: 1),
+                      ),
                     ),
                   ],
                 ),
@@ -230,24 +287,36 @@ class PlaybackProgressLine extends StatelessWidget {
   final Color? color;
   final Color? backgroundColor;
 
-  const PlaybackProgressLine({super.key, this.height = 2.5, this.color, this.backgroundColor});
+  const PlaybackProgressLine({
+    super.key,
+    this.height = 2.5,
+    this.color,
+    this.backgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final playback = context.read<PlaybackProvider>();
-    final durationMs = context.select<PlaybackProvider, int>((p) => p.duration.inMilliseconds);
+    final durationMs = context.select<PlaybackProvider, int>(
+      (p) => p.duration.inMilliseconds,
+    );
     final colorScheme = Theme.of(context).colorScheme;
 
     return RepaintBoundary(
       child: ValueListenableBuilder<Duration>(
         valueListenable: playback.positionNotifier,
         builder: (context, position, _) {
-          final fraction = durationMs <= 0 ? 0.0 : (position.inMilliseconds / durationMs).clamp(0.0, 1.0);
+          final fraction = durationMs <= 0
+              ? 0.0
+              : (position.inMilliseconds / durationMs).clamp(0.0, 1.0);
           return LinearProgressIndicator(
             value: fraction,
             minHeight: height,
-            backgroundColor: backgroundColor ?? colorScheme.surfaceContainerHighest,
-            valueColor: AlwaysStoppedAnimation<Color>(color ?? colorScheme.primary),
+            backgroundColor:
+                backgroundColor ?? colorScheme.surfaceContainerHighest,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              color ?? colorScheme.primary,
+            ),
           );
         },
       ),

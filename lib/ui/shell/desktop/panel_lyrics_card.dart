@@ -42,6 +42,10 @@ class PanelLyricsCard extends StatelessWidget {
       key: ValueKey((track.id, remote)),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
+        // The live backdrop and translucent lyric layers meet at the rounded
+        // edge; composite them together so fractional-DPI desktop corners do
+        // not show seams between separately painted layers.
+        clipBehavior: Clip.antiAliasWithSaveLayer,
         child: BackdropGroup(
           child: Stack(
             fit: StackFit.expand,

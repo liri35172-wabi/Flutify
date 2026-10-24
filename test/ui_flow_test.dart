@@ -130,8 +130,8 @@ void main() {
     expect(firstLine, findsOneWidget);
     // 手机只保留内嵌歌词：流动背景和玻璃控制区，不再重复打开全屏面板。
     expect(find.byType(LyricsBackdrop), findsOneWidget);
-    // Playback controls plus the source-translation toolbar button.
-    expect(find.byType(LiquidGlass), findsNWidgets(2));
+    // Translation now lives in the playback control surface, not a separate toolbar.
+    expect(find.byType(LiquidGlass), findsOneWidget);
     expect(find.byIcon(Icons.translate_rounded), findsOneWidget);
     expect(find.byTooltip('全屏歌词'), findsNothing);
     // Android now uses the native micro-bitmap background and Apple's

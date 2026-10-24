@@ -348,7 +348,7 @@ class _AccountButton extends StatelessWidget {
           : context.l10n.shellAccountMenu,
       child: IconButton(
         onPressed: onPressed,
-        icon: const UserAvatar(size: 28),
+        icon: const UserAvatar(size: 34),
         style: IconButton.styleFrom(
           fixedSize: const Size.square(DesktopTopBar.controlSize),
           backgroundColor: colorScheme.surfaceContainerHigh,

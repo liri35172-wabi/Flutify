@@ -16,11 +16,11 @@ import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/breathing_dots.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyric_line_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/lyrics_glass_controls.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics_sheet.dart';
 import 'package:flutify_app/ui/screens/settings/sections/lyrics_section.dart';
 import 'package:flutify_app/ui/screens/settings/widgets/settings_section.dart';
-import 'package:flutify_app/ui/widgets/liquid_glass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
@@ -348,39 +348,37 @@ void main() {
         expect(find.byType(BreathingDots), findsOneWidget);
         expect(lyricText('First words'), findsOneWidget);
         expect(lyricText('第一句歌词'), findsOneWidget);
-        final buttonRect = tester.getRect(find.byType(LyricsTranslationButton));
+        final translationToggle = find.byType(LyricsTranslationToggle);
+        expect(translationToggle, findsOneWidget);
+        expect(find.byType(LyricsTranslationButton), findsNothing);
+        final buttonRect = tester.getRect(translationToggle);
+        expect(buttonRect.center.dy, greaterThan(500));
         if (sheet == 'lyrics sheet') {
-          final title = find.descendant(
-            of: find.byType(LyricsSheet),
-            matching: find.text(track.name),
+          expect(
+            find.ancestor(
+              of: translationToggle,
+              matching: find.byType(LyricsGlassControls),
+            ),
+            findsOneWidget,
           );
-          final cardRect = tester.getRect(
-            find.ancestor(of: title, matching: find.byType(LiquidGlass)).first,
-          );
-          expect(buttonRect.right, closeTo(cardRect.right, 0.1));
-          expect(cardRect.top - buttonRect.bottom, closeTo(6, 0.1));
+          final controlsRect = tester.getRect(find.byType(LyricsGlassControls));
+          expect(buttonRect.top, greaterThanOrEqualTo(controlsRect.top));
+          expect(buttonRect.bottom, lessThanOrEqualTo(controlsRect.bottom));
         } else {
           final cardRect = tester.getRect(
             find.byKey(const ValueKey('lyrics-control-card')),
           );
-          expect(buttonRect.right, closeTo(cardRect.right, 0.1));
-          expect(cardRect.top - buttonRect.bottom, closeTo(8, 0.1));
+          expect(buttonRect.center.dy, greaterThan(cardRect.center.dy));
         }
-        expect(buttonRect.width, greaterThanOrEqualTo(48));
+        expect(buttonRect.width, greaterThanOrEqualTo(44));
         expect(buttonRect.height, buttonRect.width);
-        final decoration =
-            tester
-                    .widget<AnimatedContainer>(
-                      find.descendant(
-                        of: find.byType(LyricsTranslationButton),
-                        matching: find.byType(AnimatedContainer),
-                      ),
-                    )
-                    .decoration
-                as BoxDecoration;
-        expect(decoration.borderRadius, BorderRadius.circular(24));
+        final translationAction = find.descendant(
+          of: translationToggle,
+          matching: find.byType(IconButton),
+        );
+        expect(translationAction, findsOneWidget);
         expect(tester.takeException(), isNull);
-        await tester.tap(find.byType(LyricsTranslationButton));
+        await tester.tap(translationToggle);
         for (var frame = 0; frame < 8; frame++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
