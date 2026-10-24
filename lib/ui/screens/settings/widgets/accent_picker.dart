@@ -4,6 +4,7 @@ import '../../../../core/theme/flutify_tokens.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../models/appearance.dart';
 import 'custom_color_dialog.dart';
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 
 /// 强调色色板：7 个预设 + 1 个「自定义」彩虹色块。
 ///
@@ -15,7 +16,12 @@ class AccentPicker extends StatelessWidget {
   final bool dimmed;
   final ValueChanged<Color> onChanged;
 
-  const AccentPicker({super.key, required this.selected, required this.onChanged, this.dimmed = false});
+  const AccentPicker({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+    this.dimmed = false,
+  });
 
   static const double _size = 34;
 
@@ -52,7 +58,9 @@ class AccentPicker extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, box) {
           // 一行放得下就一行；放不下时均分成若干行（手机上 4 + 4），避免 6 + 2 的残行
-          final fit = ((box.maxWidth + _gap) / (_Swatch.outer + _gap)).floor().clamp(1, swatches.length);
+          final fit = ((box.maxWidth + _gap) / (_Swatch.outer + _gap))
+              .floor()
+              .clamp(1, swatches.length);
           final rows = (swatches.length / fit).ceil();
           final perRow = (swatches.length / rows).ceil();
           return Column(
@@ -61,9 +69,15 @@ class AccentPicker extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.only(top: r == 0 ? 0 : 12),
                   child: Row(
-                    mainAxisAlignment: rows == 1 ? MainAxisAlignment.start : MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: rows == 1
+                        ? MainAxisAlignment.start
+                        : MainAxisAlignment.spaceBetween,
                     children: [
-                      for (final (i, s) in swatches.skip(r * perRow).take(perRow).indexed) ...[
+                      for (final (i, s)
+                          in swatches
+                              .skip(r * perRow)
+                              .take(perRow)
+                              .indexed) ...[
                         if (rows == 1 && i > 0) const SizedBox(width: _gap),
                         s,
                       ],
@@ -85,7 +99,12 @@ class _Swatch extends StatelessWidget {
   final VoidCallback onTap;
   final Widget child;
 
-  const _Swatch({required this.selected, this.tooltip, required this.onTap, required this.child});
+  const _Swatch({
+    required this.selected,
+    this.tooltip,
+    required this.onTap,
+    required this.child,
+  });
 
   /// 含选中环在内的外径。
   static const double outer = AccentPicker._size + 8;
@@ -105,13 +124,23 @@ class _Swatch extends StatelessWidget {
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: selected ? colorScheme.onSurface : Colors.transparent, width: 2),
+            border: Border.all(
+              color: selected ? colorScheme.onSurface : Colors.transparent,
+              width: 2,
+            ),
           ),
           child: ClipOval(child: child),
         ),
       ),
     );
-    if (tooltip != null) swatch = Tooltip(message: tooltip!, child: swatch);
+    if (tooltip != null) {
+      swatch = ControlTooltip(
+        message: tooltip!,
+        placement: ControlTooltipPlacement.above,
+        hitboxSize: outer,
+        child: swatch,
+      );
+    }
     return MouseRegion(cursor: SystemMouseCursors.click, child: swatch);
   }
 }
@@ -122,7 +151,8 @@ class _Fill extends StatelessWidget {
   const _Fill({required this.color});
 
   @override
-  Widget build(BuildContext context) => ColoredBox(color: color, child: const SizedBox.expand());
+  Widget build(BuildContext context) =>
+      ColoredBox(color: color, child: const SizedBox.expand());
 }
 
 /// 彩虹扫描渐变；选中自定义色时中心叠一个该颜色的小圆点。

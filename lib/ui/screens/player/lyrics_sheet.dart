@@ -13,6 +13,8 @@ import 'lyrics/lyrics_view.dart';
 import 'lyrics/lyrics_translation_controls.dart';
 import 'player_modal.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 同步歌词面板（Apple Music iOS 风格，手机 / 窄窗口使用）。
 /// 遥控远程设备时同样可用（手机上点远程迷你播放器即打开它）。
 ///
@@ -179,14 +181,19 @@ class _Header extends StatelessWidget {
                     size: 22,
                     inactiveColor: Colors.white70,
                   ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Colors.white,
-                    size: 28,
+                ControlTooltip(
+                  message: context.l10n.commonClose,
+                  placement: ControlTooltipPlacement.below,
+                  hitboxSize: 40,
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  tooltip: context.l10n.commonClose,
-                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),

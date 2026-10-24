@@ -17,6 +17,8 @@ import 'marquee_text.dart';
 import 'playback_scrubber.dart';
 import 'player_controls.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 移动端悬浮胶囊迷你播放器（位于毛玻璃底部导航上方）。
 ///
 /// - 胶囊形、背景色取自专辑封面并压暗（与 Spotify 一致），切歌时平滑过渡；
@@ -185,16 +187,20 @@ class _MiniPlayerRow extends StatelessWidget {
               ),
 
               if (showDevice)
-                IconButton(
-                  tooltip: activeDeviceName ?? context.l10n.deviceConnectTitle,
-                  icon: Icon(
-                    Icons.devices_rounded,
-                    color: activeDeviceName != null
-                        ? colorScheme.primary
-                        : Colors.white70,
-                    size: 20,
+                ControlTooltip(
+                  message: activeDeviceName ?? context.l10n.deviceConnectTitle,
+                  placement: ControlTooltipPlacement.above,
+                  hitboxSize: 32,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.devices_rounded,
+                      color: activeDeviceName != null
+                          ? colorScheme.primary
+                          : Colors.white70,
+                      size: 20,
+                    ),
+                    onPressed: () => DevicePickerSheet.show(context),
                   ),
-                  onPressed: () => DevicePickerSheet.show(context),
                 ),
 
               if (showLike) LikeButton(track: track, size: 22),

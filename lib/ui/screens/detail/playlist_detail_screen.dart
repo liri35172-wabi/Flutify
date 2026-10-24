@@ -24,6 +24,8 @@ import '../../widgets/track_tile.dart';
 import 'widgets/collection_hero.dart';
 import 'widgets/collection_widgets.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 歌单详情页（含 Liked Songs 与自建歌单）。
 ///
 /// - 媒体库中的歌单通过 select 实时反映增删歌曲。
@@ -118,8 +120,9 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
     final playlist = _fetched ?? libraryVersion ?? widget.playlist;
     final tracks = playlist.tracks;
     final isLikedSongs = playlist.id == LibraryProvider.likedSongsId;
-    final isBackupLikedSongs =
-        playlist.id.startsWith(BackupAccount.backupLikedPrefix);
+    final isBackupLikedSongs = playlist.id.startsWith(
+      BackupAccount.backupLikedPrefix,
+    );
     final isOwn = library.isOwnPlaylist(playlist.id);
     final l10n = context.l10n;
     // 「已点赞的歌曲」由 LibraryProvider 生成，名称与简介按界面语言展示
@@ -256,31 +259,34 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
                         onPressed: () => library.togglePlaylistSaved(playlist),
                       ),
                     if (!isLikedSongs && tracks.isNotEmpty)
-                      IconButton(
-                        icon: Icon(
-                          _selecting
-                              ? Icons.check_box_rounded
-                              : Icons.playlist_add_check_rounded,
-                          size: 26,
-                          color: _selecting
-                              ? Theme.of(context).colorScheme.primary
-                              : null,
+                      ControlTooltip(
+                        message: _selecting ? '退出选择歌曲' : '选择部分歌曲一键导入到本账号',
+                        placement: ControlTooltipPlacement.above,
+                        hitboxSize: 32,
+                        child: IconButton(
+                          icon: Icon(
+                            _selecting
+                                ? Icons.check_box_rounded
+                                : Icons.playlist_add_check_rounded,
+                            size: 26,
+                            color: _selecting
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
+
+                          onPressed: () {
+                            setState(() {
+                              _selecting = !_selecting;
+                              if (_selecting && _selectedTrackIds.isEmpty) {
+                                _selectedTrackIds.addAll(
+                                  visible
+                                      .map((t) => t.id)
+                                      .where((id) => id.isNotEmpty),
+                                );
+                              }
+                            });
+                          },
                         ),
-                        tooltip: _selecting
-                            ? '退出选择歌曲'
-                            : '选择部分歌曲一键导入到本账号',
-                        onPressed: () {
-                          setState(() {
-                            _selecting = !_selecting;
-                            if (_selecting && _selectedTrackIds.isEmpty) {
-                              _selectedTrackIds.addAll(
-                                visible
-                                    .map((t) => t.id)
-                                    .where((id) => id.isNotEmpty),
-                              );
-                            }
-                          });
-                        },
                       ),
                     if (!isBackupLikedSongs)
                       ShareButton(target: ShareTarget.playlist(playlist)),

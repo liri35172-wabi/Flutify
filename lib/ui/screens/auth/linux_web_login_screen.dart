@@ -12,6 +12,8 @@ import '../../../services/eme/chrome/linux_chrome.dart';
 import '../../widgets/toast/app_toast.dart';
 import 'web_login_screen.dart' show WebLoginResult;
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// Linux 全曲播放 Web 登录：没有内嵌 WebView，改用一个受管理的系统 Chrome
 /// 打开 Spotify 官方登录页，用户在窗口里登录后，App 经 CDP 读取 HttpOnly 的
 /// `sp_dc` cookie（Widevine 真密钥所需），随后窗口自动隐藏、登录态持久化。
@@ -20,7 +22,10 @@ class LinuxWebLoginScreen extends StatefulWidget {
 
   static Future<WebLoginResult?> open(BuildContext context) {
     return Navigator.of(context, rootNavigator: true).push<WebLoginResult?>(
-      MaterialPageRoute(fullscreenDialog: true, builder: (_) => const LinuxWebLoginScreen()),
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const LinuxWebLoginScreen(),
+      ),
     );
   }
 
@@ -105,9 +110,10 @@ class _LinuxWebLoginScreenState extends State<LinuxWebLoginScreen> {
     if (_done || !mounted) return;
     _done = true;
     _poll?.cancel();
-    Navigator.of(context, rootNavigator: true).pop(
-      WebLoginResult(spDc: spDc, desktopAuthorized: authorized),
-    );
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).pop(WebLoginResult(spDc: spDc, desktopAuthorized: authorized));
   }
 
   Future<void> _reopen() async {
@@ -124,10 +130,16 @@ class _LinuxWebLoginScreenState extends State<LinuxWebLoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.webLoginTitle),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          tooltip: l10n.commonClose,
-          onPressed: () => _finish(_tokens.spDc, authorized: _auth?.isSignedIn ?? false),
+        leading: ControlTooltip(
+          message: l10n.commonClose,
+          placement: ControlTooltipPlacement.below,
+          hitboxSize: 40,
+          child: IconButton(
+            icon: const Icon(Icons.close_rounded),
+
+            onPressed: () =>
+                _finish(_tokens.spDc, authorized: _auth?.isSignedIn ?? false),
+          ),
         ),
       ),
       body: Column(
@@ -165,7 +177,10 @@ class _LinuxWebLoginScreenState extends State<LinuxWebLoginScreen> {
                         size: 48,
                       ),
                       const SizedBox(height: 16),
-                      Text('${l10n.loginFailed}：$_error', textAlign: TextAlign.center),
+                      Text(
+                        '${l10n.loginFailed}：$_error',
+                        textAlign: TextAlign.center,
+                      ),
                     ],
                     const SizedBox(height: 24),
                     Wrap(
@@ -178,7 +193,9 @@ class _LinuxWebLoginScreenState extends State<LinuxWebLoginScreen> {
                         ),
                         OutlinedButton.icon(
                           onPressed: () async {
-                            final messenger = ScaffoldMessenger.maybeOf(context);
+                            final messenger = ScaffoldMessenger.maybeOf(
+                              context,
+                            );
                             await Clipboard.setData(
                               ClipboardData(text: _loginUrl.toString()),
                             );

@@ -20,6 +20,8 @@ import 'widgets/home_shortcuts_grid.dart';
 import 'widgets/home_skeleton.dart';
 import 'widgets/home_top_gradient.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 主页：与官方 Spotify 客户端同源的 home 查询，按分区原样还原。
 ///
 /// 自上而下：
@@ -100,16 +102,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     chips: home.chips,
                     selected: facet,
                     onSelected: provider.selectHomeFacet,
-                    trailing: IconButton(
-                      tooltip: context.l10n.homeRefresh,
-                      onPressed:
-                          loading ||
-                              !context.read<SpotifyApiService>().isConfigured
-                          ? null
-                          : _refresh,
-                      icon: const Icon(Icons.refresh_rounded),
-                      iconSize: 20,
-                      visualDensity: VisualDensity.compact,
+                    trailing: ControlTooltip(
+                      message: context.l10n.homeRefresh,
+                      placement: ControlTooltipPlacement.above,
+                      hitboxSize: 32,
+                      child: IconButton(
+                        onPressed:
+                            loading ||
+                                !context.read<SpotifyApiService>().isConfigured
+                            ? null
+                            : _refresh,
+                        icon: const Icon(Icons.refresh_rounded),
+                        iconSize: 20,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
                     background: HomeTopGradient(
                       tint: _hoverTint,

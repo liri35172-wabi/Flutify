@@ -9,6 +9,8 @@ import '../../widgets/user_avatar.dart';
 import 'desktop_window.dart';
 import 'window_caption_buttons.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 桌面端顶栏（与窗口标题栏合一，高 56）。
 ///
 /// 布局：`‹ ›` 后退 / 前进 ─── [⌂] [ 🔍 你想听什么？  Ctrl K ] ─── 头像 · （窗口按钮位）
@@ -146,20 +148,25 @@ class _RoundIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return IconButton(
-      icon: Icon(icon, size: 22),
-      tooltip: tooltip,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        fixedSize: const Size.square(DesktopTopBar.controlSize),
-        minimumSize: const Size.square(DesktopTopBar.controlSize),
-        padding: EdgeInsets.zero,
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        foregroundColor: colorScheme.onSurface,
-        disabledBackgroundColor: colorScheme.surfaceContainerHigh.withAlpha(
-          140,
+    return ControlTooltip(
+      message: tooltip,
+      placement: ControlTooltipPlacement.below,
+      hitboxSize: 40,
+      child: IconButton(
+        icon: Icon(icon, size: 22),
+
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          fixedSize: const Size.square(DesktopTopBar.controlSize),
+          minimumSize: const Size.square(DesktopTopBar.controlSize),
+          padding: EdgeInsets.zero,
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          foregroundColor: colorScheme.onSurface,
+          disabledBackgroundColor: colorScheme.surfaceContainerHigh.withAlpha(
+            140,
+          ),
+          disabledForegroundColor: colorScheme.onSurfaceVariant.withAlpha(110),
         ),
-        disabledForegroundColor: colorScheme.onSurfaceVariant.withAlpha(110),
       ),
     );
   }
@@ -175,16 +182,24 @@ class _HomeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return IconButton(
-      icon: Icon(selected ? Icons.home_filled : Icons.home_outlined, size: 22),
-      tooltip: context.l10n.shellHome,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        fixedSize: const Size.square(DesktopTopBar.controlSize),
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        foregroundColor: selected
-            ? colorScheme.onSurface
-            : colorScheme.onSurfaceVariant,
+    return ControlTooltip(
+      message: context.l10n.shellHome,
+      placement: ControlTooltipPlacement.below,
+      hitboxSize: 40,
+      child: IconButton(
+        icon: Icon(
+          selected ? Icons.home_filled : Icons.home_outlined,
+          size: 22,
+        ),
+
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          fixedSize: const Size.square(DesktopTopBar.controlSize),
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          foregroundColor: selected
+              ? colorScheme.onSurface
+              : colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -294,15 +309,20 @@ class _SearchFieldState extends State<_SearchField> {
               ),
             ),
             if (hasText)
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                tooltip: l10n.commonClear,
-                color: colorScheme.onSurfaceVariant,
-                onPressed: () {
-                  widget.controller.clear();
-                  widget.onChanged('');
-                  widget.focusNode.requestFocus();
-                },
+              ControlTooltip(
+                message: l10n.commonClear,
+                placement: ControlTooltipPlacement.below,
+                hitboxSize: 40,
+                child: IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+
+                  color: colorScheme.onSurfaceVariant,
+                  onPressed: () {
+                    widget.controller.clear();
+                    widget.onChanged('');
+                    widget.focusNode.requestFocus();
+                  },
+                ),
               )
             else if (!focused)
               Container(
@@ -342,10 +362,12 @@ class _AccountButton extends StatelessWidget {
       (a) => (a.isSignedIn, a.displayName),
     );
 
-    return Tooltip(
+    return ControlTooltip(
       message: signedIn && name.isNotEmpty
           ? name
           : context.l10n.shellAccountMenu,
+      placement: ControlTooltipPlacement.below,
+      hitboxSize: DesktopTopBar.controlSize,
       child: IconButton(
         onPressed: onPressed,
         icon: const UserAvatar(size: 34),

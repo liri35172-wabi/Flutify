@@ -4,6 +4,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../../l10n/l10n.dart';
 import 'desktop_window.dart';
 import 'snap_layout_bridge.dart';
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 
 /// Windows 11 风格的窗口按钮组：最小化 / 最大化（还原）/ 关闭。
 ///
@@ -23,7 +24,8 @@ class WindowCaptionButtons extends StatefulWidget {
   State<WindowCaptionButtons> createState() => _WindowCaptionButtonsState();
 }
 
-class _WindowCaptionButtonsState extends State<WindowCaptionButtons> with WindowListener {
+class _WindowCaptionButtonsState extends State<WindowCaptionButtons>
+    with WindowListener {
   bool _maximized = false;
 
   @override
@@ -118,7 +120,10 @@ class _CaptionButtonState extends State<_CaptionButton> {
   Widget build(BuildContext context) {
     if (!widget.nativeState) return _build(context, _hover, _pressed);
     return ListenableBuilder(
-      listenable: Listenable.merge([SnapLayoutBridge.hovered, SnapLayoutBridge.pressed]),
+      listenable: Listenable.merge([
+        SnapLayoutBridge.hovered,
+        SnapLayoutBridge.pressed,
+      ]),
       builder: (context, _) => _build(
         context,
         _hover || SnapLayoutBridge.hovered.value,
@@ -138,14 +143,15 @@ class _CaptionButtonState extends State<_CaptionButton> {
       background = pressed
           ? colorScheme.onSurface.withAlpha(20)
           : hover
-              ? colorScheme.onSurface.withAlpha(14)
-              : Colors.transparent;
+          ? colorScheme.onSurface.withAlpha(14)
+          : Colors.transparent;
       foreground = colorScheme.onSurface.withAlpha(hover ? 255 : 210);
     }
 
-    return Tooltip(
+    return ControlTooltip(
       message: widget.tooltip,
       waitDuration: const Duration(milliseconds: 600),
+      placement: ControlTooltipPlacement.below,
       child: MouseRegion(
         onEnter: (_) => setState(() => _hover = true),
         onExit: (_) => setState(() => _hover = _pressed = false),
@@ -159,7 +165,9 @@ class _CaptionButtonState extends State<_CaptionButton> {
             width: _CaptionButton.width,
             height: widget.height,
             color: background,
-            child: CustomPaint(painter: _GlyphPainter(widget.glyph, foreground)),
+            child: CustomPaint(
+              painter: _GlyphPainter(widget.glyph, foreground),
+            ),
           ),
         ),
       ),
@@ -181,20 +189,29 @@ class _GlyphPainter extends CustomPainter {
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke
       ..isAntiAlias = glyph == _Glyph.close;
-    final o = Offset((size.width / 2).floorToDouble() - 5 + 0.5, (size.height / 2).floorToDouble() - 5 + 0.5);
+    final o = Offset(
+      (size.width / 2).floorToDouble() - 5 + 0.5,
+      (size.height / 2).floorToDouble() - 5 + 0.5,
+    );
 
     switch (glyph) {
       case _Glyph.minimize:
         canvas.drawLine(o + const Offset(0, 5), o + const Offset(10, 5), paint);
       case _Glyph.maximize:
         canvas.drawRRect(
-          RRect.fromRectAndRadius(Rect.fromLTWH(o.dx, o.dy, 10, 10), const Radius.circular(1.5)),
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(o.dx, o.dy, 10, 10),
+            const Radius.circular(1.5),
+          ),
           paint..isAntiAlias = true,
         );
       case _Glyph.restore:
         paint.isAntiAlias = true;
         canvas.drawRRect(
-          RRect.fromRectAndRadius(Rect.fromLTWH(o.dx, o.dy + 2, 8, 8), const Radius.circular(1.5)),
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(o.dx, o.dy + 2, 8, 8),
+            const Radius.circular(1.5),
+          ),
           paint,
         );
         final back = Path()
@@ -209,10 +226,15 @@ class _GlyphPainter extends CustomPainter {
         canvas.drawPath(back, paint);
       case _Glyph.close:
         canvas.drawLine(o, o + const Offset(10, 10), paint);
-        canvas.drawLine(o + const Offset(10, 0), o + const Offset(0, 10), paint);
+        canvas.drawLine(
+          o + const Offset(10, 0),
+          o + const Offset(0, 10),
+          paint,
+        );
     }
   }
 
   @override
-  bool shouldRepaint(_GlyphPainter old) => old.glyph != glyph || old.color != color;
+  bool shouldRepaint(_GlyphPainter old) =>
+      old.glyph != glyph || old.color != color;
 }

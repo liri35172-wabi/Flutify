@@ -14,6 +14,8 @@ import 'connect_actions.dart';
 import 'connect_device_icon.dart';
 import 'remote_progress.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 移动端迷你播放器的远程模式：外观与本机胶囊一致，内容与按钮作用于远程设备。
 ///
 /// - 第二行改为强调色「正在 {设备} 上播放」（与官方移动端一致）；
@@ -207,10 +209,14 @@ class _RemoteMiniRow extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            tooltip: context.l10n.deviceConnectTitle,
-            icon: Icon(Icons.devices_rounded, color: tokens.accent, size: 20),
-            onPressed: () => DevicePickerSheet.show(context),
+          ControlTooltip(
+            message: context.l10n.deviceConnectTitle,
+            placement: ControlTooltipPlacement.above,
+            hitboxSize: 32,
+            child: IconButton(
+              icon: Icon(Icons.devices_rounded, color: tokens.accent, size: 20),
+              onPressed: () => DevicePickerSheet.show(context),
+            ),
           ),
           SizedBox.square(
             dimension: 40,

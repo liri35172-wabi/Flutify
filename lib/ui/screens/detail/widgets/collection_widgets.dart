@@ -11,6 +11,7 @@ import '../../../widgets/empty_state.dart';
 import '../../../widgets/player_controls.dart';
 import '../../../widgets/skeleton.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 // 歌单 / 专辑 / 艺人详情页共用的操作行组件（头部见 collection_hero.dart）。
 
 /// 详情页大号播放按钮：
@@ -37,9 +38,10 @@ class ContextPlayButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final uri = playbackContext.uri;
     final tokens = context.tokens;
-    final (isPlayingThis, isThisContext) = context.select<PlaybackProvider, (bool, bool)>(
-      (p) => (p.isPlayingContext(uri), p.playbackContext.uri == uri),
-    );
+    final (isPlayingThis, isThisContext) = context
+        .select<PlaybackProvider, (bool, bool)>(
+          (p) => (p.isPlayingContext(uri), p.playbackContext.uri == uri),
+        );
 
     return Container(
       width: size,
@@ -47,7 +49,12 @@ class ContextPlayButton extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
-          if (elevated) BoxShadow(color: Colors.black.withAlpha(70), blurRadius: 16, offset: const Offset(0, 6)),
+          if (elevated)
+            BoxShadow(
+              color: Colors.black.withAlpha(70),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
         ],
       ),
       child: Material(
@@ -101,8 +108,14 @@ class CollectionActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final shuffle = ShuffleButton(size: 26, inactiveColor: colorScheme.onSurfaceVariant);
-    final play = ContextPlayButton(tracks: tracks, playbackContext: playbackContext);
+    final shuffle = ShuffleButton(
+      size: 26,
+      inactiveColor: colorScheme.onSurfaceVariant,
+    );
+    final play = ContextPlayButton(
+      tracks: tracks,
+      playbackContext: playbackContext,
+    );
     final trailing = this.trailing;
 
     return LayoutBuilder(
@@ -117,7 +130,9 @@ class CollectionActionRow extends StatelessWidget {
               ...leading,
               const SizedBox(width: 16),
               // 占满剩余宽度并靠右：工具内部的输入框需要有界宽度
-              Expanded(child: Align(alignment: Alignment.centerRight, child: trailing)),
+              Expanded(
+                child: Align(alignment: Alignment.centerRight, child: trailing),
+              ),
             ],
           );
         }
@@ -151,24 +166,33 @@ class SaveToggleButton extends StatelessWidget {
   final bool saved;
   final VoidCallback onPressed;
 
-  const SaveToggleButton({super.key, required this.saved, required this.onPressed});
+  const SaveToggleButton({
+    super.key,
+    required this.saved,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    return IconButton(
-      tooltip: saved ? context.l10n.libraryRemove : context.l10n.libraryAdd,
-      icon: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-        child: Icon(
-          saved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          key: ValueKey(saved),
-          size: 28,
-          color: saved ? primary : null,
+    return ControlTooltip(
+      message: saved ? context.l10n.libraryRemove : context.l10n.libraryAdd,
+      placement: ControlTooltipPlacement.above,
+      hitboxSize: 32,
+      child: IconButton(
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, anim) =>
+              ScaleTransition(scale: anim, child: child),
+          child: Icon(
+            saved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            key: ValueKey(saved),
+            size: 28,
+            color: saved ? primary : null,
+          ),
         ),
+        onPressed: onPressed,
       ),
-      onPressed: onPressed,
     );
   }
 }
@@ -196,12 +220,22 @@ class CollectionPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     if (loading) {
       return SliverToBoxAdapter(
-        child: SkeletonPulse(child: Column(children: [for (var i = 0; i < 6; i++) const _SkeletonTrackRow()])),
+        child: SkeletonPulse(
+          child: Column(
+            children: [for (var i = 0; i < 6; i++) const _SkeletonTrackRow()],
+          ),
+        ),
       );
     }
     return SliverToBoxAdapter(
       child: Center(
-        child: EmptyState(icon: icon, title: message, compact: true, actionLabel: actionLabel, onAction: onAction),
+        child: EmptyState(
+          icon: icon,
+          title: message,
+          compact: true,
+          actionLabel: actionLabel,
+          onAction: onAction,
+        ),
       ),
     );
   }
@@ -214,7 +248,11 @@ class CollectionErrorPlaceholder extends StatelessWidget {
   final bool signedOut;
   final VoidCallback onRetry;
 
-  const CollectionErrorPlaceholder({super.key, required this.signedOut, required this.onRetry});
+  const CollectionErrorPlaceholder({
+    super.key,
+    required this.signedOut,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -247,13 +285,21 @@ class _SkeletonTrackRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          SkeletonBox(width: 48, height: 48, borderRadius: BorderRadius.all(Radius.circular(6))),
+          SkeletonBox(
+            width: 48,
+            height: 48,
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ),
           SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                FractionallySizedBox(widthFactor: 0.6, alignment: Alignment.centerLeft, child: SkeletonBox(height: 13)),
+                FractionallySizedBox(
+                  widthFactor: 0.6,
+                  alignment: Alignment.centerLeft,
+                  child: SkeletonBox(height: 13),
+                ),
                 SizedBox(height: 8),
                 FractionallySizedBox(
                   widthFactor: 0.35,

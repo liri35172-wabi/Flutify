@@ -15,6 +15,7 @@ import '../../../services/eme/eme_player.dart';
 import '../../shell/desktop/desktop_window.dart';
 import 'linux_web_login_screen.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 export '../../../services/auth/web_login_flow.dart' show WebLoginStage;
 
 /// 统一登录页：在内嵌 WebView2 里完成一次 Web 登录，其余全部自动收尾。
@@ -431,10 +432,15 @@ class _WebLoginScreenState extends State<WebLoginScreen> {
         flexibleSpace: macInset > 0
             ? const WindowDragArea(child: SizedBox.expand())
             : null,
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          tooltip: context.l10n.commonClose,
-          onPressed: () => _finish(null),
+        leading: ControlTooltip(
+          message: context.l10n.commonClose,
+          placement: ControlTooltipPlacement.below,
+          hitboxSize: 40,
+          child: IconButton(
+            icon: const Icon(Icons.close_rounded),
+
+            onPressed: () => _finish(null),
+          ),
         ),
       ),
       body: Column(

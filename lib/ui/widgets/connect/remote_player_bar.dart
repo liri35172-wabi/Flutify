@@ -16,6 +16,8 @@ import 'connect_device_icon.dart';
 import 'remote_progress.dart';
 import 'remote_transport_controls.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 桌面端播放栏的远程模式：内容与按钮作用于正在使用的远程设备。
 ///
 /// 与本机播放栏相同的悬浮液态玻璃胶囊（左曲目 / 中控制 + 进度 / 右设备与音量），
@@ -149,17 +151,22 @@ class _RemoteRightControls extends StatelessWidget {
           children: [
             PlaybackStatusButton(layout: layout, style: _style),
             const SizedBox(width: controlGap),
-            IconButton(
-              icon: Icon(
-                device == null
-                    ? Icons.devices_rounded
-                    : connectDeviceIcon(device.type),
-                size: 20,
+            ControlTooltip(
+              message: context.l10n.deviceConnectTitle,
+              placement: ControlTooltipPlacement.above,
+              hitboxSize: 32,
+              child: IconButton(
+                icon: Icon(
+                  device == null
+                      ? Icons.devices_rounded
+                      : connectDeviceIcon(device.type),
+                  size: 20,
+                ),
+                color: tokens.accent,
+
+                style: _style,
+                onPressed: () => DevicePickerSheet.show(context),
               ),
-              color: tokens.accent,
-              tooltip: context.l10n.deviceConnectTitle,
-              style: _style,
-              onPressed: () => DevicePickerSheet.show(context),
             ),
             const SizedBox(width: controlGap),
             FloatingLyricsQuickToggle(

@@ -24,6 +24,8 @@ import 'lyrics/lyrics_backdrop.dart';
 import 'lyrics/lyrics_translation_controls.dart';
 import 'player_scene_view.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 桌面沉浸式歌词：窗口外壳 + 全端共用的播放器场景（[PlayerSceneView]）。
 ///
 /// - 两种铺满方式（左上角按钮或 F11 切换，记住上次选择）：默认只铺满窗口（保留窗口按钮，顶部可拖动窗口），
@@ -282,28 +284,33 @@ class _ImmersiveLyricsScreenState extends State<ImmersiveLyricsScreen> {
                               // 「更多」按钮贴在歌名行的红心右边
                               titleTrailing: Builder(
                                 // 独立 context：菜单锚定在按钮下方
-                                builder: (buttonContext) => IconButton(
-                                  icon: const Icon(
-                                    Icons.more_horiz_rounded,
-                                    size: 24,
-                                  ),
-                                  color: Colors.white,
-                                  tooltip: l10n.commonMoreOptions,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints.tightFor(
-                                    width: 40,
-                                    height: 40,
-                                  ),
-                                  onPressed: () => TrackMenu.show(
-                                    buttonContext,
-                                    track,
-                                    onConnect: () {
-                                      _activity.value++;
-                                      PlayerSceneView.toggleDevices(
-                                        context,
-                                        _devicesOpen,
-                                      );
-                                    },
+                                builder: (buttonContext) => ControlTooltip(
+                                  message: l10n.commonMoreOptions,
+                                  placement: ControlTooltipPlacement.below,
+                                  hitboxSize: 40,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.more_horiz_rounded,
+                                      size: 24,
+                                    ),
+                                    color: Colors.white,
+
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints.tightFor(
+                                      width: 40,
+                                      height: 40,
+                                    ),
+                                    onPressed: () => TrackMenu.show(
+                                      buttonContext,
+                                      track,
+                                      onConnect: () {
+                                        _activity.value++;
+                                        PlayerSceneView.toggleDevices(
+                                          context,
+                                          _devicesOpen,
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
@@ -417,18 +424,23 @@ class _CapsuleIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(icon, size: 24),
-      color: Colors.white,
-      tooltip: tooltip,
-      style: IconButton.styleFrom(
-        shape: const CircleBorder(),
-        fixedSize: const Size.square(48),
-        padding: EdgeInsets.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return ControlTooltip(
+      message: tooltip,
+      placement: ControlTooltipPlacement.below,
+      hitboxSize: 40,
+      child: IconButton(
+        icon: Icon(icon, size: 24),
+        color: Colors.white,
+
+        style: IconButton.styleFrom(
+          shape: const CircleBorder(),
+          fixedSize: const Size.square(48),
+          padding: EdgeInsets.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+        onPressed: onPressed,
       ),
-      constraints: const BoxConstraints.tightFor(width: 48, height: 48),
-      onPressed: onPressed,
     );
   }
 }
@@ -483,18 +495,23 @@ class _VolumeRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 40,
-          child: IconButton(
-            icon: Icon(
-              muted ? Icons.volume_off_rounded : Icons.volume_mute_rounded,
-              size: 18,
-            ),
-            color: Colors.white60,
-            tooltip: muted
+          child: ControlTooltip(
+            message: muted
                 ? context.l10n.playerUnmute
                 : context.l10n.playerMute,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints.tightFor(width: 40, height: 28),
-            onPressed: onMute,
+            placement: ControlTooltipPlacement.above,
+            hitboxSize: 32,
+            child: IconButton(
+              icon: Icon(
+                muted ? Icons.volume_off_rounded : Icons.volume_mute_rounded,
+                size: 18,
+              ),
+              color: Colors.white60,
+
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(width: 40, height: 28),
+              onPressed: onMute,
+            ),
           ),
         ),
         gap,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/l10n.dart';
 import '../../../../models/lyrics_source.dart';
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 
 /// 歌词来源优先级：整行列表，拖动右侧手柄调整顺序（越靠前越优先）。
 ///
@@ -137,8 +138,10 @@ class LyricsSourceOrderTile extends StatelessWidget {
                       index: index,
                       child: MouseRegion(
                         cursor: SystemMouseCursors.grab,
-                        child: Tooltip(
+                        child: ControlTooltip(
                           message: l10n.settingsLyricsSourceDrag,
+                          placement: ControlTooltipPlacement.above,
+                          hitboxSize: 48,
                           child: const Padding(
                             padding: EdgeInsets.all(12),
                             child: Icon(Icons.drag_handle_rounded),

@@ -15,6 +15,8 @@ import '../../../widgets/toast/app_toast.dart';
 import '../../auth/backup_account_login_screen.dart';
 import '../widgets/settings_section.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 设置页「歌单备份」分组：
 /// - 显示各个备份账号各自的「已点赞的歌曲」（点击直接查看该账号的已点赞歌曲，不会跳去本机账号）；
 /// - 无论是备份的歌单还是歌曲，均支持勾选其中一部分一键导入到当前账号。
@@ -23,7 +25,7 @@ class BackupSection extends StatefulWidget {
 
   /// 可选注入外部账号登录回调（测试用；默认打开独立 WebView 登录页 [BackupAccountLoginScreen]）。
   final Future<BackupLoginResult?> Function(BuildContext context)?
-      loginExternalAccount;
+  loginExternalAccount;
 
   @override
   State<BackupSection> createState() => _BackupSectionState();
@@ -200,8 +202,7 @@ class _BackupSectionState extends State<BackupSection> {
     }
     final validIds = playlists.map((p) => p.id).toSet();
     final selectedCount = _selectedPlaylistIds.intersection(validIds).length;
-    final allSelected =
-        validIds.isNotEmpty && selectedCount == validIds.length;
+    final allSelected = validIds.isNotEmpty && selectedCount == validIds.length;
 
     return SettingsSection(
       title: '歌单备份',
@@ -225,9 +226,10 @@ class _BackupSectionState extends State<BackupSection> {
             subtitle: '最短 20 分钟以防止触发服务端限流',
             trailing: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
-                value: AppPreferences.backupIntervalOptions.contains(
-                  prefs.backupIntervalMinutes,
-                )
+                value:
+                    AppPreferences.backupIntervalOptions.contains(
+                      prefs.backupIntervalMinutes,
+                    )
                     ? prefs.backupIntervalMinutes
                     : AppPreferences.defaultBackupIntervalMinutes,
                 items: [
@@ -383,21 +385,27 @@ class _BackupAccountTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Tooltip(
+          ControlTooltip(
             message: '参与一键同步到本账号',
+            placement: ControlTooltipPlacement.above,
             child: Switch.adaptive(
               value: account.syncToLocal,
               onChanged: onToggleSync,
             ),
           ),
           if (onRemove != null)
-            IconButton(
-              icon: Icon(
-                Icons.delete_outline_rounded,
-                color: colorScheme.error,
+            ControlTooltip(
+              message: '移除该备份账号',
+              placement: ControlTooltipPlacement.above,
+              hitboxSize: 32,
+              child: IconButton(
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: colorScheme.error,
+                ),
+
+                onPressed: onRemove,
               ),
-              tooltip: '移除该备份账号',
-              onPressed: onRemove,
             ),
         ],
       ),
@@ -482,7 +490,10 @@ class _BackedUpPlaylistTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    l10n.subtitleJoin(playlist.ownerName, l10n.songCount(count)),
+                    l10n.subtitleJoin(
+                      playlist.ownerName,
+                      l10n.songCount(count),
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -493,10 +504,15 @@ class _BackedUpPlaylistTile extends StatelessWidget {
               ),
             ),
             if (onPickTracks != null)
-              IconButton(
-                icon: const Icon(Icons.checklist_rounded, size: 22),
-                tooltip: '选择部分歌曲一键导入到本账号',
-                onPressed: onPickTracks,
+              ControlTooltip(
+                message: '选择部分歌曲一键导入到本账号',
+                placement: ControlTooltipPlacement.above,
+                hitboxSize: 32,
+                child: IconButton(
+                  icon: const Icon(Icons.checklist_rounded, size: 22),
+
+                  onPressed: onPickTracks,
+                ),
               ),
             Icon(
               Icons.chevron_right_rounded,
@@ -542,8 +558,9 @@ class _TrackImportDialogState extends State<_TrackImportDialog> {
     final allIds = tracks.map((t) => t.id).where((id) => id.isNotEmpty).toSet();
     final allSelected =
         allIds.isNotEmpty && _selectedIds.length == allIds.length;
-    final isBackupLiked =
-        widget.playlist.id.startsWith(BackupAccount.backupLikedPrefix);
+    final isBackupLiked = widget.playlist.id.startsWith(
+      BackupAccount.backupLikedPrefix,
+    );
     final selected = _selectedTracks;
 
     return AlertDialog(

@@ -5,6 +5,7 @@ import '../../../../core/utils/artwork_palette.dart';
 import '../../../shell/shell_breakpoints.dart';
 import '../../../widgets/cover_image.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 // 歌单 / 专辑 / 艺人详情页的大头图（Spotify 新版桌面端风格）。
 //
 // 结构：
@@ -21,14 +22,20 @@ class CollectionTintScope extends StatelessWidget {
   final Color fallback;
   final Widget child;
 
-  const CollectionTintScope({super.key, required this.imageUrl, required this.fallback, required this.child});
+  const CollectionTintScope({
+    super.key,
+    required this.imageUrl,
+    required this.fallback,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ArtworkColorBuilder(
       imageUrl: imageUrl,
       fallback: fallback,
-      builder: (context, color) => CollectionTint(artColor: color, child: child),
+      builder: (context, color) =>
+          CollectionTint(artColor: color, child: child),
     );
   }
 }
@@ -38,7 +45,11 @@ class CollectionTintScope extends StatelessWidget {
 class CollectionTint extends InheritedWidget {
   final Color artColor;
 
-  const CollectionTint({super.key, required this.artColor, required super.child});
+  const CollectionTint({
+    super.key,
+    required this.artColor,
+    required super.child,
+  });
 
   static Color? maybeOf(BuildContext context) {
     final tint = context.dependOnInheritedWidgetOfExactType<CollectionTint>();
@@ -48,13 +59,17 @@ class CollectionTint extends InheritedWidget {
 
   /// 头部底色：深色主题略压暗（配浅色文字），浅色主题提亮成淡彩（配深色文字）。
   static Color toneFor(Color art, Brightness brightness) =>
-      brightness == Brightness.dark ? Color.lerp(art, Colors.black, 0.15)! : Color.lerp(art, Colors.white, 0.55)!;
+      brightness == Brightness.dark
+      ? Color.lerp(art, Colors.black, 0.15)!
+      : Color.lerp(art, Colors.white, 0.55)!;
 
   /// 头部底边的颜色（已向页面底色过渡一段），[CollectionHeroFade] 从这里接着淡出。
-  static Color heroBottom(Color tone, ColorScheme scheme) => Color.lerp(tone, scheme.surface, 0.35)!;
+  static Color heroBottom(Color tone, ColorScheme scheme) =>
+      Color.lerp(tone, scheme.surface, 0.35)!;
 
   @override
-  bool updateShouldNotify(CollectionTint oldWidget) => oldWidget.artColor != artColor;
+  bool updateShouldNotify(CollectionTint oldWidget) =>
+      oldWidget.artColor != artColor;
 }
 
 /// 操作行（播放 / 收藏 / 更多）的底色：从头部底边颜色渐变到页面底色，避免头部下沿出现硬边。
@@ -73,7 +88,10 @@ class CollectionHeroFade extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [CollectionTint.heroBottom(tone, scheme).withAlpha(150), scheme.surface.withAlpha(0)],
+          colors: [
+            CollectionTint.heroBottom(tone, scheme).withAlpha(150),
+            scheme.surface.withAlpha(0),
+          ],
         ),
       ),
       child: child,
@@ -130,16 +148,22 @@ class _CollectionHeroState extends State<CollectionHero> {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    final tone = CollectionTint.maybeOf(context) ?? CollectionTint.toneFor(const Color(0xFF3A3A48), brightness);
+    final tone =
+        CollectionTint.maybeOf(context) ??
+        CollectionTint.toneFor(const Color(0xFF3A3A48), brightness);
     final topPadding = MediaQuery.paddingOf(context).top;
-    final inDesktopShell = ShellBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
-    final showBack = !inDesktopShell && (ModalRoute.of(context)?.canPop ?? false);
+    final inDesktopShell = ShellBreakpoints.isDesktop(
+      MediaQuery.sizeOf(context).width,
+    );
+    final showBack =
+        !inDesktopShell && (ModalRoute.of(context)?.canPop ?? false);
     _cachedSliver = null;
 
     return SliverLayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.crossAxisExtent;
-        if (_cachedSliver != null && _cachedWidth == width) return _cachedSliver!;
+        if (_cachedSliver != null && _cachedWidth == width)
+          return _cachedSliver!;
         _cachedWidth = width;
         return _cachedSliver = SliverPersistentHeader(
           pinned: true,
@@ -186,7 +210,11 @@ class _HeroDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => wide ? _wideCover + 72 : topPadding + 400;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     final range = maxExtent - minExtent;
     final t = range <= 0 ? 1.0 : (shrinkOffset / range).clamp(0.0, 1.0);
@@ -198,7 +226,8 @@ class _HeroDelegate extends SliverPersistentHeaderDelegate {
     final barColor = brightness == Brightness.dark
         ? Color.lerp(tone, Colors.black, 0.3)!
         : Color.lerp(tone, Colors.black, 0.08)!;
-    final barForeground = ThemeData.estimateBrightnessForColor(barColor) == Brightness.dark
+    final barForeground =
+        ThemeData.estimateBrightnessForColor(barColor) == Brightness.dark
         ? Colors.white
         : const Color(0xFF15161B);
 
@@ -243,18 +272,28 @@ class _HeroDelegate extends SliverPersistentHeaderDelegate {
                 child: ColoredBox(
                   color: barColor,
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(showBack ? 60 : 16, topPadding, 16, 0),
+                    padding: EdgeInsets.fromLTRB(
+                      showBack ? 60 : 16,
+                      topPadding,
+                      16,
+                      0,
+                    ),
                     child: Row(
                       children: [
-                        if (hero.collapsedAction != null) ...[hero.collapsedAction!, const SizedBox(width: 12)],
+                        if (hero.collapsedAction != null) ...[
+                          hero.collapsedAction!,
+                          const SizedBox(width: 12),
+                        ],
                         Expanded(
                           child: Text(
                             hero.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: barForeground),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: barForeground,
+                                ),
                           ),
                         ),
                       ],
@@ -264,7 +303,12 @@ class _HeroDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
           ),
-          if (showBack) Positioned(left: 8, top: topPadding + 12, child: const _BackCircle()),
+          if (showBack)
+            Positioned(
+              left: 8,
+              top: topPadding + 12,
+              child: const _BackCircle(),
+            ),
         ],
       ),
     );
@@ -320,7 +364,12 @@ class _WideContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (hero.typeLabel.isNotEmpty)
-                      Text(hero.typeLabel, style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+                      Text(
+                        hero.typeLabel,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     const SizedBox(height: 6),
                     Flexible(
                       child: Text(
@@ -359,9 +408,16 @@ class _TitleFitter {
   static const List<double> _sizes = [88, 72, 60, 48, 40, 32, 26];
   static final Map<String, double> _cache = {};
 
-  static double fit(BuildContext context, String title, TextStyle style, double maxWidth, double maxHeight) {
+  static double fit(
+    BuildContext context,
+    String title,
+    TextStyle style,
+    double maxWidth,
+    double maxHeight,
+  ) {
     final scaler = MediaQuery.textScalerOf(context);
-    final key = '$title|${maxWidth.round()}|${maxHeight.round()}|${scaler.scale(10)}';
+    final key =
+        '$title|${maxWidth.round()}|${maxHeight.round()}|${scaler.scale(10)}';
     final hit = _cache[key];
     if (hit != null) return hit;
 
@@ -406,7 +462,10 @@ class _NarrowContent extends StatelessWidget {
           Expanded(
             child: Center(
               child: LayoutBuilder(
-                builder: (context, box) => _HeroCover(hero: hero, size: box.maxHeight.clamp(96.0, 240.0)),
+                builder: (context, box) => _HeroCover(
+                  hero: hero,
+                  size: box.maxHeight.clamp(96.0, 240.0),
+                ),
               ),
             ),
           ),
@@ -415,11 +474,16 @@ class _NarrowContent extends StatelessWidget {
             hero.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           if (hero.meta != null) ...[
             const SizedBox(height: 6),
-            DefaultTextStyle.merge(style: theme.textTheme.bodySmall, child: hero.meta!),
+            DefaultTextStyle.merge(
+              style: theme.textTheme.bodySmall,
+              child: hero.meta!,
+            ),
           ],
         ],
       ),
@@ -447,13 +511,21 @@ class _HeroCover extends StatelessWidget {
             size: size,
             circular: hero.circularCover,
             borderRadius: hero.circularCover ? null : radius,
-            placeholderIcon: hero.circularCover ? Icons.person_rounded : Icons.music_note_rounded,
+            placeholderIcon: hero.circularCover
+                ? Icons.person_rounded
+                : Icons.music_note_rounded,
           );
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: hero.circularCover ? BoxShape.circle : BoxShape.rectangle,
         borderRadius: hero.circularCover ? null : radius,
-        boxShadow: [BoxShadow(color: Colors.black.withAlpha(110), blurRadius: 40, offset: const Offset(0, 12))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(110),
+            blurRadius: 40,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
       child: cover,
     );
@@ -466,15 +538,20 @@ class _BackCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back_rounded),
-      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-      onPressed: () => Navigator.of(context).maybePop(),
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.black.withAlpha(90),
-        foregroundColor: Colors.white,
-        fixedSize: const Size.square(40),
-        minimumSize: const Size.square(40),
+    return ControlTooltip(
+      message: MaterialLocalizations.of(context).backButtonTooltip,
+      placement: ControlTooltipPlacement.below,
+      hitboxSize: 40,
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded),
+
+        onPressed: () => Navigator.of(context).maybePop(),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.black.withAlpha(90),
+          foregroundColor: Colors.white,
+          fixedSize: const Size.square(40),
+          minimumSize: const Size.square(40),
+        ),
       ),
     );
   }

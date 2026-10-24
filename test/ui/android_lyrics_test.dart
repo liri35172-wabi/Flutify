@@ -465,7 +465,12 @@ void main() {
         expect((currentButton().icon as Icon).icon, Icons.translate_rounded);
         expect(currentButton().color, Colors.black87);
         expect(currentButton().isSelected, isTrue);
-        expect(currentButton().tooltip, '取消译词');
+        expect(currentButton().tooltip, isNull);
+        final tooltip = find.descendant(
+          of: find.byType(LyricsTranslationButton),
+          matching: find.byType(Tooltip),
+        );
+        expect(tester.widget<Tooltip>(tooltip).message, '取消译词');
         await tester.tap(button);
         await tester.pumpAndSettle();
         expect((currentButton().icon as Icon).icon, Icons.translate_rounded);
@@ -843,6 +848,66 @@ void main() {
       AppPreferences.decode(storage.preferencesJson).lyricsBilingual,
       isFalse,
     );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
+    'Android full lyrics keep the active original multiline with translation below',
+    (tester) async {
+      const activeLine =
+          'This is a deliberately long highlighted lyric that should wrap naturally onto multiple lines';
+      const source = SpotifyLyrics(
+        language: 'en',
+        lines: [
+          LyricLine(startTimeMs: 0, words: activeLine),
+          LyricLine(startTimeMs: 12000, words: 'Next line'),
+        ],
+        alternatives: [
+          LyricsAlternative(
+            language: 'zh-Hans',
+            lines: ['这句歌词应该显示在多行原文的下方', '下一句'],
+          ),
+        ],
+      );
+      final (_, playback) = await pumpLyrics(
+        tester,
+        width: 320,
+        source: source,
+      );
+      playback.positionNotifier.value = const Duration(seconds: 1);
+      await tester.pumpAndSettle();
+
+      final activeText = find.text(activeLine);
+      expect(activeText, findsOneWidget);
+      expect(tester.widget<Text>(activeText).maxLines, isNull);
+      expect(find.byType(OnePassLyricTicker), findsNothing);
+      expect(find.text('这句歌词应该显示在多行原文的下方'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('Android tapping another synced lyric seeks to its timestamp', (
+    tester,
+  ) async {
+    const source = SpotifyLyrics(
+      language: 'en',
+      lines: [
+        LyricLine(startTimeMs: 0, words: 'Current lyric'),
+        LyricLine(startTimeMs: 12000, words: 'Seek target lyric'),
+        LyricLine(startTimeMs: 24000, words: 'Later lyric'),
+      ],
+    );
+    final (audio, playback) = await pumpLyrics(tester, source: source);
+    playback.positionNotifier.value = const Duration(seconds: 1);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Seek target lyric'));
+    await tester.pumpAndSettle();
+
+    expect(playback.positionNotifier.value, const Duration(seconds: 12));
+    expect(audio.seeks, contains(const Duration(seconds: 12)));
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });

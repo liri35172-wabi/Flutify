@@ -19,6 +19,8 @@ import '../../widgets/skeleton.dart';
 import '../../widgets/track_tile.dart';
 import '../detail/widgets/collection_widgets.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 搜索页：浏览分类 / 最近搜索 / 多类型搜索结果。
 ///
 /// 输入经 SpotifyProvider 300ms 防抖并丢弃过期结果；
@@ -36,8 +38,10 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  late final TextEditingController _searchController = widget.controller ?? TextEditingController();
+  late final TextEditingController _searchController =
+      widget.controller ?? TextEditingController();
   final FocusNode _focusNode = FocusNode();
+
   /// 结果过滤：0 全部 / 1 歌曲 / 2 艺人 / 3 歌单。
   int _searchFilterIndex = 0;
 
@@ -71,7 +75,9 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {});
   }
 
-  void _commit() => context.read<SpotifyProvider>().commitRecentSearch(_searchController.text);
+  void _commit() => context.read<SpotifyProvider>().commitRecentSearch(
+    _searchController.text,
+  );
 
   /// 一次搜索被确认后收起输入法。输入框若继续持有焦点，返回搜索页时路由会把焦点还回去，输入法再次弹出。
   /// 逐字输入不收起，否则无法继续打字。
@@ -94,7 +100,12 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
-    final searchFilters = [l10n.filterAll, l10n.filterSongs, l10n.filterArtists, l10n.filterPlaylists];
+    final searchFilters = [
+      l10n.filterAll,
+      l10n.filterSongs,
+      l10n.filterArtists,
+      l10n.filterPlaylists,
+    ];
     final isQueryEmpty = _searchController.text.trim().isEmpty;
     final isDesktop = MediaQuery.sizeOf(context).width >= 800;
 
@@ -106,40 +117,47 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             if (isDesktop) const SizedBox(height: 16),
             if (!isDesktop)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.navSearch,
-                    style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _searchController,
-                    focusNode: _focusNode,
-                    textInputAction: TextInputAction.search,
-                    onChanged: (val) {
-                      context.read<SpotifyProvider>().performSearch(val);
-                      setState(() {});
-                    },
-                    onSubmitted: (_) => _submitSearch(),
-                    decoration: InputDecoration(
-                      hintText: l10n.searchHint,
-                      prefixIcon: const Icon(Icons.search_rounded, size: 24),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close_rounded),
-                              tooltip: l10n.commonClear,
-                              onPressed: () => _setQuery(''),
-                            )
-                          : null,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.navSearch,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _searchController,
+                      focusNode: _focusNode,
+                      textInputAction: TextInputAction.search,
+                      onChanged: (val) {
+                        context.read<SpotifyProvider>().performSearch(val);
+                        setState(() {});
+                      },
+                      onSubmitted: (_) => _submitSearch(),
+                      decoration: InputDecoration(
+                        hintText: l10n.searchHint,
+                        prefixIcon: const Icon(Icons.search_rounded, size: 24),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? ControlTooltip(
+                                message: l10n.commonClear,
+                                placement: ControlTooltipPlacement.above,
+                                hitboxSize: 32,
+                                child: IconButton(
+                                  icon: const Icon(Icons.close_rounded),
+
+                                  onPressed: () => _setQuery(''),
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
             if (!isQueryEmpty)
               SizedBox(
@@ -165,7 +183,10 @@ class _SearchScreenState extends State<SearchScreen> {
             Expanded(
               child: isQueryEmpty
                   ? _BrowseView(onRecentTap: _setQuery)
-                  : _SearchResults(filterIndex: _searchFilterIndex, onResultTap: _onResultTap),
+                  : _SearchResults(
+                      filterIndex: _searchFilterIndex,
+                      onResultTap: _onResultTap,
+                    ),
             ),
           ],
         ),
@@ -184,9 +205,15 @@ class _BrowseView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
-    final categories = context.select<SpotifyProvider, List<SpotifyCategory>>((s) => s.categories);
-    final recent = context.select<SpotifyProvider, List<String>>((s) => s.recentSearches);
-    final isLoading = context.select<SpotifyProvider, bool>((s) => s.isLoadingHome);
+    final categories = context.select<SpotifyProvider, List<SpotifyCategory>>(
+      (s) => s.categories,
+    );
+    final recent = context.select<SpotifyProvider, List<String>>(
+      (s) => s.recentSearches,
+    );
+    final isLoading = context.select<SpotifyProvider, bool>(
+      (s) => s.isLoadingHome,
+    );
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -198,10 +225,16 @@ class _BrowseView extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(l10n.searchRecent, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                    child: Text(
+                      l10n.searchRecent,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                   TextButton(
-                    onPressed: () => context.read<SpotifyProvider>().clearRecentSearches(),
+                    onPressed: () =>
+                        context.read<SpotifyProvider>().clearRecentSearches(),
                     child: Text(l10n.searchClearAll),
                   ),
                 ],
@@ -213,11 +246,21 @@ class _BrowseView extends StatelessWidget {
             itemBuilder: (context, i) => ListTile(
               dense: true,
               leading: const Icon(Icons.history_rounded),
-              title: Text(recent[i], style: const TextStyle(fontWeight: FontWeight.w600)),
-              trailing: IconButton(
-                icon: const Icon(Icons.close_rounded, size: 18),
-                tooltip: l10n.commonRemove,
-                onPressed: () => context.read<SpotifyProvider>().removeRecentSearch(recent[i]),
+              title: Text(
+                recent[i],
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              trailing: ControlTooltip(
+                message: l10n.commonRemove,
+                placement: ControlTooltipPlacement.above,
+                hitboxSize: 32,
+                child: IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 18),
+
+                  onPressed: () => context
+                      .read<SpotifyProvider>()
+                      .removeRecentSearch(recent[i]),
+                ),
               ),
               onTap: () => onRecentTap(recent[i]),
             ),
@@ -226,13 +269,24 @@ class _BrowseView extends StatelessWidget {
 
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(l10n.searchBrowseAll, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Text(
+              l10n.searchBrowseAll,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ),
         if (categories.isEmpty)
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             sliver: SliverToBoxAdapter(
               child: isLoading
                   ? const SkeletonGrid()
@@ -241,39 +295,46 @@ class _BrowseView extends StatelessWidget {
                       title: l10n.searchCategoriesFailedTitle,
                       message: l10n.searchCategoriesFailedMessage,
                       actionLabel: l10n.commonRetry,
-                      onAction: () => context.read<SpotifyProvider>().loadInitialData(),
+                      onAction: () =>
+                          context.read<SpotifyProvider>().loadInitialData(),
                     ),
             ),
           )
         else
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          sliver: SliverLayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.crossAxisExtent;
-              final columns = width >= 1400 ? 5 : width >= 1000 ? 4 : width >= 640 ? 3 : 2;
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            sliver: SliverLayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.crossAxisExtent;
+                final columns = width >= 1400
+                    ? 5
+                    : width >= 1000
+                    ? 4
+                    : width >= 640
+                    ? 3
+                    : 2;
 
-              return SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 1.6,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+                return SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 1.6,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
                     final category = categories[index];
                     return CategoryCard(
                       category: category,
                       onTap: () => AppRoutes.openCategory(context, category),
                     );
-                  },
-                  childCount: categories.length,
-                ),
-              );
-            },
+                  }, childCount: categories.length),
+                );
+              },
+            ),
           ),
-        ),
         const ContentBottomSpacer(),
       ],
     );

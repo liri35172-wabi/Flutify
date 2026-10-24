@@ -27,15 +27,18 @@ class SleepTimerIndicator extends StatelessWidget {
         final button = IconButton(
           icon: const Icon(Icons.bedtime_rounded, size: 18),
           color: Theme.of(context).colorScheme.primary,
-          tooltip: message == null
-              ? null
-              : ControlTooltip.nativeTooltip(message),
+          tooltip: ControlTooltip.nativeTooltip(message),
           style: style,
           onPressed: () => SleepTimerMenu.show(buttonContext),
         );
         return message == null
             ? button
-            : ControlTooltip(message: message, child: button);
+            : ControlTooltip(
+                message: message,
+                placement: ControlTooltipPlacement.above,
+                hitboxSize: 32,
+                child: button,
+              );
       },
     );
   }

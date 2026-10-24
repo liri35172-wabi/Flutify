@@ -13,6 +13,8 @@ import '../panel_surface.dart';
 import 'library_sidebar_entry.dart';
 import 'library_sidebar_item.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 桌面端左栏「音乐库」。
 ///
 /// 展开时：标题（点击收起）+ 新建歌单 → 类型筛选胶囊 → 库内搜索 / 排序 → 条目列表；
@@ -156,16 +158,21 @@ class _Header extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final l10n = context.l10n;
 
-    final createButton = IconButton(
-      icon: const Icon(Icons.add_rounded, size: 22),
-      tooltip: l10n.libraryCreatePlaylist,
-      onPressed: onCreate,
-      style: IconButton.styleFrom(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        foregroundColor: colorScheme.onSurface,
-        fixedSize: const Size(36, 36),
-        minimumSize: const Size(36, 36),
-        padding: EdgeInsets.zero,
+    final createButton = ControlTooltip(
+      message: l10n.libraryCreatePlaylist,
+      placement: ControlTooltipPlacement.below,
+      hitboxSize: 40,
+      child: IconButton(
+        icon: const Icon(Icons.add_rounded, size: 22),
+
+        onPressed: onCreate,
+        style: IconButton.styleFrom(
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          foregroundColor: colorScheme.onSurface,
+          fixedSize: const Size(36, 36),
+          minimumSize: const Size(36, 36),
+          padding: EdgeInsets.zero,
+        ),
       ),
     );
 
@@ -174,11 +181,16 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
         child: Column(
           children: [
-            IconButton(
-              icon: const Icon(Icons.library_music_rounded),
-              tooltip: l10n.shellExpandLibrary,
-              color: colorScheme.onSurfaceVariant,
-              onPressed: onToggle,
+            ControlTooltip(
+              message: l10n.shellExpandLibrary,
+              placement: ControlTooltipPlacement.below,
+              hitboxSize: 40,
+              child: IconButton(
+                icon: const Icon(Icons.library_music_rounded),
+
+                color: colorScheme.onSurfaceVariant,
+                onPressed: onToggle,
+              ),
             ),
             const SizedBox(height: 8),
             createButton,
@@ -191,31 +203,33 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
       child: Row(
         children: [
-          Tooltip(
-            message: l10n.shellCollapseLibrary,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              mouseCursor: onToggle == null
-                  ? MouseCursor.defer
-                  : SystemMouseCursors.click,
-              onTap: onToggle,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: Row(
-                  children: [
-                    Icon(
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            mouseCursor: onToggle == null
+                ? MouseCursor.defer
+                : SystemMouseCursors.click,
+            onTap: onToggle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                children: [
+                  ControlTooltip(
+                    message: l10n.shellCollapseLibrary,
+                    placement: ControlTooltipPlacement.below,
+                    hitboxSize: 40,
+                    child: Icon(
                       Icons.library_music_rounded,
                       color: colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      l10n.navLibrary,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.navLibrary,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -249,17 +263,22 @@ class _FilterRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         children: [
           if (selected != null) ...[
-            IconButton(
-              icon: const Icon(Icons.close_rounded, size: 18),
-              tooltip: l10n.libraryClearFilter,
-              onPressed: () => onSelected(null),
-              style: IconButton.styleFrom(
-                fixedSize: const Size(32, 32),
-                minimumSize: const Size(32, 32),
-                padding: EdgeInsets.zero,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHigh,
+            ControlTooltip(
+              message: l10n.libraryClearFilter,
+              placement: ControlTooltipPlacement.below,
+              hitboxSize: 40,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, size: 18),
+
+                onPressed: () => onSelected(null),
+                style: IconButton.styleFrom(
+                  fixedSize: const Size(32, 32),
+                  minimumSize: const Size(32, 32),
+                  padding: EdgeInsets.zero,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHigh,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -324,10 +343,15 @@ class _SearchSortRow extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: l10n.librarySearchHint,
                     prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 16),
-                      tooltip: l10n.libraryCloseSearch,
-                      onPressed: onSearchToggle,
+                    suffixIcon: ControlTooltip(
+                      message: l10n.libraryCloseSearch,
+                      placement: ControlTooltipPlacement.below,
+                      hitboxSize: 40,
+                      child: IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 16),
+
+                        onPressed: onSearchToggle,
+                      ),
                     ),
                     contentPadding: EdgeInsets.zero,
                     border: OutlineInputBorder(
@@ -347,11 +371,16 @@ class _SearchSortRow extends StatelessWidget {
               ),
             )
           else ...[
-            IconButton(
-              icon: const Icon(Icons.search_rounded, size: 20),
-              tooltip: l10n.librarySearchHint,
-              color: colorScheme.onSurfaceVariant,
-              onPressed: onSearchToggle,
+            ControlTooltip(
+              message: l10n.librarySearchHint,
+              placement: ControlTooltipPlacement.below,
+              hitboxSize: 40,
+              child: IconButton(
+                icon: const Icon(Icons.search_rounded, size: 20),
+
+                color: colorScheme.onSurfaceVariant,
+                onPressed: onSearchToggle,
+              ),
             ),
             const Spacer(),
           ],

@@ -3,16 +3,34 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// Shared tooltip placement for player controls.
+/// The UI region determines which side of its trigger a desktop tooltip uses.
+enum ControlTooltipPlacement { above, below }
+
+/// Shared placement and spacing for application tooltips.
 ///
-/// Desktop tooltips use a small, consistent gap above the trigger. Near the top
-/// edge they flip below, with extra cursor clearance; touch platforms keep
-/// Material's usual placement.
+/// Desktop tooltips stay on the requested side with an 8 logical-pixel gap.
+/// Horizontal alignment is clamped to the overlay; if a vertical edge leaves
+/// too little room, the tooltip keeps its side and gap rather than crossing
+/// the trigger. Touch platforms retain Flutter's native long-press behavior.
 class ControlTooltip extends StatelessWidget {
   final String message;
   final Widget child;
+  final ControlTooltipPlacement placement;
+  final Duration? waitDuration;
 
-  const ControlTooltip({super.key, required this.message, required this.child});
+  /// Minimum side length of the centered trigger; never shrinks [child].
+  final double? hitboxSize;
+
+  const ControlTooltip({
+    super.key,
+    required this.message,
+    required this.child,
+    this.placement = ControlTooltipPlacement.above,
+    this.waitDuration,
+    this.hitboxSize,
+  });
+
+  static const double gap = 8;
 
   static bool get _desktop => switch (defaultTargetPlatform) {
     TargetPlatform.windows ||
@@ -23,31 +41,46 @@ class ControlTooltip extends StatelessWidget {
     TargetPlatform.fuchsia => false,
   };
 
-  /// Keep Material tooltips on touch platforms; desktop uses the offset overlay.
-  static String? nativeTooltip(String? message) => _desktop ? null : message;
+  /// Prevents nested button-owned tooltips when this wrapper owns the tooltip.
+  static String? nativeTooltip(String? message) => null;
 
   @override
   Widget build(BuildContext context) {
-    if (!_desktop) return child;
+    final target = hitboxSize == null
+        ? child
+        : ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: hitboxSize!,
+              minHeight: hitboxSize!,
+            ),
+            child: Center(widthFactor: 1, heightFactor: 1, child: child),
+          );
     return Tooltip(
       message: message,
-      preferBelow: false,
-      verticalOffset: 8,
-      positionDelegate: desktopControlTooltipPosition,
-      child: child,
+      waitDuration: waitDuration,
+      preferBelow: _desktop ? placement == ControlTooltipPlacement.below : null,
+      verticalOffset: _desktop ? gap : null,
+      positionDelegate: _desktop
+          ? (position) =>
+                desktopControlTooltipPosition(position, placement: placement)
+          : null,
+      child: target,
     );
   }
 }
 
-/// Position a desktop tooltip relative to its full trigger bounds.
+/// Position a desktop tooltip on its designated side of the full trigger bounds.
 ///
-/// A short gap keeps labels close to the trigger without placing them under the
-/// pointer hotspot. Near the top edge, the fallback leaves more room for the
-/// hand cursor below its hotspot. Clamping keeps labels inside the overlay.
-Offset desktopControlTooltipPosition(TooltipPositionContext context) {
+/// Horizontal alignment is centered and clamped to the overlay. Vertical
+/// placement always preserves the requested side and gap. If there is not
+/// enough vertical room, part of the tooltip may extend beyond the overlay
+/// rather than overlapping or crossing the trigger.
+Offset desktopControlTooltipPosition(
+  TooltipPositionContext context, {
+  ControlTooltipPlacement placement = ControlTooltipPlacement.above,
+}) {
   const edgeInset = 8.0;
-  const aboveGap = 8.0;
-  const belowCursorGap = 20.0;
+  const gap = ControlTooltip.gap;
   final overlay = context.overlaySize;
   final tooltip = context.tooltipSize;
   final target = Rect.fromCenter(
@@ -59,31 +92,12 @@ Offset desktopControlTooltipPosition(TooltipPositionContext context) {
   final width = overlay.width.isFinite && overlay.width > 0
       ? overlay.width
       : math.max(context.target.dx + tooltip.width / 2, tooltip.width);
-  final height = overlay.height.isFinite && overlay.height > 0
-      ? overlay.height
-      : double.infinity;
   final maxX = math.max(edgeInset, width - tooltip.width - edgeInset);
   final x = (context.target.dx - tooltip.width / 2).clamp(edgeInset, maxX);
 
-  final above = target.top - aboveGap - tooltip.height;
-  final below = target.bottom + belowCursorGap;
-  final fitsAbove = above >= edgeInset;
-  final fitsBelow = below + tooltip.height <= height - edgeInset;
-  final double y;
-  if (fitsAbove) {
-    y = above;
-  } else if (fitsBelow) {
-    y = below;
-  } else if (target.top - edgeInset >= height - target.bottom - edgeInset) {
-    y = (target.top - aboveGap - tooltip.height).clamp(
-      edgeInset,
-      math.max(edgeInset, height - tooltip.height - edgeInset),
-    );
-  } else {
-    y = (target.bottom + belowCursorGap).clamp(
-      edgeInset,
-      math.max(edgeInset, height - tooltip.height - edgeInset),
-    );
-  }
-  return Offset(x.toDouble(), y.toDouble());
+  final desiredY = switch (placement) {
+    ControlTooltipPlacement.above => target.top - gap - tooltip.height,
+    ControlTooltipPlacement.below => target.bottom + gap,
+  };
+  return Offset(x.toDouble(), desiredY.toDouble());
 }

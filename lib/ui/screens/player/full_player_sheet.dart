@@ -19,6 +19,8 @@ import 'player_expansion.dart';
 import 'player_scene_view.dart';
 import 'widgets/swipeable_artwork.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 全屏播放器（移动端底部全屏面板 / 桌面端居中对话框）。
 ///
 /// - 中间区域在「封面 / 歌词 / 播放队列」之间切换（底部两个按钮，再点一次回到封面），
@@ -227,10 +229,15 @@ class _NothingPlaying extends StatelessWidget {
           children: [
             Align(
               alignment: Alignment.topLeft,
-              child: IconButton(
-                icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 30),
-                tooltip: context.l10n.commonClose,
-                onPressed: () => Navigator.pop(context),
+              child: ControlTooltip(
+                message: context.l10n.commonClose,
+                placement: ControlTooltipPlacement.below,
+                hitboxSize: 40,
+                child: IconButton(
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 30),
+
+                  onPressed: () => Navigator.pop(context),
+                ),
               ),
             ),
             Center(

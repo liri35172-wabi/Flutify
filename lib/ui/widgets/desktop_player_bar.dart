@@ -23,6 +23,8 @@ import 'player_bar_cover.dart';
 import 'sleep_timer/sleep_timer_indicator.dart';
 import 'player_controls.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 桌面端底部悬浮播放器：iOS 液态玻璃风格的悬浮胶囊。
 ///
 /// 配合 `Scaffold(extendBody: true)` 使用：三栏内容铺到窗口底部，
@@ -487,33 +489,50 @@ class _RightControls extends StatelessWidget {
       if (SleepTimerIndicator.isActive(context))
         SleepTimerIndicator(style: _barIconStyle),
       PlaybackStatusButton(layout: layout, style: _barIconStyle),
-      IconButton(
-        icon: const Icon(Icons.queue_music_rounded, size: 20),
-        color: layout?.isShowing(RightPanel.queue) ?? false
-            ? colorScheme.primary
-            : colorScheme.onSurfaceVariant,
-        tooltip: context.l10n.queueTitle,
-        style: _barIconStyle,
-        onPressed: layout == null
-            ? () => QueueSheet.show(context)
-            : () => layout.togglePanel(RightPanel.queue),
-      ),
-      IconButton(
-        icon: Icon(
-          Icons.devices_rounded,
-          size: 20,
-          color: hasDevice ? colorScheme.primary : colorScheme.onSurfaceVariant,
+      ControlTooltip(
+        message: context.l10n.queueTitle,
+        placement: ControlTooltipPlacement.above,
+        hitboxSize: 32,
+        child: IconButton(
+          icon: const Icon(Icons.queue_music_rounded, size: 20),
+          color: layout?.isShowing(RightPanel.queue) ?? false
+              ? colorScheme.primary
+              : colorScheme.onSurfaceVariant,
+
+          style: _barIconStyle,
+          onPressed: layout == null
+              ? () => QueueSheet.show(context)
+              : () => layout.togglePanel(RightPanel.queue),
         ),
-        tooltip: context.l10n.deviceConnectTitle,
-        style: _barIconStyle,
-        onPressed: () => DevicePickerSheet.show(context),
       ),
-      IconButton(
-        icon: const Icon(Icons.open_in_full_rounded, size: 18),
-        color: colorScheme.onSurfaceVariant,
-        tooltip: context.l10n.lyricsImmersive,
-        style: _barIconStyle,
-        onPressed: () => ImmersiveLyricsScreen.open(context),
+      ControlTooltip(
+        message: context.l10n.deviceConnectTitle,
+        placement: ControlTooltipPlacement.above,
+        hitboxSize: 32,
+        child: IconButton(
+          icon: Icon(
+            Icons.devices_rounded,
+            size: 20,
+            color: hasDevice
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          ),
+
+          style: _barIconStyle,
+          onPressed: () => DevicePickerSheet.show(context),
+        ),
+      ),
+      ControlTooltip(
+        message: context.l10n.lyricsImmersive,
+        placement: ControlTooltipPlacement.above,
+        hitboxSize: 32,
+        child: IconButton(
+          icon: const Icon(Icons.open_in_full_rounded, size: 18),
+          color: colorScheme.onSurfaceVariant,
+
+          style: _barIconStyle,
+          onPressed: () => ImmersiveLyricsScreen.open(context),
+        ),
       ),
       FloatingLyricsQuickToggle(
         buttonSize: buttonSize,
@@ -578,14 +597,19 @@ class _VolumeControl extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          icon: Icon(icon, size: 18),
-          color: colorScheme.onSurfaceVariant,
-          tooltip: volume == 0
+        ControlTooltip(
+          message: volume == 0
               ? context.l10n.playerUnmute
               : context.l10n.playerMute,
-          style: _barIconStyle,
-          onPressed: playback.toggleMute,
+          placement: ControlTooltipPlacement.above,
+          hitboxSize: 32,
+          child: IconButton(
+            icon: Icon(icon, size: 18),
+            color: colorScheme.onSurfaceVariant,
+
+            style: _barIconStyle,
+            onPressed: playback.toggleMute,
+          ),
         ),
         if (showSlider)
           SizedBox(

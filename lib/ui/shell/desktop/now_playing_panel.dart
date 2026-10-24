@@ -11,6 +11,8 @@ import '../shell_layout_controller.dart';
 import 'now_playing_details.dart';
 import 'panel_lyrics_card.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 桌面端右栏：顶部是当前面板的标题 + 关闭按钮，下面是面板内容。没有标签切换——
 /// 「正在播放」与「播放队列」分别由播放栏上的「播放状态」键和队列键打开（见 [ShellLayoutController]）。
 ///
@@ -46,7 +48,12 @@ class NowPlayingPanel extends StatelessWidget {
     } else if (expanded) {
       body = Padding(
         // 底部留白随播放栏占位：放大歌词不被悬浮胶囊压住最后一行
-        padding: EdgeInsets.fromLTRB(12, 0, 12, 12 + MediaQuery.paddingOf(context).bottom),
+        padding: EdgeInsets.fromLTRB(
+          12,
+          0,
+          12,
+          12 + MediaQuery.paddingOf(context).bottom,
+        ),
         child: PanelLyricsCard(track: track, remote: remote, expanded: true),
       );
     } else {
@@ -65,7 +72,9 @@ class NowPlayingPanel extends StatelessWidget {
           Expanded(
             child: AnimatedSwitcher(
               duration: context.motion(const Duration(milliseconds: 320)),
-              reverseDuration: context.motion(const Duration(milliseconds: 160)),
+              reverseDuration: context.motion(
+                const Duration(milliseconds: 160),
+              ),
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
               // 歌词放大 / 收起：从顶部轻微放大淡入，像卡片「长」满面板
@@ -77,7 +86,10 @@ class NowPlayingPanel extends StatelessWidget {
                   child: child,
                 ),
               ),
-              child: KeyedSubtree(key: ValueKey((layout.panel, expanded)), child: body),
+              child: KeyedSubtree(
+                key: ValueKey((layout.panel, expanded)),
+                child: body,
+              ),
             ),
           ),
         ],
@@ -92,7 +104,11 @@ class _PanelHeader extends StatelessWidget {
   final String closeTooltip;
   final VoidCallback onClose;
 
-  const _PanelHeader({required this.title, required this.closeTooltip, required this.onClose});
+  const _PanelHeader({
+    required this.title,
+    required this.closeTooltip,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -104,22 +120,32 @@ class _PanelHeader extends StatelessWidget {
           Expanded(
             child: AnimatedSwitcher(
               duration: context.motion(const Duration(milliseconds: 200)),
-              layoutBuilder: (current, previous) =>
-                  Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
+              layoutBuilder: (current, previous) => Stack(
+                alignment: Alignment.centerLeft,
+                children: [...previous, ?current],
+              ),
               child: Text(
                 title,
                 key: ValueKey(title),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.2),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.close_rounded, size: 20),
-            tooltip: closeTooltip,
-            color: theme.colorScheme.onSurfaceVariant,
-            onPressed: onClose,
+          ControlTooltip(
+            message: closeTooltip,
+            placement: ControlTooltipPlacement.below,
+            hitboxSize: 40,
+            child: IconButton(
+              icon: const Icon(Icons.close_rounded, size: 20),
+
+              color: theme.colorScheme.onSurfaceVariant,
+              onPressed: onClose,
+            ),
           ),
         ],
       ),

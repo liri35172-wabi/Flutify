@@ -250,7 +250,7 @@ void main() {
         of: player,
         matching: find.byTooltip('歌词'),
       );
-      final lyricsIconButton = find.ancestor(
+      final lyricsIconButton = find.descendant(
         of: lyricsButton,
         matching: find.byType(IconButton),
       );

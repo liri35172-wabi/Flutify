@@ -4,6 +4,7 @@ import '../../../l10n/l10n.dart';
 import '../hover_builder.dart';
 import 'track_sort.dart';
 import 'track_table_columns.dart';
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 
 /// 桌面曲目表格的列表头（Sliver，吸顶在详情页收起后的标题栏之下）：
 /// `#` · 标题 · [艺人] · [专辑] · [添加日期] · 🕒
@@ -16,7 +17,12 @@ class TrackTableHeader extends StatelessWidget {
   final TrackSort sort;
   final ValueChanged<TrackSortKey> onSort;
 
-  const TrackTableHeader({super.key, required this.columns, required this.sort, required this.onSort});
+  const TrackTableHeader({
+    super.key,
+    required this.columns,
+    required this.sort,
+    required this.onSort,
+  });
 
   static const double height = 40;
 
@@ -43,12 +49,20 @@ class _Delegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => TrackTableHeader.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final stuck = overlapsContent || shrinkOffset > 0;
 
-    Widget cell(TrackSortKey key, String label, {TextAlign align = TextAlign.start}) => _SortLabel(
+    Widget cell(
+      TrackSortKey key,
+      String label, {
+      TextAlign align = TextAlign.start,
+    }) => _SortLabel(
       label: label,
       active: sort.key == key,
       descending: sort.descending,
@@ -59,22 +73,37 @@ class _Delegate extends SliverPersistentHeaderDelegate {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: stuck ? scheme.surfaceContainer : null,
-        border: Border(bottom: BorderSide(color: scheme.onSurface.withAlpha(28))),
+        border: Border(
+          bottom: BorderSide(color: scheme.onSurface.withAlpha(28)),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: TrackTableColumns.horizontalPadding),
+        padding: const EdgeInsets.symmetric(
+          horizontal: TrackTableColumns.horizontalPadding,
+        ),
         child: Row(
           children: [
             SizedBox(
               width: columns.leadWidth,
-              child: Center(child: Text('#', style: _SortLabel.baseStyle(context))),
+              child: Center(
+                child: Text('#', style: _SortLabel.baseStyle(context)),
+              ),
             ),
             const SizedBox(width: TrackTableColumns.leadGap),
-            Expanded(flex: TrackTableColumns.titleFlex, child: cell(TrackSortKey.title, l10n.trackColumnTitle)),
+            Expanded(
+              flex: TrackTableColumns.titleFlex,
+              child: cell(TrackSortKey.title, l10n.trackColumnTitle),
+            ),
             if (columns.artist)
-              Expanded(flex: TrackTableColumns.artistFlex, child: cell(TrackSortKey.artist, l10n.trackColumnArtist)),
+              Expanded(
+                flex: TrackTableColumns.artistFlex,
+                child: cell(TrackSortKey.artist, l10n.trackColumnArtist),
+              ),
             if (columns.album)
-              Expanded(flex: TrackTableColumns.albumFlex, child: cell(TrackSortKey.album, l10n.trackColumnAlbum)),
+              Expanded(
+                flex: TrackTableColumns.albumFlex,
+                child: cell(TrackSortKey.album, l10n.trackColumnAlbum),
+              ),
             if (columns.addedAt)
               SizedBox(
                 width: TrackTableColumns.addedAtWidth,
@@ -83,8 +112,9 @@ class _Delegate extends SliverPersistentHeaderDelegate {
             const SizedBox(width: TrackTableColumns.actionWidth),
             SizedBox(
               width: TrackTableColumns.durationWidth,
-              child: Tooltip(
+              child: ControlTooltip(
                 message: l10n.trackColumnDuration,
+                placement: ControlTooltipPlacement.below,
                 child: _SortLabel(
                   icon: Icons.schedule_rounded,
                   active: sort.key == TrackSortKey.duration,
@@ -102,7 +132,8 @@ class _Delegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(_Delegate old) => old.columns != columns || old.sort != sort || old.onSort != onSort;
+  bool shouldRebuild(_Delegate old) =>
+      old.columns != columns || old.sort != sort || old.onSort != onSort;
 }
 
 /// 可点击的列名（或图标）：悬停变亮，当前排序列高亮并显示 ▲ / ▼。
@@ -123,9 +154,11 @@ class _SortLabel extends StatelessWidget {
     required this.onTap,
   });
 
-  static TextStyle? baseStyle(BuildContext context) => Theme.of(
-    context,
-  ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500);
+  static TextStyle? baseStyle(BuildContext context) =>
+      Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w500,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +171,9 @@ class _SortLabel extends StatelessWidget {
     return HoverBuilder(
       cursor: SystemMouseCursors.click,
       builder: (context, hovered) {
-        final color = active || hovered ? scheme.onSurface : scheme.onSurfaceVariant;
+        final color = active || hovered
+            ? scheme.onSurface
+            : scheme.onSurfaceVariant;
         final content = icon != null
             ? Icon(icon, size: 18, color: color)
             : Flexible(
@@ -156,7 +191,9 @@ class _SortLabel extends StatelessWidget {
             // 左对齐列与行里的文字列一样留 16 列间距；右对齐的时长列贴齐右沿
             padding: EdgeInsets.only(right: align == TextAlign.end ? 0 : 16),
             child: Row(
-              mainAxisAlignment: align == TextAlign.end ? MainAxisAlignment.end : MainAxisAlignment.start,
+              mainAxisAlignment: align == TextAlign.end
+                  ? MainAxisAlignment.end
+                  : MainAxisAlignment.start,
               children: [
                 // 右对齐的列（时长）箭头放左边，图标始终与下方时长右沿对齐
                 if (active && align == TextAlign.end) arrow,

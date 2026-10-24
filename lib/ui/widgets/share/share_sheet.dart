@@ -9,6 +9,8 @@ import '../cover_image.dart';
 import 'embed_code_panel.dart';
 import 'share_action_tile.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 分享面板：曲目 / 专辑 / 歌单 / 艺人共用。
 ///
 /// - 桌面端：居中对话框（最宽 [maxWidth]）；
@@ -185,10 +187,14 @@ class _ShareHeader extends StatelessWidget {
           ),
         ),
         if (showClose)
-          IconButton(
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close_rounded),
+          ControlTooltip(
+            message: MaterialLocalizations.of(context).closeButtonTooltip,
+            placement: ControlTooltipPlacement.below,
+            hitboxSize: 40,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close_rounded),
+            ),
           ),
       ],
     );

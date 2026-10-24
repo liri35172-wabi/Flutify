@@ -5,6 +5,7 @@ import '../../l10n/l10n.dart';
 import '../shell/shell_layout_controller.dart';
 import 'cover_image.dart';
 import 'hover_builder.dart';
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 
 /// 播放栏左侧封面（本机 / 远程播放栏共用），与官方桌面端一致：
 ///
@@ -17,7 +18,12 @@ class PlayerBarCover extends StatelessWidget {
   final ShellLayoutController? layout;
   final VoidCallback? onOpenFallback;
 
-  const PlayerBarCover({super.key, required this.url, required this.layout, this.onOpenFallback});
+  const PlayerBarCover({
+    super.key,
+    required this.url,
+    required this.layout,
+    this.onOpenFallback,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +52,18 @@ class PlayerBarCover extends StatelessWidget {
     );
 
     if (onTap == null) return cover;
-    return Tooltip(
-      message: layout != null ? context.l10n.shellPlaybackStatus : context.l10n.openNowPlaying,
-      child: InkWell(borderRadius: radius, mouseCursor: SystemMouseCursors.click, onTap: onTap, child: cover),
+    return ControlTooltip(
+      message: layout != null
+          ? context.l10n.shellPlaybackStatus
+          : context.l10n.openNowPlaying,
+      placement: ControlTooltipPlacement.above,
+      hitboxSize: size,
+      child: InkWell(
+        borderRadius: radius,
+        mouseCursor: SystemMouseCursors.click,
+        onTap: onTap,
+        child: cover,
+      ),
     );
   }
 }
@@ -62,8 +77,15 @@ class _ExpandBadge extends StatelessWidget {
     return Container(
       width: 22,
       height: 22,
-      decoration: BoxDecoration(color: Colors.black.withAlpha(170), shape: BoxShape.circle),
-      child: const Icon(Icons.keyboard_arrow_up_rounded, size: 18, color: Colors.white),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(170),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.keyboard_arrow_up_rounded,
+        size: 18,
+        color: Colors.white,
+      ),
     );
   }
 }

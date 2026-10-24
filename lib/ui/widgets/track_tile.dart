@@ -22,6 +22,8 @@ import 'track_menu.dart';
 import 'track_table/track_table_columns.dart';
 import 'waveform_visualizer.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 曲目行。
 ///
 /// 通过 `context.select` 只订阅「是否当前曲目 / 是否正在播放 / 是否已点赞」，
@@ -293,21 +295,26 @@ class TrackTile extends StatelessWidget {
                           size: 22,
                         )
                       : null,
-                  child: IconButton(
-                    icon: Icon(
-                      isLiked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color: isLiked
-                          ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
-                      size: 22,
-                    ),
-                    tooltip: isLiked
+                  child: ControlTooltip(
+                    message: isLiked
                         ? context.l10n.likeRemove
                         : context.l10n.likeAdd,
-                    onPressed: () =>
-                        context.read<LibraryProvider>().toggleLike(track),
+                    placement: ControlTooltipPlacement.above,
+                    hitboxSize: 32,
+                    child: IconButton(
+                      icon: Icon(
+                        isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: isLiked
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
+                        size: 22,
+                      ),
+
+                      onPressed: () =>
+                          context.read<LibraryProvider>().toggleLike(track),
+                    ),
                   ),
                 ),
 
@@ -328,19 +335,24 @@ class TrackTile extends StatelessWidget {
                   fixedExtent: hoverCapable,
                   child: Builder(
                     // 独立 context：桌面菜单锚定在按钮下方
-                    builder: (buttonContext) => IconButton(
-                      icon: Icon(
-                        hoverCapable
-                            ? Icons.more_horiz_rounded
-                            : Icons.more_vert_rounded,
-                        size: 20,
-                      ),
-                      color: colorScheme.onSurfaceVariant,
-                      tooltip: context.l10n.commonMoreOptions,
-                      onPressed: () => TrackMenu.show(
-                        actionContext,
-                        track,
-                        position: DesktopMenu.anchorOf(buttonContext),
+                    builder: (buttonContext) => ControlTooltip(
+                      message: context.l10n.commonMoreOptions,
+                      placement: ControlTooltipPlacement.above,
+                      hitboxSize: 32,
+                      child: IconButton(
+                        icon: Icon(
+                          hoverCapable
+                              ? Icons.more_horiz_rounded
+                              : Icons.more_vert_rounded,
+                          size: 20,
+                        ),
+                        color: colorScheme.onSurfaceVariant,
+
+                        onPressed: () => TrackMenu.show(
+                          actionContext,
+                          track,
+                          position: DesktopMenu.anchorOf(buttonContext),
+                        ),
                       ),
                     ),
                   ),

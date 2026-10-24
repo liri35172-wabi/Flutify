@@ -16,6 +16,8 @@ import 'web_login_screen.dart';
 import 'widgets/login_intro_view.dart';
 import 'widgets/oauth_waiting_view.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// Spotify 账号登录页（唯一方式：在浏览器中登录）。
 ///
 /// 外壳只负责：在「介绍」与「等待浏览器授权」两态间切换（淡入 + 轻微上移 + 缩放）、
@@ -185,16 +187,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         8,
                       ),
                       child: MouseRegion(
-                        child: IconButton(
-                          icon: Icon(
-                            authorizing
-                                ? Icons.arrow_back_rounded
-                                : Icons.close_rounded,
-                          ),
-                          tooltip: authorizing
+                        child: ControlTooltip(
+                          message: authorizing
                               ? context.l10n.loginBack
                               : context.l10n.commonClose,
-                          onPressed: _back,
+                          placement: ControlTooltipPlacement.above,
+                          hitboxSize: 32,
+                          child: IconButton(
+                            icon: Icon(
+                              authorizing
+                                  ? Icons.arrow_back_rounded
+                                  : Icons.close_rounded,
+                            ),
+
+                            onPressed: _back,
+                          ),
                         ),
                       ),
                     ),

@@ -10,6 +10,8 @@ import '../../../services/spotify_api_service.dart';
 import '../../navigation/app_routes.dart';
 import '../../shell/shell_breakpoints.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 「查看制作人员」：按角色分组列出参与者（表演者、作曲和作词、制作兼工程…）与版权来源。
 ///
 /// 桌面端为居中的大圆角对话框，移动端为底部面板，内容相同。
@@ -20,7 +22,11 @@ class TrackCreditsView extends StatefulWidget {
   /// 打开弹窗前的页面 context，用于关闭弹窗后导航到艺人页。
   final BuildContext hostContext;
 
-  const TrackCreditsView({super.key, required this.track, required this.hostContext});
+  const TrackCreditsView({
+    super.key,
+    required this.track,
+    required this.hostContext,
+  });
 
   static Future<void> show(BuildContext context, SpotifyTrack track) {
     final view = TrackCreditsView(track: track, hostContext: context);
@@ -28,9 +34,14 @@ class TrackCreditsView extends StatefulWidget {
       return showDialog(
         context: context,
         builder: (_) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
           clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640), child: view),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
+            child: view,
+          ),
         ),
       );
     }
@@ -40,7 +51,9 @@ class TrackCreditsView extends StatefulWidget {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) => ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.85),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.85,
+        ),
         child: SafeArea(top: false, child: view),
       ),
     );
@@ -53,14 +66,19 @@ class TrackCreditsView extends StatefulWidget {
 class _TrackCreditsViewState extends State<TrackCreditsView> {
   late Future<TrackCredits> _future = _load();
 
-  Future<TrackCredits> _load() => context.read<SpotifyApiService>().getTrackCredits(widget.track.id);
+  Future<TrackCredits> _load() =>
+      context.read<SpotifyApiService>().getTrackCredits(widget.track.id);
 
   void _retry() => setState(() => _future = _load());
 
   void _openArtist(CreditPerson person) {
     Navigator.of(context).pop();
     final host = widget.hostContext;
-    if (host.mounted) AppRoutes.openArtist(host, SpotifyArtist(id: person.artistId, name: person.name));
+    if (host.mounted)
+      AppRoutes.openArtist(
+        host,
+        SpotifyArtist(id: person.artistId, name: person.name),
+      );
   }
 
   @override
@@ -83,22 +101,32 @@ class _TrackCreditsViewState extends State<TrackCreditsView> {
                   children: [
                     Text(
                       l10n.creditsTitle,
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.4),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       widget.track.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded),
-                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                onPressed: () => Navigator.of(context).pop(),
+              ControlTooltip(
+                message: MaterialLocalizations.of(context).closeButtonTooltip,
+                placement: ControlTooltipPlacement.below,
+                hitboxSize: 40,
+                child: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ),
             ],
           ),
@@ -116,7 +144,10 @@ class _TrackCreditsViewState extends State<TrackCreditsView> {
               if (snapshot.hasError) {
                 return _Message(
                   text: snapshot.error.toString(),
-                  action: TextButton(onPressed: _retry, child: Text(l10n.commonRetry)),
+                  action: TextButton(
+                    onPressed: _retry,
+                    child: Text(l10n.commonRetry),
+                  ),
                 );
               }
               final credits = snapshot.data!;
@@ -128,16 +159,27 @@ class _TrackCreditsViewState extends State<TrackCreditsView> {
                   for (final group in credits.groups) ...[
                     if (group.name.isNotEmpty) _SectionTitle(group.name),
                     for (final person in group.people)
-                      _PersonRow(person: person, onTap: person.hasArtistPage ? () => _openArtist(person) : null),
+                      _PersonRow(
+                        person: person,
+                        onTap: person.hasArtistPage
+                            ? () => _openArtist(person)
+                            : null,
+                      ),
                     const SizedBox(height: 8),
                   ],
                   if (credits.sources.isNotEmpty) ...[
                     _SectionTitle(l10n.creditsSources),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       child: Text(
                         credits.sources.join('\n'),
-                        style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -164,7 +206,10 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
       child: Text(
         text,
-        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.w800),
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -199,7 +244,10 @@ class _PersonRow extends StatelessWidget {
                 radius: 20,
                 backgroundColor: colorScheme.secondaryContainer,
                 foregroundColor: colorScheme.onSecondaryContainer,
-                child: Text(initial, style: const TextStyle(fontWeight: FontWeight.w800)),
+                child: Text(
+                  initial,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -210,19 +258,27 @@ class _PersonRow extends StatelessWidget {
                       person.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     if (person.roles.isNotEmpty)
                       Text(
                         person.roles.join('、'),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 ),
               ),
-              if (onTap != null) Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+              if (onTap != null)
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: colorScheme.onSurfaceVariant,
+                ),
             ],
           ),
         ),
@@ -249,7 +305,9 @@ class _Message extends StatelessWidget {
           Text(
             text,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           if (action != null) ...[const SizedBox(height: 8), action!],
         ],

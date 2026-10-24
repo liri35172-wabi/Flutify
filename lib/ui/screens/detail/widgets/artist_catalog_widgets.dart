@@ -8,6 +8,8 @@ import '../../../navigation/app_routes.dart';
 import '../../../widgets/cover_image.dart';
 import '../../../widgets/text_metrics.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// A catalog remains reachable even when its overview preview is empty.
 class ArtistCatalogSectionHeading extends StatelessWidget {
   final String title;
@@ -38,21 +40,26 @@ class ArtistCatalogSectionHeading extends StatelessWidget {
         ),
       ),
       const SizedBox(width: 8),
-      IconButton.filledTonal(
-        key: buttonKey,
-        tooltip: tooltip,
-        onPressed: onOpen,
-        style: IconButton.styleFrom(
-          shape: const CircleBorder(),
-          minimumSize: const Size.square(32),
-          fixedSize: const Size.square(32),
-          padding: const EdgeInsets.all(6),
-          iconSize: 20,
-          visualDensity: VisualDensity.standard,
-          // Shrink the painted circle, not the accessible hit target.
-          tapTargetSize: MaterialTapTargetSize.padded,
+      ControlTooltip(
+        message: tooltip,
+        placement: ControlTooltipPlacement.above,
+        hitboxSize: 32,
+        child: IconButton.filledTonal(
+          key: buttonKey,
+
+          onPressed: onOpen,
+          style: IconButton.styleFrom(
+            shape: const CircleBorder(),
+            minimumSize: const Size.square(32),
+            fixedSize: const Size.square(32),
+            padding: const EdgeInsets.all(6),
+            iconSize: 20,
+            visualDensity: VisualDensity.standard,
+            // Shrink the painted circle, not the accessible hit target.
+            tapTargetSize: MaterialTapTargetSize.padded,
+          ),
+          icon: const Icon(Icons.chevron_right_rounded),
         ),
-        icon: const Icon(Icons.chevron_right_rounded),
       ),
     ],
   );

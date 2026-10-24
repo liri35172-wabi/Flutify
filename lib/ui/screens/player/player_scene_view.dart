@@ -36,6 +36,8 @@ import 'player_lyrics_motion.dart';
 import 'widgets/swipeable_artwork.dart';
 import 'widgets/canvas_artwork.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 中间区域显示的内容。
 enum PlayerView { artwork, lyrics, queue }
 
@@ -369,11 +371,11 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
                                     icon: _canvasPlaying
                                         ? Icons.motion_photos_pause_rounded
                                         : Icons.motion_photos_on_rounded,
-                                    size: 38,
-                                    selected: _canvasPlaying,
                                     tooltip: _canvasPlaying
                                         ? '停止 Canvas'
                                         : '播放 Canvas',
+                                    size: 38,
+                                    selected: _canvasPlaying,
                                     onPressed: () => setState(
                                       () => _canvasPlaying = !_canvasPlaying,
                                     ),
@@ -404,8 +406,8 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
             widget.immersiveEntry && MediaQuery.sizeOf(context).width >= 800
             ? GlassIconButton(
                 icon: Icons.open_in_full_rounded,
-                size: 36,
                 tooltip: context.l10n.lyricsImmersive,
+                size: 36,
                 onPressed: () => ImmersiveLyricsScreen.open(context),
               )
             : const SizedBox.shrink(),
@@ -563,11 +565,16 @@ class _TopBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 30),
-            color: Colors.white,
-            tooltip: context.l10n.commonClose,
-            onPressed: () => Navigator.pop(context),
+          ControlTooltip(
+            message: context.l10n.commonClose,
+            placement: ControlTooltipPlacement.below,
+            hitboxSize: 40,
+            child: IconButton(
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 30),
+              color: Colors.white,
+
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
           Expanded(
             child: Column(
@@ -599,12 +606,17 @@ class _TopBar extends StatelessWidget {
           ),
           Builder(
             // 独立 context：桌面对话框中菜单锚定在按钮下方
-            builder: (buttonContext) => IconButton(
-              icon: const Icon(Icons.more_vert_rounded, size: 22),
-              color: Colors.white,
-              tooltip: context.l10n.commonMoreOptions,
-              onPressed: () =>
-                  TrackMenu.show(buttonContext, track, onConnect: onConnect),
+            builder: (buttonContext) => ControlTooltip(
+              message: context.l10n.commonMoreOptions,
+              placement: ControlTooltipPlacement.below,
+              hitboxSize: 40,
+              child: IconButton(
+                icon: const Icon(Icons.more_vert_rounded, size: 22),
+                color: Colors.white,
+
+                onPressed: () =>
+                    TrackMenu.show(buttonContext, track, onConnect: onConnect),
+              ),
             ),
           ),
         ],
@@ -776,14 +788,18 @@ class _BottomBar extends StatelessWidget {
 
     Widget toggle(PlayerView target, IconData icon, String tooltip) {
       final active = view == target;
-      return IconButton(
-        tooltip: tooltip,
-        isSelected: active,
-        visualDensity: VisualDensity.compact,
-        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-        padding: EdgeInsets.zero,
-        onPressed: () => onToggle(target),
-        icon: Icon(icon, color: active ? primary : Colors.white70, size: 22),
+      return ControlTooltip(
+        message: tooltip,
+        placement: ControlTooltipPlacement.above,
+        hitboxSize: 32,
+        child: IconButton(
+          isSelected: active,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+          padding: EdgeInsets.zero,
+          onPressed: () => onToggle(target),
+          icon: Icon(icon, color: active ? primary : Colors.white70, size: 22),
+        ),
       );
     }
 
@@ -924,19 +940,23 @@ class _PinButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    return IconButton(
-      tooltip: pinned
+    return ControlTooltip(
+      message: pinned
           ? context.l10n.lyricsUnpinControls
           : context.l10n.lyricsPinControls,
-      isSelected: pinned,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-      padding: EdgeInsets.zero,
-      onPressed: () => onChanged(!pinned),
-      icon: Icon(
-        pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
-        color: pinned ? primary : Colors.white70,
-        size: 22,
+      placement: ControlTooltipPlacement.above,
+      hitboxSize: 32,
+      child: IconButton(
+        isSelected: pinned,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+        padding: EdgeInsets.zero,
+        onPressed: () => onChanged(!pinned),
+        icon: Icon(
+          pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+          color: pinned ? primary : Colors.white70,
+          size: 22,
+        ),
       ),
     );
   }
@@ -1007,14 +1027,20 @@ class _MiniBar extends StatelessWidget {
             ),
           ),
           LikeButton(track: track, size: 20),
-          IconButton(
-            tooltip: context.l10n.deviceConnectShort,
-            visualDensity: VisualDensity.compact,
-            onPressed: onDevices,
-            icon: Icon(
-              Icons.devices_rounded,
-              size: 19,
-              color: deviceActive ? theme.colorScheme.primary : Colors.white70,
+          ControlTooltip(
+            message: context.l10n.deviceConnectShort,
+            placement: ControlTooltipPlacement.above,
+            hitboxSize: 32,
+            child: IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: onDevices,
+              icon: Icon(
+                Icons.devices_rounded,
+                size: 19,
+                color: deviceActive
+                    ? theme.colorScheme.primary
+                    : Colors.white70,
+              ),
             ),
           ),
           if (remote)

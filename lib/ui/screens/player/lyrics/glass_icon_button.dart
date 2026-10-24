@@ -45,9 +45,10 @@ class GlassIconButton extends StatelessWidget {
         ),
         child: IconButton(
           icon: Icon(icon, size: size * 0.45, color: fg),
+          tooltip: null,
           color: fg,
           disabledColor: Colors.white54,
-          tooltip: ControlTooltip.nativeTooltip(tooltip),
+
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(
             foregroundColor: fg,

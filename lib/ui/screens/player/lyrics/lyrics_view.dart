@@ -1039,12 +1039,6 @@ class _LyricsViewState extends State<LyricsView>
                             i,
                             LyricLineView(
                               appleMusicStyle: widget.appleMusicStyle,
-                              horizontalTicker:
-                                  !kIsWeb &&
-                                  defaultTargetPlatform ==
-                                      TargetPlatform.android &&
-                                  _isSynced &&
-                                  !_browsing,
                               text: lyrics.lines[i].words,
                               tickerDuration:
                                   _isSynced && i + 1 < lyrics.lines.length

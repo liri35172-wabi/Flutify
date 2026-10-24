@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/flutify_tokens.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../models/home_feed.dart';
+import '../../../widgets/control_tooltip.dart';
 import '../../../widgets/filter_pill.dart';
 import '../../../widgets/hover_builder.dart';
 import '../../../widgets/text_metrics.dart';
@@ -192,8 +193,10 @@ class _ClearPill extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     // 与胶囊同高（见 HomeChipBar.pillHeight）
     const size = HomeChipBar.pillHeight;
-    return Tooltip(
+    return ControlTooltip(
       message: tooltip,
+      placement: ControlTooltipPlacement.above,
+      hitboxSize: size,
       child: HoverBuilder(
         cursor: SystemMouseCursors.click,
         builder: (context, hovered) => GestureDetector(

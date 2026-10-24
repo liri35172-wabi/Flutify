@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/control_tooltip.dart';
 import '../../widgets/cover_image.dart';
 import 'library_sidebar_entry.dart';
 
@@ -13,7 +14,12 @@ class LibrarySidebarItem extends StatefulWidget {
   final bool playing;
   final bool compact;
 
-  const LibrarySidebarItem({super.key, required this.entry, required this.playing, this.compact = false});
+  const LibrarySidebarItem({
+    super.key,
+    required this.entry,
+    required this.playing,
+    this.compact = false,
+  });
 
   @override
   State<LibrarySidebarItem> createState() => _LibrarySidebarItemState();
@@ -31,10 +37,11 @@ class _LibrarySidebarItemState extends State<LibrarySidebarItem> {
     final cover = _EntryCover(entry: entry);
     final Widget content;
     if (widget.compact) {
-      content = Tooltip(
+      content = ControlTooltip(
         message: entry.title,
         waitDuration: const Duration(milliseconds: 400),
-        preferBelow: false,
+        placement: ControlTooltipPlacement.below,
+        hitboxSize: 48,
         child: Padding(padding: const EdgeInsets.all(6), child: cover),
       );
     } else {
@@ -55,14 +62,20 @@ class _LibrarySidebarItemState extends State<LibrarySidebarItem> {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: widget.playing ? colorScheme.primary : colorScheme.onSurface,
+                      color: widget.playing
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Row(
                     children: [
                       if (entry.pinned) ...[
-                        Icon(Icons.push_pin_rounded, size: 13, color: colorScheme.primary),
+                        Icon(
+                          Icons.push_pin_rounded,
+                          size: 13,
+                          color: colorScheme.primary,
+                        ),
                         const SizedBox(width: 4),
                       ],
                       Expanded(
@@ -70,7 +83,9 @@ class _LibrarySidebarItemState extends State<LibrarySidebarItem> {
                           entry.subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
@@ -80,7 +95,11 @@ class _LibrarySidebarItemState extends State<LibrarySidebarItem> {
             ),
             if (widget.playing) ...[
               const SizedBox(width: 8),
-              Icon(Icons.volume_up_rounded, size: 18, color: colorScheme.primary),
+              Icon(
+                Icons.volume_up_rounded,
+                size: 18,
+                color: colorScheme.primary,
+              ),
               const SizedBox(width: 6),
             ],
           ],
@@ -128,7 +147,11 @@ class _EntryCover extends StatelessWidget {
             colors: [Color(0xFF450AF5), Color(0xFF8E8EE5), Color(0xFFC4EFD9)],
           ),
         ),
-        child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 20),
+        child: const Icon(
+          Icons.favorite_rounded,
+          color: Colors.white,
+          size: 20,
+        ),
       );
     }
     return CoverImage(

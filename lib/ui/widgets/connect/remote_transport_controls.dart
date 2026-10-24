@@ -5,6 +5,8 @@ import '../../../l10n/l10n.dart';
 import '../../../providers/connect_provider.dart';
 import 'connect_actions.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 /// 远程控制按钮的外观：桌面播放栏（跟随主题）与歌词玻璃控制台（白色、大尺寸）两套。
 class RemoteControlsStyle {
   /// 上一首 / 下一首图标色；为 null 时取 onSurface。
@@ -75,7 +77,11 @@ class RemoteTransportControls extends StatelessWidget {
   final bool showModes;
   final RemoteControlsStyle style;
 
-  const RemoteTransportControls({super.key, this.showModes = true, this.style = RemoteControlsStyle.bar});
+  const RemoteTransportControls({
+    super.key,
+    this.showModes = true,
+    this.style = RemoteControlsStyle.bar,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,17 +102,22 @@ class RemoteTransportControls extends StatelessWidget {
     }) {
       // M3 IconButton 默认补到 48px 点击区；小图标收紧，避免播放栏一行放不下
       final extent = size <= 22 ? 32.0 : size + 16;
-      return IconButton(
-        icon: Icon(icon, size: size),
-        color: color,
-        tooltip: tooltip,
-        style: IconButton.styleFrom(
-          fixedSize: Size.square(extent),
-          minimumSize: Size.square(extent),
-          padding: EdgeInsets.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      return ControlTooltip(
+        message: tooltip,
+        placement: ControlTooltipPlacement.above,
+        hitboxSize: 32,
+        child: IconButton(
+          icon: Icon(icon, size: size),
+          color: color,
+
+          style: IconButton.styleFrom(
+            fixedSize: Size.square(extent),
+            minimumSize: Size.square(extent),
+            padding: EdgeInsets.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          onPressed: () => ConnectActions.run(context, action),
         ),
-        onPressed: () => ConnectActions.run(context, action),
       );
     }
 
@@ -150,7 +161,13 @@ class RemoteTransportControls extends StatelessWidget {
           ),
         ),
       ),
-      button(Icons.skip_next_rounded, l10n.playerNext, connect.skipNext, color: foreground, size: s.skipSize),
+      button(
+        Icons.skip_next_rounded,
+        l10n.playerNext,
+        connect.skipNext,
+        color: foreground,
+        size: s.skipSize,
+      ),
       if (showModes)
         button(
           player.repeatTrack ? Icons.repeat_one_rounded : Icons.repeat_rounded,
@@ -162,12 +179,18 @@ class RemoteTransportControls extends StatelessWidget {
     ];
 
     if (s.spread) {
-      return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: children);
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: children,
+      );
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var i = 0; i < children.length; i++) ...[if (i > 0) SizedBox(width: s.gap), children[i]],
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) SizedBox(width: s.gap),
+          children[i],
+        ],
       ],
     );
   }

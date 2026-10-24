@@ -16,6 +16,8 @@ import '../../widgets/track_tile.dart';
 import 'widgets/artist_catalog_widgets.dart';
 import 'widgets/collection_widgets.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 enum ArtistCatalogKind { albums, songs }
 
 /// Full artist catalog. Pages are fetched as the user approaches the end;
@@ -217,12 +219,17 @@ class _ArtistCatalogScreenState extends State<ArtistCatalogScreen> {
             leadingWidth: 64,
             leading: Padding(
               padding: const EdgeInsets.all(8),
-              child: IconButton.filledTonal(
-                key: const Key('artist-catalog-back'),
-                tooltip: l10n.shellBack,
-                style: IconButton.styleFrom(shape: const CircleBorder()),
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.chevron_left_rounded),
+              child: ControlTooltip(
+                message: l10n.shellBack,
+                placement: ControlTooltipPlacement.below,
+                hitboxSize: 40,
+                child: IconButton.filledTonal(
+                  key: const Key('artist-catalog-back'),
+
+                  style: IconButton.styleFrom(shape: const CircleBorder()),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
               ),
             ),
             title: Text(

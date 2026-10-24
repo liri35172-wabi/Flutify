@@ -7,6 +7,8 @@ import '../../../../services/network/spotify_gateway.dart';
 import '../../../../services/network/network_proxy.dart';
 import 'settings_section.dart';
 
+import 'package:flutify_app/ui/widgets/control_tooltip.dart';
+
 class GatewaySettings extends StatelessWidget {
   final VoidCallback onChanged;
   const GatewaySettings({super.key, required this.onChanged});
@@ -63,10 +65,14 @@ class GatewaySettings extends StatelessWidget {
                       dimension: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : IconButton(
-                      tooltip: l10n.settingsGatewayRecheck,
-                      onPressed: proxy?.refreshGatewayCountry,
-                      icon: const Icon(Icons.refresh_rounded),
+                  : ControlTooltip(
+                      message: l10n.settingsGatewayRecheck,
+                      placement: ControlTooltipPlacement.above,
+                      hitboxSize: 32,
+                      child: IconButton(
+                        onPressed: proxy?.refreshGatewayCountry,
+                        icon: const Icon(Icons.refresh_rounded),
+                      ),
                     ),
             ),
         ],
