@@ -35,11 +35,15 @@ class DesktopShell extends StatelessWidget {
 
   /// 按基础主题缓存「带桌面提示宽度」的主题：拖动侧栏时本组件每帧重建，
   /// 每次都 new 一个 ThemeData 会让所有依赖主题的子组件跟着重建。
-  static final Expando<ThemeData> _toastThemes = Expando('desktopToastTheme');
+  static final Expando<ThemeData> _desktopThemes = Expando('desktopTheme');
 
-  static ThemeData _withToastWidth(ThemeData base) =>
-      _toastThemes[base] ??= base.copyWith(
+  static ThemeData _withDesktopDefaults(ThemeData base) =>
+      _desktopThemes[base] ??= base.copyWith(
         snackBarTheme: base.snackBarTheme.copyWith(width: toastWidth),
+        tooltipTheme: base.tooltipTheme.copyWith(
+          preferBelow: false,
+          verticalOffset: 12,
+        ),
       );
 
   @override
@@ -61,7 +65,7 @@ class DesktopShell extends StatelessWidget {
     // - 播放栏作为 bottomNavigationBar，Scaffold 自动把悬浮提示放在它上方；
     // - 宽度来自主题，窗口拖窄（< 宽度）时 Scaffold 自动改为铺满，切到手机布局后也不残留桌面边距。
     return Theme(
-      data: _withToastWidth(theme),
+      data: _withDesktopDefaults(theme),
       child: Scaffold(
         backgroundColor: colorScheme.surfaceContainerLowest,
         extendBody: true,

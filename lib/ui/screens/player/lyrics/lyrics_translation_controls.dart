@@ -80,37 +80,23 @@ class LyricsTranslationToggle extends StatelessWidget {
     return IconButton(
       tooltip: label,
       isSelected: active,
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      padding: EdgeInsets.zero,
       onPressed: !controller.available
           ? null
           : active
           ? controller.cancel
           : controller.translate,
-      icon: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.translate_rounded,
-            color: active
-                ? primary
-                : controller.available
-                ? Colors.white70
-                : Colors.white24,
-            size: 22,
-          ),
-          if (active)
-            Positioned(
-              bottom: -7,
-              child: Container(
-                width: 4,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
+      // State is communicated by accent colour alone; no dot beneath the icon.
+      icon: Icon(
+        Icons.translate_rounded,
+        color: active
+            ? primary
+            : controller.available
+            ? Colors.white70
+            : Colors.white24,
+        size: 22,
       ),
     );
   }

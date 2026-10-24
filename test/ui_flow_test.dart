@@ -211,6 +211,9 @@ void main() {
 
     // ≥ 1280：右栏默认停靠在「正在播放」，没有标签切换；播放栏队列键切到独立的「播放队列」面板，再隐藏
     expect(find.byType(NowPlayingPanel), findsOneWidget);
+    final desktopTheme = Theme.of(tester.element(find.byType(NowPlayingPanel)));
+    expect(desktopTheme.tooltipTheme.preferBelow, isFalse);
+    expect(desktopTheme.tooltipTheme.verticalOffset, 12);
     expect(find.widgetWithText(FilterPill, '播放队列'), findsNothing);
     // 无曲目时播放栏只有占位，直接调用队列键对应的操作
     tester
@@ -245,6 +248,14 @@ void main() {
       // 内嵌：歌词卡与「关于艺人」同在详情列表里
       expect(find.byType(NowPlayingDetails), findsOneWidget);
       expect(find.byType(PanelLyricsCard), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PanelLyricsCard),
+          matching: find.byIcon(Icons.fullscreen_rounded),
+        ),
+        findsNothing,
+        reason: 'immersive lyrics remains available from the player bar only',
+      );
       expect(find.text('First synthetic line'), findsOneWidget);
 
       // 放大：歌词卡撑满面板，详情列表让位；再点收起回到详情
@@ -252,6 +263,14 @@ void main() {
       await settle(tester);
       expect(find.byType(NowPlayingDetails), findsNothing);
       expect(find.byType(PanelLyricsCard), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PanelLyricsCard),
+          matching: find.byIcon(Icons.fullscreen_rounded),
+        ),
+        findsNothing,
+        reason: 'immersive lyrics remains available from the player bar only',
+      );
       expect(find.text('First synthetic line'), findsOneWidget);
 
       await tester.tap(find.byTooltip('收起歌词'));

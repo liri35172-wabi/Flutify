@@ -8,12 +8,15 @@ import 'package:flutify_app/providers/preferences_provider.dart';
 import 'package:flutify_app/services/eme/eme_player.dart';
 import 'package:flutify_app/services/lyrics/lyrics_translation.dart';
 import 'package:flutify_app/services/storage_service.dart';
+import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_channel.dart';
+import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_controls.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/glass_icon_button.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyric_line_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/floating_lyrics_quick_toggle.dart';
 import 'package:flutify_app/ui/widgets/mini_player.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +27,45 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../fakes/fake_audio_player_service.dart';
 import '../fakes/fake_spotify_api_service.dart';
 import '../fakes/fake_track_audio_source.dart';
+
+class _NoopTaskbarLyricsPlatform implements TaskbarLyricsPlatform {
+  @override
+  Stream<TaskbarLyricsEvent> get events =>
+      const Stream<TaskbarLyricsEvent>.empty();
+
+  @override
+  Future<void> setEnabled(bool enabled) async {}
+
+  @override
+  Future<void> setOverlayEnabled(bool enabled) async {}
+
+  @override
+  Future<void> setOverlayOptions({
+    required bool clickThrough,
+    required bool transparentBackground,
+  }) async {}
+
+  @override
+  Future<void> setOverlayStyle(TaskbarLyricsStyle style) async {}
+
+  @override
+  Future<void> setStyle(TaskbarLyricsStyle style) async {}
+
+  @override
+  Future<void> setTrack(({String title, String artist})? track) async {}
+
+  @override
+  Future<void> setArt(Uint8List? bytes) async {}
+
+  @override
+  Future<void> setLyrics(List<LyricLine>? lines) async {}
+
+  @override
+  Future<void> setPlayback({
+    required bool playing,
+    required Duration position,
+  }) async {}
+}
 
 const _track = SpotifyTrack(
   id: 'scene-track',
@@ -42,6 +84,7 @@ Future<PlaybackProvider> _open(
   WidgetTester tester, {
   double width = 390,
   bool withTranslation = false,
+  TaskbarLyricsControls? taskbarLyrics,
 }) async {
   debugDefaultTargetPlatformOverride = TargetPlatform.android;
   addTearDown(() => debugDefaultTargetPlatformOverride = null);
@@ -75,6 +118,7 @@ Future<PlaybackProvider> _open(
         },
       ),
       trackAudioLoader: FakeTrackAudioSource(),
+      taskbarLyrics: taskbarLyrics,
     ),
   );
   await _frames(tester);
@@ -172,6 +216,59 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     });
   }
+
+  testWidgets(
+    'Android player footer controls share equal slots on artwork and lyrics',
+    (tester) async {
+      final controls = TaskbarLyricsControls(
+        _NoopTaskbarLyricsPlatform(),
+        isAndroid: true,
+      );
+      await _open(tester, taskbarLyrics: controls);
+      final player = find.byType(FullPlayerSheet);
+
+      void expectFooterGeometry() {
+        final buttons = [
+          find.descendant(
+            of: player,
+            matching: find.byType(FloatingLyricsQuickToggle),
+          ),
+          find.descendant(of: player, matching: find.byTooltip('歌词')),
+          find.descendant(of: player, matching: find.byTooltip('播放队列')),
+        ];
+        for (final button in buttons) {
+          expect(button, findsOneWidget);
+          expect(tester.getSize(button), const Size.square(44));
+        }
+        for (var i = 1; i < buttons.length; i++) {
+          expect(
+            tester.getCenter(buttons[i]).dx -
+                tester.getCenter(buttons[i - 1]).dx,
+            48,
+          );
+        }
+      }
+
+      expectFooterGeometry();
+      final lyricsButton = find.descendant(
+        of: player,
+        matching: find.byTooltip('歌词'),
+      );
+      final lyricsIconButton = find.ancestor(
+        of: lyricsButton,
+        matching: find.byType(IconButton),
+      );
+      expect(lyricsIconButton, findsOneWidget);
+      expect(tester.widget<IconButton>(lyricsIconButton).icon, isA<Icon>());
+      await tester.tap(lyricsButton);
+      await _frames(tester);
+      expectFooterGeometry();
+      await tester.pumpWidget(const SizedBox.shrink());
+      controls.dispose();
+      debugDefaultTargetPlatformOverride = null;
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   for (final width in [320.0, 390.0, 430.0]) {
     testWidgets(

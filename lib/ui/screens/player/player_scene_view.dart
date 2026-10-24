@@ -291,7 +291,7 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
             translation: widget.controlsOnLeft && _view == PlayerView.lyrics
                 ? const LyricsTranslationToggle()
                 : null,
-            floatingLyrics: const FloatingLyricsQuickToggle(buttonSize: 48),
+            floatingLyrics: const FloatingLyricsQuickToggle(buttonSize: 44),
           ),
         ),
         artworkPreview: CurrentLyricsPreview(
@@ -787,28 +787,29 @@ class _BottomBar extends StatelessWidget {
       return IconButton(
         tooltip: tooltip,
         isSelected: active,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+        padding: EdgeInsets.zero,
         onPressed: () => onToggle(target),
-        icon: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            Icon(icon, color: active ? primary : Colors.white70, size: 22),
-            if (active)
-              Positioned(
-                bottom: -7,
-                child: Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
-        ),
+        icon: Icon(icon, color: active ? primary : Colors.white70, size: 22),
       );
     }
+
+    final trailingControls = <Widget>[
+      ?pin,
+      ?translation,
+      ?floatingLyrics,
+      toggle(
+        PlayerView.lyrics,
+        Icons.lyrics_outlined,
+        context.l10n.lyricsTitle,
+      ),
+      toggle(
+        PlayerView.queue,
+        Icons.queue_music_rounded,
+        context.l10n.queueTitle,
+      ),
+    ];
 
     final bar = Padding(
       padding: EdgeInsets.lerp(
@@ -881,19 +882,15 @@ class _BottomBar extends StatelessWidget {
               ),
             ),
           ),
-          ?pin,
-          ?translation,
-          ?floatingLyrics,
-          toggle(
-            PlayerView.lyrics,
-            Icons.lyrics_outlined,
-            context.l10n.lyricsTitle,
-          ),
-          toggle(
-            PlayerView.queue,
-            Icons.queue_music_rounded,
-            context.l10n.queueTitle,
-          ),
+          const SizedBox(width: 4),
+          for (final control in trailingControls)
+            SizedBox.square(
+              dimension: 48,
+              child: Center(
+                child: SizedBox.square(dimension: 44, child: control),
+              ),
+            ),
+          const SizedBox(width: 4),
         ],
       ),
     );
@@ -940,6 +937,9 @@ class _PinButton extends StatelessWidget {
           ? context.l10n.lyricsUnpinControls
           : context.l10n.lyricsPinControls,
       isSelected: pinned,
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      padding: EdgeInsets.zero,
       onPressed: () => onChanged(!pinned),
       icon: Icon(
         pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,

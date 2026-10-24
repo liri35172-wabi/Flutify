@@ -108,38 +108,43 @@ void main() {
     },
   );
 
-  testWidgets('timed ticker finishes within the supplied lyric window', (
+  testWidgets('timed focused lyric dwells, then reveals its ending in-window', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(180, 300);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    const lyric = 'An unusually long English lyric that needs room to finish';
     await tester.pumpWidget(
       wrap(
-        const SizedBox(
-          width: 160,
-          height: 30,
-          child: OnePassLyricTicker(
-            text: 'An unusually long English lyric that needs room to finish',
-            style: TextStyle(fontSize: 20),
-            textAlign: TextAlign.start,
-            duration: Duration(milliseconds: 800),
-            startDelay: Duration.zero,
-          ),
+        const LyricLineView(
+          text: lyric,
+          distance: 0,
+          horizontalTicker: true,
+          tickerDuration: Duration(milliseconds: 800),
+          fontSize: 20,
         ),
       ),
     );
     await tester.pump();
-    final scrollable = find.byType(Scrollable);
+    final scrollable = find.descendant(
+      of: find.byType(LyricLineView),
+      matching: find.byType(Scrollable),
+    );
     expect(scrollable, findsOneWidget);
     final state = tester.state<ScrollableState>(scrollable);
     expect(state.position.maxScrollExtent, greaterThan(0));
-    // Flush the zero-delay start before measuring the timed animation.
-    await tester.pump(Duration.zero);
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(const Duration(milliseconds: 499));
+    expect(
+      state.position.pixels,
+      0,
+      reason: 'opening words need a readable pause before the pass',
+    );
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 150));
     expect(state.position.pixels, greaterThan(0));
     expect(state.position.pixels, lessThan(state.position.maxScrollExtent));
-    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 150));
     expect(state.position.pixels, closeTo(state.position.maxScrollExtent, 0.1));
     final end = state.position.pixels;
     await tester.pump(const Duration(seconds: 2));

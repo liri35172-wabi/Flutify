@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../../l10n/l10n.dart';
 import '../../../models/track.dart';
-import '../../screens/player/immersive_lyrics_screen.dart';
 import '../../screens/player/lyrics/glass_icon_button.dart';
 import '../../screens/player/lyrics/lyrics_backdrop.dart';
 import '../../screens/player/lyrics/lyrics_view.dart';
@@ -17,7 +16,8 @@ import '../shell_layout_controller.dart';
 /// - 内嵌（[expanded] 为 false）：固定高度，夹在歌名与「关于艺人」之间，左上角标「歌词」；
 /// - 放大（[expanded] 为 true）：撑满整个面板，左上角改为小封面 + 歌名 / 艺人，方便确认在听什么。
 ///
-/// 右上角两枚玻璃按钮：放大 / 收起（切换 [ShellLayoutController.lyricsExpanded]）与进入沉浸式歌词。
+/// 右上角按钮用于放大 / 收起（切换 [ShellLayoutController.lyricsExpanded]）；
+/// 沉浸式歌词入口保留在底部播放器栏，避免在卡片内重复。
 class PanelLyricsCard extends StatelessWidget {
   final SpotifyTrack track;
   final bool remote;
@@ -100,13 +100,6 @@ class PanelLyricsCard extends StatelessWidget {
                           : l10n.lyricsExpand,
                       size: 36,
                       onPressed: layout.toggleLyricsExpanded,
-                    ),
-                    const SizedBox(width: 8),
-                    GlassIconButton(
-                      icon: Icons.fullscreen_rounded,
-                      tooltip: l10n.lyricsImmersive,
-                      size: 36,
-                      onPressed: () => ImmersiveLyricsScreen.open(context),
                     ),
                   ],
                 ),

@@ -470,7 +470,7 @@ class _RightControls extends StatelessWidget {
   const _RightControls();
 
   static const double buttonSize = 32;
-  static const double _sliderWidth = 92;
+  static const double _sliderWidth = 72;
 
   @override
   Widget build(BuildContext context) {
@@ -524,21 +524,32 @@ class _RightControls extends StatelessWidget {
       ),
     ];
 
-    // 按实际可用宽度逐级隐藏：先去掉音量滑块，再去掉音量键
+    // Keep every action reachable at narrow widths; only the optional slider
+    // is omitted. Wrap rather than letting a fixed Row clip the last controls.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final base = buttons.length * (buttonSize + 4);
-        final showVolume = constraints.maxWidth >= base + buttonSize;
+        final actionWidth = buttons.length * buttonSize;
         final showSlider =
-            constraints.maxWidth >= base + buttonSize + _sliderWidth + 8;
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            for (final b in buttons)
-              Padding(padding: const EdgeInsets.only(left: 4), child: b),
-            if (showVolume)
-              _VolumeControl(showSlider: showSlider, sliderWidth: _sliderWidth),
-          ],
+            constraints.maxWidth >= actionWidth + buttonSize + _sliderWidth;
+        final controls = <Widget>[
+          for (final button in buttons)
+            SizedBox.square(dimension: buttonSize, child: button),
+          SizedBox(
+            width: buttonSize + (showSlider ? _sliderWidth : 0),
+            height: buttonSize,
+            child: _VolumeControl(
+              showSlider: showSlider,
+              sliderWidth: _sliderWidth,
+            ),
+          ),
+        ];
+        return Wrap(
+          alignment: WrapAlignment.end,
+          runAlignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 0,
+          runSpacing: 0,
+          children: controls,
         );
       },
     );

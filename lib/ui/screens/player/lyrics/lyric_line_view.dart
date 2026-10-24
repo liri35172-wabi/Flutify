@@ -192,6 +192,19 @@ class _LineText extends StatelessWidget {
     final progress = trans == null || trans.isEmpty
         ? 0.0
         : translationProgress.clamp(0.0, 1.0);
+    final windowMs = tickerDuration?.inMilliseconds;
+    // Give the opening words a short reading beat, then use only the rest of
+    // this line's existing sync window for the one-pass reveal.
+    final tickerDelay = windowMs == null
+        ? const Duration(milliseconds: 350)
+        : Duration(milliseconds: (windowMs - 50).clamp(0, 500).toInt());
+    final tickerMotion = windowMs == null
+        ? null
+        : Duration(
+            milliseconds: (windowMs - tickerDelay.inMilliseconds)
+                .clamp(1, 120000)
+                .toInt(),
+          );
     Widget mainText() => Builder(
       builder: (context) {
         final style = TextStyle(
@@ -210,10 +223,8 @@ class _LineText extends StatelessWidget {
             style: style,
             textAlign: centered ? TextAlign.center : TextAlign.start,
             motionEnabled: tickerMotionEnabled,
-            duration: tickerDuration,
-            startDelay: tickerDuration == null
-                ? const Duration(milliseconds: 350)
-                : Duration.zero,
+            duration: tickerMotion,
+            startDelay: tickerDelay,
           );
         }
         return Text(

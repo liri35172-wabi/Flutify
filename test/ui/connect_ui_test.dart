@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutify_app/core/utils/artwork_palette.dart';
 import 'package:flutify_app/l10n/app_localizations.dart';
 import 'package:flutify_app/models/connect_cluster.dart';
+import 'package:flutify_app/models/lyrics.dart';
 import 'package:flutify_app/providers/connect_provider.dart';
 import 'package:flutify_app/providers/library_provider.dart';
 import 'package:flutify_app/providers/playback_provider.dart';
+import 'package:flutify_app/providers/preferences_provider.dart';
 import 'package:flutify_app/providers/spotify_provider.dart';
 import 'package:flutify_app/services/connect/connect_service.dart';
 import 'package:flutify_app/services/connect/connect_play_request.dart';
@@ -15,6 +17,8 @@ import 'package:flutify_app/services/media_controls/system_media_controls.dart';
 import 'package:flutify_app/ui/widgets/connect/playback_shortcuts.dart';
 import 'package:flutify_app/services/spotify_api_service.dart';
 import 'package:flutify_app/services/storage_service.dart';
+import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_channel.dart';
+import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_controls.dart';
 import 'package:flutify_app/ui/screens/player/device_picker_sheet.dart';
 import 'package:flutify_app/ui/screens/player/immersive_lyrics_screen.dart';
 import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
@@ -146,6 +150,45 @@ class FakeConnectService implements ConnectService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _NoopTaskbarLyricsPlatform implements TaskbarLyricsPlatform {
+  @override
+  Stream<TaskbarLyricsEvent> get events =>
+      const Stream<TaskbarLyricsEvent>.empty();
+
+  @override
+  Future<void> setEnabled(bool enabled) async {}
+
+  @override
+  Future<void> setOverlayEnabled(bool enabled) async {}
+
+  @override
+  Future<void> setOverlayOptions({
+    required bool clickThrough,
+    required bool transparentBackground,
+  }) async {}
+
+  @override
+  Future<void> setOverlayStyle(TaskbarLyricsStyle style) async {}
+
+  @override
+  Future<void> setStyle(TaskbarLyricsStyle style) async {}
+
+  @override
+  Future<void> setTrack(({String title, String artist})? track) async {}
+
+  @override
+  Future<void> setArt(Uint8List? bytes) async {}
+
+  @override
+  Future<void> setLyrics(List<LyricLine>? lines) async {}
+
+  @override
+  Future<void> setPlayback({
+    required bool playing,
+    required Duration position,
+  }) async {}
+}
+
 /// 只使用合成数据的 cluster：一台正在播放的音箱 + 一台空闲手机。
 ConnectCluster syntheticCluster({
   bool playing = true,
@@ -202,6 +245,7 @@ void main() {
     ConnectCluster? cluster,
     bool available = true,
     double fontScale = 1.0,
+    TaskbarLyricsControls? taskbarLyrics,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -213,6 +257,8 @@ void main() {
       MultiProvider(
         providers: [
           Provider<StorageService>.value(value: storage),
+          ChangeNotifierProvider(create: (_) => PreferencesProvider(storage)),
+          Provider<TaskbarLyricsControls?>.value(value: taskbarLyrics),
           // 未登录：歌词请求直接返回空，不联网
           ChangeNotifierProvider(
             create: (_) => SpotifyProvider(SpotifyApiService(storage), storage),
@@ -287,6 +333,44 @@ void main() {
         await unmount(tester);
       });
     }
+
+    testWidgets(
+      'remote right controls keep status, device, and lyrics toggle',
+      (tester) async {
+        final controls = TaskbarLyricsControls(
+          _NoopTaskbarLyricsPlatform(),
+          isWindows: true,
+        );
+        await pumpHost(
+          tester,
+          const Size(1280, 700),
+          const DesktopPlayerBar(),
+          cluster: syntheticCluster(),
+          taskbarLyrics: controls,
+        );
+        final buttons = [
+          find.byTooltip(zh.shellPlaybackStatus),
+          find.byTooltip(zh.deviceConnectTitle),
+          find.byTooltip(zh.settingsFloatingLyrics),
+        ];
+        for (final button in buttons) {
+          expect(button, findsOneWidget);
+          expect(tester.getSize(button), const Size.square(36));
+        }
+        expect(
+          tester.getCenter(buttons[1]).dx - tester.getCenter(buttons[0]).dx,
+          40,
+        );
+        expect(
+          tester.getCenter(buttons[2]).dx - tester.getCenter(buttons[1]).dx,
+          40,
+        );
+        expect(find.byType(Slider), findsNWidgets(2));
+        expect(tester.takeException(), isNull);
+        await unmount(tester);
+        controls.dispose();
+      },
+    );
 
     testWidgets('local mode when there is no remote session', (tester) async {
       await pumpHost(

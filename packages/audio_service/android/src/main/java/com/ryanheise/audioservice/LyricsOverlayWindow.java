@@ -267,6 +267,7 @@ final class LyricsOverlayWindow {
             final int token = generation;
             view.setText(text);
             view.scrollTo(0, 0);
+            long dwellMs = Math.min(500L, Math.max(0L, remainingMs - 50L));
             pendingStart = () -> {
                 pendingStart = null;
                 if (token != generation || text.isEmpty()) return;
@@ -278,14 +279,19 @@ final class LyricsOverlayWindow {
                 if (distance <= 1) return;
                 ValueAnimator next = ValueAnimator.ofInt(0, distance);
                 animator = next;
-                next.setDuration(Math.max(50L, remainingMs));
+                long motionMs = Math.max(50L, remainingMs - dwellMs);
+                next.setDuration(motionMs);
                 next.setInterpolator(new LinearInterpolator());
                 next.addUpdateListener(value -> {
                     if (token == generation) view.scrollTo((int) value.getAnimatedValue(), 0);
                 });
                 next.start();
             };
-            view.post(pendingStart);
+            if (dwellMs == 0L) {
+                view.post(pendingStart);
+            } else {
+                view.postDelayed(pendingStart, dwellMs);
+            }
         }
 
         void cancel() {

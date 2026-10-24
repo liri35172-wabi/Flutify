@@ -6,6 +6,7 @@ import '../../../l10n/l10n.dart';
 import '../../../providers/connect_provider.dart';
 import '../../screens/player/device_picker_sheet.dart';
 import '../../screens/player/full_player_sheet.dart';
+import '../../screens/player/lyrics/floating_lyrics_quick_toggle.dart';
 import '../../shell/shell_layout_controller.dart';
 import '../desktop_player_bar.dart';
 import '../playback_status_button.dart';
@@ -78,7 +79,9 @@ class _RemoteTrackInfo extends StatelessWidget {
         PlayerBarCover(
           url: track?.coverUrl ?? player.imageUrl,
           layout: layout,
-          onOpenFallback: layout == null ? () => FullPlayerSheet.show(context) : null,
+          onOpenFallback: layout == null
+              ? () => FullPlayerSheet.show(context)
+              : null,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -98,7 +101,7 @@ class _RemoteTrackInfo extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -132,16 +135,19 @@ class _RemoteRightControls extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final showPanels = constraints.maxWidth >= 2 * _buttonSize;
-        final used = (showPanels ? 2 : 1) * _buttonSize;
+        // Keep all three actions in the remote bar; omit only the optional
+        // volume slider when the right-hand column is genuinely too narrow.
+        const controlGap = 4.0;
+        final actionWidth = 3 * _buttonSize + 2 * controlGap;
         final showSlider =
             device != null &&
             device.supportsVolume &&
-            constraints.maxWidth >= used + _sliderWidth + 8;
+            constraints.maxWidth >= actionWidth + _sliderWidth + 8;
         return Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (showPanels) PlaybackStatusButton(layout: layout, style: _style),
+            PlaybackStatusButton(layout: layout, style: _style),
+            const SizedBox(width: controlGap),
             IconButton(
               icon: Icon(
                 device == null
@@ -153,6 +159,14 @@ class _RemoteRightControls extends StatelessWidget {
               tooltip: context.l10n.deviceConnectTitle,
               style: _style,
               onPressed: () => DevicePickerSheet.show(context),
+            ),
+            const SizedBox(width: controlGap),
+            FloatingLyricsQuickToggle(
+              buttonSize: _buttonSize,
+              iconSize: 20,
+              buttonStyle: _style,
+              activeColor: tokens.accent,
+              inactiveColor: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             if (showSlider)
               SizedBox(
