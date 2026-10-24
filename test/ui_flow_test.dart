@@ -10,7 +10,9 @@ import 'package:flutify_app/services/storage_service.dart';
 import 'package:flutify_app/ui/screens/detail/widgets/collection_hero.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_backdrop.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/glass_icon_button.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
 import 'package:flutify_app/ui/screens/player/queue_list.dart';
 import 'package:flutify_app/ui/shell/desktop/now_playing_details.dart';
 import 'package:flutify_app/ui/shell/desktop/now_playing_panel.dart';
@@ -257,6 +259,23 @@ void main() {
         reason: 'immersive lyrics remains available from the player bar only',
       );
       expect(find.text('First synthetic line'), findsOneWidget);
+      final translationButton = find.descendant(
+        of: find.byType(PanelLyricsCard),
+        matching: find.byType(LyricsTranslationButton),
+      );
+      expect(
+        tester.widget<LyricsTranslationButton>(translationButton).size,
+        36,
+      );
+      final expandIcon = find.descendant(
+        of: find.byType(PanelLyricsCard),
+        matching: find.byIcon(Icons.open_in_full_rounded),
+      );
+      final expandControl = find.ancestor(
+        of: expandIcon,
+        matching: find.byType(GlassIconButton),
+      );
+      expect(tester.widget<GlassIconButton>(expandControl).size, 36);
 
       // 放大：歌词卡撑满面板，详情列表让位；再点收起回到详情
       await tester.tap(find.byTooltip('放大歌词'));
@@ -272,6 +291,19 @@ void main() {
         reason: 'immersive lyrics remains available from the player bar only',
       );
       expect(find.text('First synthetic line'), findsOneWidget);
+      expect(
+        tester.widget<LyricsTranslationButton>(translationButton).size,
+        36,
+      );
+      final collapseIcon = find.descendant(
+        of: find.byType(PanelLyricsCard),
+        matching: find.byIcon(Icons.close_fullscreen_rounded),
+      );
+      final collapseControl = find.ancestor(
+        of: collapseIcon,
+        matching: find.byType(GlassIconButton),
+      );
+      expect(tester.widget<GlassIconButton>(collapseControl).size, 36);
 
       await tester.tap(find.byTooltip('收起歌词'));
       await settle(tester);

@@ -6,6 +6,7 @@ import '../../models/playback_state.dart';
 import '../../models/track.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/playback_provider.dart';
+import 'control_tooltip.dart';
 
 // 播放器通用控件。每个控件只 select 自己关心的状态，
 // 例如切换随机播放不会让播放按钮、封面、歌名等重建。
@@ -29,8 +30,10 @@ class PlayPauseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (isPlaying, isBuffering) =
-        context.select<PlaybackProvider, (bool, bool)>((p) => (p.isPlaying, p.isBuffering));
+    final (isPlaying, isBuffering) = context
+        .select<PlaybackProvider, (bool, bool)>(
+          (p) => (p.isPlaying, p.isBuffering),
+        );
 
     return SizedBox(
       width: size,
@@ -50,11 +53,15 @@ class PlayPauseButton extends StatelessWidget {
                 SizedBox(
                   width: size - 8,
                   height: size - 8,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: foreground.withAlpha(90)),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: foreground.withAlpha(90),
+                  ),
                 ),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
-                transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                transitionBuilder: (child, anim) =>
+                    ScaleTransition(scale: anim, child: child),
                 child: Icon(
                   isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                   key: ValueKey(isPlaying),
@@ -75,22 +82,37 @@ class ShuffleButton extends StatelessWidget {
   final Color inactiveColor;
   final BoxConstraints? constraints;
 
-  const ShuffleButton({super.key, this.size = 24, this.inactiveColor = Colors.white60, this.constraints});
+  const ShuffleButton({
+    super.key,
+    this.size = 24,
+    this.inactiveColor = Colors.white60,
+    this.constraints,
+  });
 
   @override
   Widget build(BuildContext context) {
     final shuffle = context.select<PlaybackProvider, bool>((p) => p.shuffle);
     final primary = Theme.of(context).colorScheme.primary;
-    return IconButton(
-      tooltip: shuffle ? context.l10n.playerShuffleOff : context.l10n.playerShuffleOn,
-      constraints: constraints,
-      padding: constraints != null ? EdgeInsets.zero : null,
-      icon: _ActiveDot(
-        active: shuffle,
-        color: primary,
-        child: Icon(Icons.shuffle_rounded, size: size, color: shuffle ? primary : inactiveColor),
+    final tooltip = shuffle
+        ? context.l10n.playerShuffleOff
+        : context.l10n.playerShuffleOn;
+    return ControlTooltip(
+      message: tooltip,
+      child: IconButton(
+        tooltip: ControlTooltip.nativeTooltip(tooltip),
+        constraints: constraints,
+        padding: constraints != null ? EdgeInsets.zero : null,
+        icon: _ActiveDot(
+          active: shuffle,
+          color: primary,
+          child: Icon(
+            Icons.shuffle_rounded,
+            size: size,
+            color: shuffle ? primary : inactiveColor,
+          ),
+        ),
+        onPressed: () => context.read<PlaybackProvider>().toggleShuffle(),
       ),
-      onPressed: () => context.read<PlaybackProvider>().toggleShuffle(),
     );
   }
 }
@@ -100,31 +122,44 @@ class RepeatButton extends StatelessWidget {
   final Color inactiveColor;
   final BoxConstraints? constraints;
 
-  const RepeatButton({super.key, this.size = 24, this.inactiveColor = Colors.white60, this.constraints});
+  const RepeatButton({
+    super.key,
+    this.size = 24,
+    this.inactiveColor = Colors.white60,
+    this.constraints,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final mode = context.select<PlaybackProvider, SpotifyRepeatMode>((p) => p.repeatMode);
+    final mode = context.select<PlaybackProvider, SpotifyRepeatMode>(
+      (p) => p.repeatMode,
+    );
     final primary = Theme.of(context).colorScheme.primary;
     final active = mode != SpotifyRepeatMode.off;
-    return IconButton(
-      tooltip: switch (mode) {
-        SpotifyRepeatMode.off => context.l10n.playerRepeatOn,
-        SpotifyRepeatMode.context => context.l10n.playerRepeatOneOn,
-        SpotifyRepeatMode.track => context.l10n.playerRepeatOff,
-      },
-      constraints: constraints,
-      padding: constraints != null ? EdgeInsets.zero : null,
-      icon: _ActiveDot(
-        active: active,
-        color: primary,
-        child: Icon(
-          mode == SpotifyRepeatMode.track ? Icons.repeat_one_rounded : Icons.repeat_rounded,
-          size: size,
-          color: active ? primary : inactiveColor,
+    final tooltip = switch (mode) {
+      SpotifyRepeatMode.off => context.l10n.playerRepeatOn,
+      SpotifyRepeatMode.context => context.l10n.playerRepeatOneOn,
+      SpotifyRepeatMode.track => context.l10n.playerRepeatOff,
+    };
+    return ControlTooltip(
+      message: tooltip,
+      child: IconButton(
+        tooltip: ControlTooltip.nativeTooltip(tooltip),
+        constraints: constraints,
+        padding: constraints != null ? EdgeInsets.zero : null,
+        icon: _ActiveDot(
+          active: active,
+          color: primary,
+          child: Icon(
+            mode == SpotifyRepeatMode.track
+                ? Icons.repeat_one_rounded
+                : Icons.repeat_rounded,
+            size: size,
+            color: active ? primary : inactiveColor,
+          ),
         ),
+        onPressed: () => context.read<PlaybackProvider>().cycleRepeatMode(),
       ),
-      onPressed: () => context.read<PlaybackProvider>().cycleRepeatMode(),
     );
   }
 }
@@ -136,17 +171,33 @@ class SkipButton extends StatelessWidget {
   final Color color;
   final BoxConstraints? constraints;
 
-  const SkipButton({super.key, required this.next, this.size = 34, this.color = Colors.white, this.constraints});
+  const SkipButton({
+    super.key,
+    required this.next,
+    this.size = 34,
+    this.color = Colors.white,
+    this.constraints,
+  });
 
   @override
   Widget build(BuildContext context) {
     final playback = context.read<PlaybackProvider>();
-    return IconButton(
-      tooltip: next ? context.l10n.playerNext : context.l10n.playerPrevious,
-      constraints: constraints,
-      padding: constraints != null ? EdgeInsets.zero : null,
-      icon: Icon(next ? Icons.skip_next_rounded : Icons.skip_previous_rounded, size: size, color: color),
-      onPressed: next ? playback.nextTrack : playback.previousTrack,
+    final tooltip = next
+        ? context.l10n.playerNext
+        : context.l10n.playerPrevious;
+    return ControlTooltip(
+      message: tooltip,
+      child: IconButton(
+        tooltip: ControlTooltip.nativeTooltip(tooltip),
+        constraints: constraints,
+        padding: constraints != null ? EdgeInsets.zero : null,
+        icon: Icon(
+          next ? Icons.skip_next_rounded : Icons.skip_previous_rounded,
+          size: size,
+          color: color,
+        ),
+        onPressed: next ? playback.nextTrack : playback.previousTrack,
+      ),
     );
   }
 }
@@ -157,25 +208,37 @@ class LikeButton extends StatelessWidget {
   final double size;
   final Color inactiveColor;
 
-  const LikeButton({super.key, required this.track, this.size = 24, this.inactiveColor = Colors.white});
+  const LikeButton({
+    super.key,
+    required this.track,
+    this.size = 24,
+    this.inactiveColor = Colors.white,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final liked = context.select<LibraryProvider, bool>((l) => l.isLiked(track.id));
+    final liked = context.select<LibraryProvider, bool>(
+      (l) => l.isLiked(track.id),
+    );
     final primary = Theme.of(context).colorScheme.primary;
-    return IconButton(
-      tooltip: liked ? context.l10n.likeRemove : context.l10n.likeAdd,
-      icon: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-        child: Icon(
-          liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-          key: ValueKey(liked),
-          size: size,
-          color: liked ? primary : inactiveColor,
+    final tooltip = liked ? context.l10n.likeRemove : context.l10n.likeAdd;
+    return ControlTooltip(
+      message: tooltip,
+      child: IconButton(
+        tooltip: ControlTooltip.nativeTooltip(tooltip),
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, anim) =>
+              ScaleTransition(scale: anim, child: child),
+          child: Icon(
+            liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            key: ValueKey(liked),
+            size: size,
+            color: liked ? primary : inactiveColor,
+          ),
         ),
+        onPressed: () => context.read<LibraryProvider>().toggleLike(track),
       ),
-      onPressed: () => context.read<LibraryProvider>().toggleLike(track),
     );
   }
 }
@@ -186,7 +249,11 @@ class _ActiveDot extends StatelessWidget {
   final Color color;
   final Widget child;
 
-  const _ActiveDot({required this.active, required this.color, required this.child});
+  const _ActiveDot({
+    required this.active,
+    required this.color,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {

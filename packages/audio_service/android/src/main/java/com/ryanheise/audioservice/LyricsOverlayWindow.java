@@ -14,7 +14,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.LinearInterpolator;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -252,7 +252,7 @@ final class LyricsOverlayWindow {
     }
 
     /** A single bounded pass to the actual text end; unlike TextView marquee it never loops. */
-    private static final class OnePassTicker {
+    private final class OnePassTicker {
         private final TextView view;
         private ValueAnimator animator;
         private Runnable pendingStart;
@@ -267,7 +267,12 @@ final class LyricsOverlayWindow {
             final int token = generation;
             view.setText(text);
             view.scrollTo(0, 0);
-            long dwellMs = Math.min(500L, Math.max(0L, remainingMs - 50L));
+            final long cueMs = Math.max(0L, remainingMs);
+            final long leadInMs = Math.max(300L, Math.min(650L, Math.round(cueMs * 0.24)));
+            final long endRestMs = Math.max(240L, Math.min(600L, Math.round(cueMs * 0.18)));
+            final long motionBudgetMs = cueMs - leadInMs - endRestMs;
+            final float density = context.getResources().getDisplayMetrics().density;
+            final double maxAverageSpeed = 82.0 * density;
             pendingStart = () -> {
                 pendingStart = null;
                 if (token != generation || text.isEmpty()) return;
@@ -275,22 +280,25 @@ final class LyricsOverlayWindow {
                 if (layout == null || layout.getLineCount() == 0) return;
                 int viewport = view.getWidth() - view.getCompoundPaddingLeft()
                         - view.getCompoundPaddingRight();
-                int distance = (int) Math.ceil(layout.getLineRight(0) - layout.getLineLeft(0) - viewport);
-                if (distance <= 1) return;
+                int overflow = (int) Math.ceil(layout.getLineRight(0) - layout.getLineLeft(0) - viewport);
+                if (overflow <= 1 || motionBudgetMs < 200L) return;
+                int maxDistance = (int) Math.floor(maxAverageSpeed * motionBudgetMs / 1000.0);
+                int distance = Math.min(overflow, maxDistance);
+                if (distance < dp(16)) return;
                 ValueAnimator next = ValueAnimator.ofInt(0, distance);
                 animator = next;
-                long motionMs = Math.max(50L, remainingMs - dwellMs);
+                long motionMs = Math.max(1L, (long) Math.ceil(distance / maxAverageSpeed * 1000.0));
                 next.setDuration(motionMs);
-                next.setInterpolator(new LinearInterpolator());
+                next.setInterpolator(new AccelerateDecelerateInterpolator());
                 next.addUpdateListener(value -> {
                     if (token == generation) view.scrollTo((int) value.getAnimatedValue(), 0);
                 });
                 next.start();
             };
-            if (dwellMs == 0L) {
+            if (leadInMs == 0L) {
                 view.post(pendingStart);
             } else {
-                view.postDelayed(pendingStart, dwellMs);
+                view.postDelayed(pendingStart, leadInMs);
             }
         }
 

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:ui';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../../../core/debug_toggles.dart';
 import '../../../../core/theme/flutify_tokens.dart';
 import 'apple_music_motion.dart';
+import 'lyric_ticker_plan.dart';
 
 /// 单行歌词（Apple Music iOS 风格）。
 ///
@@ -192,19 +194,6 @@ class _LineText extends StatelessWidget {
     final progress = trans == null || trans.isEmpty
         ? 0.0
         : translationProgress.clamp(0.0, 1.0);
-    final windowMs = tickerDuration?.inMilliseconds;
-    // Give the opening words a short reading beat, then use only the rest of
-    // this line's existing sync window for the one-pass reveal.
-    final tickerDelay = windowMs == null
-        ? const Duration(milliseconds: 350)
-        : Duration(milliseconds: (windowMs - 50).clamp(0, 500).toInt());
-    final tickerMotion = windowMs == null
-        ? null
-        : Duration(
-            milliseconds: (windowMs - tickerDelay.inMilliseconds)
-                .clamp(1, 120000)
-                .toInt(),
-          );
     Widget mainText() => Builder(
       builder: (context) {
         final style = TextStyle(
@@ -223,8 +212,7 @@ class _LineText extends StatelessWidget {
             style: style,
             textAlign: centered ? TextAlign.center : TextAlign.start,
             motionEnabled: tickerMotionEnabled,
-            duration: tickerMotion,
-            startDelay: tickerDelay,
+            duration: tickerDuration,
           );
         }
         return Text(
@@ -321,9 +309,7 @@ class _OnePassLyricTickerState extends State<OnePassLyricTicker> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.text != widget.text ||
         !_sameTextMetrics(oldWidget.style, widget.style) ||
-        oldWidget.motionEnabled != widget.motionEnabled ||
-        oldWidget.duration != widget.duration ||
-        oldWidget.startDelay != widget.startDelay) {
+        oldWidget.motionEnabled != widget.motionEnabled) {
       _resetPass();
     }
   }
@@ -368,23 +354,25 @@ class _OnePassLyricTickerState extends State<OnePassLyricTicker> {
     }
     _scheduledExtent = extent;
     _delay?.cancel();
-    _delay = Timer(widget.startDelay, () {
-      if (!mounted || !_scroll.hasClients) return;
-      final remaining =
-          _scroll.position.maxScrollExtent - _scroll.position.pixels;
-      if (remaining <= 1) return;
+    final plan = LyricTickerPlan.create(
+      overflow: extent,
+      remainingCue: widget.duration,
+      unboundedLeadIn: widget.startDelay,
+    );
+    if (!plan.moves) {
       _started = true;
-      final duration =
-          widget.duration ??
-          Duration(
-            milliseconds: (remaining / 34 * 1000).round().clamp(900, 6000),
-          );
+      return false;
+    }
+    _delay = Timer(plan.leadIn, () {
+      if (!mounted || !_scroll.hasClients) return;
+      final maxExtent = _scroll.position.maxScrollExtent;
+      final distance = math.min(plan.distance, maxExtent);
+      if (distance <= 1) return;
+      _started = true;
       _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: Duration(
-          milliseconds: duration.inMilliseconds.clamp(50, 120000),
-        ),
-        curve: Curves.linear,
+        distance.toDouble(),
+        duration: plan.motion,
+        curve: Curves.easeInOutSine,
       );
     });
     return false;

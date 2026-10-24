@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/l10n.dart';
 import '../screens/player/lyrics_sheet.dart';
 import '../shell/shell_layout_controller.dart';
+import 'control_tooltip.dart';
 
 /// 播放栏「播放状态」键（本机 / 远程播放栏共用）。
 ///
@@ -19,12 +20,20 @@ class PlaybackStatusButton extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final layout = this.layout;
     final active = layout?.playbackStatusVisible ?? false;
-    return IconButton(
-      icon: Icon(active ? Icons.view_sidebar_rounded : Icons.view_sidebar_outlined, size: 20),
-      color: active ? colorScheme.primary : colorScheme.onSurfaceVariant,
-      tooltip: context.l10n.shellPlaybackStatus,
-      style: style,
-      onPressed: layout == null ? () => LyricsSheet.show(context) : layout.togglePlaybackStatus,
+    return ControlTooltip(
+      message: context.l10n.shellPlaybackStatus,
+      child: IconButton(
+        icon: Icon(
+          active ? Icons.view_sidebar_rounded : Icons.view_sidebar_outlined,
+          size: 20,
+        ),
+        color: active ? colorScheme.primary : colorScheme.onSurfaceVariant,
+        tooltip: ControlTooltip.nativeTooltip(context.l10n.shellPlaybackStatus),
+        style: style,
+        onPressed: layout == null
+            ? () => LyricsSheet.show(context)
+            : layout.togglePlaybackStatus,
+      ),
     );
   }
 }

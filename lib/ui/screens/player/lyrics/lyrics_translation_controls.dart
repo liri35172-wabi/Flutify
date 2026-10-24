@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../providers/spotify_provider.dart';
 import '../../../../services/lyrics/lyrics_translation.dart';
+import '../../../widgets/control_tooltip.dart';
 import 'glass_icon_button.dart';
 
 /// A lyrics surface and its toolbar share one lookup and cancellation state.
@@ -77,26 +78,29 @@ class LyricsTranslationToggle extends StatelessWidget {
         : controller.unavailable
         ? l10n.lyricsTranslationUnavailable
         : l10n.lyricsTranslate;
-    return IconButton(
-      tooltip: label,
-      isSelected: active,
-      visualDensity: VisualDensity.compact,
-      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-      padding: EdgeInsets.zero,
-      onPressed: !controller.available
-          ? null
-          : active
-          ? controller.cancel
-          : controller.translate,
-      // State is communicated by accent colour alone; no dot beneath the icon.
-      icon: Icon(
-        Icons.translate_rounded,
-        color: active
-            ? primary
-            : controller.available
-            ? Colors.white70
-            : Colors.white24,
-        size: 22,
+    return ControlTooltip(
+      message: label,
+      child: IconButton(
+        tooltip: ControlTooltip.nativeTooltip(label),
+        isSelected: active,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+        padding: EdgeInsets.zero,
+        onPressed: !controller.available
+            ? null
+            : active
+            ? controller.cancel
+            : controller.translate,
+        // State is communicated by accent colour alone; no dot beneath the icon.
+        icon: Icon(
+          Icons.translate_rounded,
+          color: active
+              ? primary
+              : controller.available
+              ? Colors.white70
+              : Colors.white24,
+          size: 22,
+        ),
       ),
     );
   }

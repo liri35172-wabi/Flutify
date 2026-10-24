@@ -7,6 +7,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../../providers/preferences_provider.dart';
 import '../../../../services/taskbar_lyrics/taskbar_lyrics_channel.dart';
 import '../../../../services/taskbar_lyrics/taskbar_lyrics_controls.dart';
+import '../../../widgets/control_tooltip.dart';
 
 /// A compact player shortcut for the existing floating-lyrics preference.
 /// Android's overlay permission flow mirrors the settings switch; Windows does
@@ -107,24 +108,29 @@ class _FloatingLyricsQuickToggleState extends State<FloatingLyricsQuickToggle>
       (preferences) => preferences.prefs.floatingLyrics,
     );
     final primary = Theme.of(context).colorScheme.primary;
-    return IconButton(
-      tooltip: context.l10n.settingsFloatingLyrics,
-      isSelected: enabled,
-      visualDensity: VisualDensity.compact,
-      constraints: BoxConstraints.tightFor(
-        width: widget.buttonSize,
-        height: widget.buttonSize,
-      ),
-      style: widget.buttonStyle,
-      onPressed: _waitingForPermission
-          ? null
-          : () => unawaited(_toggle(enabled, controls)),
-      icon: Icon(
-        enabled ? Icons.subtitles_rounded : Icons.subtitles_outlined,
-        size: widget.iconSize,
-        color: enabled
-            ? (widget.activeColor ?? primary)
-            : (widget.inactiveColor ?? Colors.white70),
+    return ControlTooltip(
+      message: context.l10n.settingsFloatingLyrics,
+      child: IconButton(
+        tooltip: ControlTooltip.nativeTooltip(
+          context.l10n.settingsFloatingLyrics,
+        ),
+        isSelected: enabled,
+        visualDensity: VisualDensity.compact,
+        constraints: BoxConstraints.tightFor(
+          width: widget.buttonSize,
+          height: widget.buttonSize,
+        ),
+        style: widget.buttonStyle,
+        onPressed: _waitingForPermission
+            ? null
+            : () => unawaited(_toggle(enabled, controls)),
+        icon: Icon(
+          enabled ? Icons.subtitles_rounded : Icons.subtitles_outlined,
+          size: widget.iconSize,
+          color: enabled
+              ? (widget.activeColor ?? primary)
+              : (widget.inactiveColor ?? Colors.white70),
+        ),
       ),
     );
   }

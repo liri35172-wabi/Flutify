@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/flutify_tokens.dart';
+import '../../../widgets/control_tooltip.dart';
 import '../../../widgets/liquid_glass.dart';
 
 /// 圆形液态玻璃图标按钮：歌词界面上的「全屏 / 关闭 / 退出」等浮动操作。
@@ -46,7 +47,7 @@ class GlassIconButton extends StatelessWidget {
           icon: Icon(icon, size: size * 0.45, color: fg),
           color: fg,
           disabledColor: Colors.white54,
-          tooltip: tooltip,
+          tooltip: ControlTooltip.nativeTooltip(tooltip),
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(
             foregroundColor: fg,
@@ -58,6 +59,9 @@ class GlassIconButton extends StatelessWidget {
         ),
       ),
     );
-    return glass ? LiquidGlass(borderRadius: radius, child: button) : button;
+    return ControlTooltip(
+      message: tooltip,
+      child: glass ? LiquidGlass(borderRadius: radius, child: button) : button,
+    );
   }
 }

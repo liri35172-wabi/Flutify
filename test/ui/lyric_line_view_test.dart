@@ -95,10 +95,12 @@ void main() {
         lessThan(initialTextX),
         reason: 'the glyphs must travel left through the clipped viewport',
       );
-      await tester.pump(const Duration(seconds: 6));
+      await tester.pump(const Duration(seconds: 20));
       expect(
         state.position.pixels,
         closeTo(state.position.maxScrollExtent, 0.1),
+        reason:
+            'a slow one-pass ticker should eventually reveal the whole line',
       );
       final stoppedAt = state.position.pixels;
       await tester.pump(const Duration(seconds: 3));
@@ -134,18 +136,29 @@ void main() {
     expect(scrollable, findsOneWidget);
     final state = tester.state<ScrollableState>(scrollable);
     expect(state.position.maxScrollExtent, greaterThan(0));
-    await tester.pump(const Duration(milliseconds: 499));
+    await tester.pump(const Duration(milliseconds: 299));
     expect(
       state.position.pixels,
       0,
       reason: 'opening words need a readable pause before the pass',
     );
     await tester.pump(const Duration(milliseconds: 1));
-    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 120));
     expect(state.position.pixels, greaterThan(0));
     expect(state.position.pixels, lessThan(state.position.maxScrollExtent));
+    await tester.pump(const Duration(milliseconds: 280));
+    final restedAt = state.position.pixels;
+    expect(restedAt, greaterThan(0));
+    expect(restedAt, lessThan(state.position.maxScrollExtent));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      state.position.pixels,
+      closeTo(restedAt, 0.1),
+      reason:
+          'the lyric should rest at the revealed position until its cue ends',
+    );
     await tester.pump(const Duration(milliseconds: 150));
-    expect(state.position.pixels, closeTo(state.position.maxScrollExtent, 0.1));
+    expect(state.position.pixels, closeTo(restedAt, 0.1));
     final end = state.position.pixels;
     await tester.pump(const Duration(seconds: 2));
     expect(state.position.pixels, closeTo(end, 0.1));

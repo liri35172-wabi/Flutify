@@ -89,7 +89,7 @@ class PanelLyricsCard extends StatelessWidget {
                           ? _TrackLabel(track: track)
                           : _CardLabel(text: l10n.lyricsTitle),
                     ),
-                    const LyricsTranslationButton(),
+                    const LyricsTranslationButton(size: 36),
                     const SizedBox(width: 8),
                     GlassIconButton(
                       icon: expanded
