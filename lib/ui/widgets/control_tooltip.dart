@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 
 /// Shared tooltip placement for player controls.
 ///
-/// Desktop tooltips sit well clear of the pointer, preferring above the
-/// trigger and flipping below only when the top edge would clip the label.
-/// Touch platforms keep Material's usual placement.
+/// Desktop tooltips use a small, consistent gap above the trigger. Near the top
+/// edge they flip below, with extra cursor clearance; touch platforms keep
+/// Material's usual placement.
 class ControlTooltip extends StatelessWidget {
   final String message;
   final Widget child;
@@ -32,7 +32,7 @@ class ControlTooltip extends StatelessWidget {
     return Tooltip(
       message: message,
       preferBelow: false,
-      verticalOffset: 30,
+      verticalOffset: 8,
       positionDelegate: desktopControlTooltipPosition,
       child: child,
     );
@@ -41,11 +41,13 @@ class ControlTooltip extends StatelessWidget {
 
 /// Position a desktop tooltip relative to its full trigger bounds.
 ///
-/// The clearance leaves room for the mouse cursor's body below its hotspot.
-/// Clamping keeps the whole label visible near either horizontal edge.
+/// A short gap keeps labels close to the trigger without placing them under the
+/// pointer hotspot. Near the top edge, the fallback leaves more room for the
+/// hand cursor below its hotspot. Clamping keeps labels inside the overlay.
 Offset desktopControlTooltipPosition(TooltipPositionContext context) {
   const edgeInset = 8.0;
-  const cursorClearance = 30.0;
+  const aboveGap = 8.0;
+  const belowCursorGap = 20.0;
   final overlay = context.overlaySize;
   final tooltip = context.tooltipSize;
   final target = Rect.fromCenter(
@@ -63,8 +65,8 @@ Offset desktopControlTooltipPosition(TooltipPositionContext context) {
   final maxX = math.max(edgeInset, width - tooltip.width - edgeInset);
   final x = (context.target.dx - tooltip.width / 2).clamp(edgeInset, maxX);
 
-  final above = target.top - cursorClearance - tooltip.height;
-  final below = target.bottom + cursorClearance;
+  final above = target.top - aboveGap - tooltip.height;
+  final below = target.bottom + belowCursorGap;
   final fitsAbove = above >= edgeInset;
   final fitsBelow = below + tooltip.height <= height - edgeInset;
   final double y;
@@ -73,12 +75,12 @@ Offset desktopControlTooltipPosition(TooltipPositionContext context) {
   } else if (fitsBelow) {
     y = below;
   } else if (target.top - edgeInset >= height - target.bottom - edgeInset) {
-    y = (target.top - cursorClearance - tooltip.height).clamp(
+    y = (target.top - aboveGap - tooltip.height).clamp(
       edgeInset,
       math.max(edgeInset, height - tooltip.height - edgeInset),
     );
   } else {
-    y = (target.bottom + cursorClearance).clamp(
+    y = (target.bottom + belowCursorGap).clamp(
       edgeInset,
       math.max(edgeInset, height - tooltip.height - edgeInset),
     );

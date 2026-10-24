@@ -15,11 +15,16 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.PathInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /** Small draggable, non-focusable Android lyrics overlay owned by the active media service. */
 final class LyricsOverlayWindow {
+    private static final float LONG_LINE_THRESHOLD_DP = 260f;
+    private static final PathInterpolator LONG_LINE_INTERPOLATOR =
+            new PathInterpolator(0.55f, 0f, 0.85f, 1f);
+
     private final Context context;
     private final WindowManager windowManager;
     private final LinearLayout root;
@@ -289,7 +294,9 @@ final class LyricsOverlayWindow {
                 animator = next;
                 long motionMs = Math.max(1L, (long) Math.ceil(distance / maxAverageSpeed * 1000.0));
                 next.setDuration(motionMs);
-                next.setInterpolator(new AccelerateDecelerateInterpolator());
+                next.setInterpolator(overflow >= dp(LONG_LINE_THRESHOLD_DP)
+                        ? LONG_LINE_INTERPOLATOR
+                        : new AccelerateDecelerateInterpolator());
                 next.addUpdateListener(value -> {
                     if (token == generation) view.scrollTo((int) value.getAnimatedValue(), 0);
                 });

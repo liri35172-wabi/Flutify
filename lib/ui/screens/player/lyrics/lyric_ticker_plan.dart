@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:flutter/animation.dart';
+
 /// A one-pass ticker schedule constrained by the active lyric's remaining cue.
 ///
 /// A readable opening and an unhurried, smooth pass take priority over exposing
@@ -10,12 +12,18 @@ class LyricTickerPlan {
     required this.motion,
     required this.distance,
     required this.endRest,
+    this.lateAcceleration = false,
   });
 
   final Duration leadIn;
   final Duration motion;
   final double distance;
   final Duration endRest;
+  final bool lateAcceleration;
+
+  /// Match the Android overlay's late-biased curve only for long overflow.
+  Curve get motionCurve =>
+      lateAcceleration ? longLyricMotionCurve : Curves.easeInOutSine;
 
   bool get moves => distance > 1 && motion > Duration.zero;
 
@@ -28,6 +36,10 @@ class LyricTickerPlan {
   static const int maximumEndRestMs = 600;
   static const int minimumMotionBudgetMs = 200;
   static const double minimumDistance = 16;
+  static const double lateAccelerationThreshold = 260;
+  // A right-biased, non-rebounding cubic lets long lyrics spend more of the
+  // latter half revealing text, then eases to a zero-velocity stop.
+  static const Curve longLyricMotionCurve = Cubic(0.55, 0, 0.85, 1);
 
   static LyricTickerPlan create({
     required double overflow,
@@ -44,6 +56,7 @@ class LyricTickerPlan {
         motion: motion,
         distance: distance,
         endRest: Duration.zero,
+        lateAcceleration: distance >= lateAccelerationThreshold,
       );
     }
 
@@ -64,6 +77,7 @@ class LyricTickerPlan {
         motion: Duration.zero,
         distance: 0,
         endRest: Duration(milliseconds: cueMs - actualLeadMs),
+        lateAcceleration: overflow >= lateAccelerationThreshold,
       );
     }
 
@@ -75,6 +89,7 @@ class LyricTickerPlan {
         motion: Duration.zero,
         distance: 0,
         endRest: Duration(milliseconds: cueMs - leadMs),
+        lateAcceleration: overflow >= lateAccelerationThreshold,
       );
     }
     final motionMs = (distance / maxAverageSpeed * 1000).ceil();
@@ -83,6 +98,7 @@ class LyricTickerPlan {
       motion: Duration(milliseconds: motionMs),
       distance: distance,
       endRest: Duration(milliseconds: math.max(0, cueMs - leadMs - motionMs)),
+      lateAcceleration: overflow >= lateAccelerationThreshold,
     );
   }
 }

@@ -5,7 +5,7 @@ import 'package:flutify_app/ui/widgets/control_tooltip.dart';
 
 void main() {
   group('desktopControlTooltipPosition', () {
-    test('prefers above the pointer with a clear gap', () {
+    test('keeps the label close above the trigger with a consistent gap', () {
       const context = TooltipPositionContext(
         target: Offset(300, 250),
         targetSize: Size(48, 48),
@@ -14,7 +14,7 @@ void main() {
         overlaySize: Size(600, 400),
       );
 
-      expect(desktopControlTooltipPosition(context), const Offset(240, 164));
+      expect(desktopControlTooltipPosition(context), const Offset(240, 186));
     });
 
     test('flips below only when the tooltip cannot fit above', () {
@@ -26,7 +26,19 @@ void main() {
         overlaySize: Size(600, 400),
       );
 
-      expect(desktopControlTooltipPosition(context).dy, 124);
+      expect(desktopControlTooltipPosition(context).dy, 114);
+    });
+
+    test('prefers above near the lower edge instead of flipping down', () {
+      const context = TooltipPositionContext(
+        target: Offset(300, 350),
+        targetSize: Size(48, 48),
+        tooltipSize: Size(120, 32),
+        verticalOffset: 8,
+        overlaySize: Size(600, 400),
+      );
+
+      expect(desktopControlTooltipPosition(context), const Offset(240, 286));
     });
 
     test('clamps the full tooltip inside the horizontal edges', () {
@@ -39,6 +51,18 @@ void main() {
       );
 
       expect(desktopControlTooltipPosition(context).dx, 8);
+    });
+
+    test('clamps the right edge without changing the vertical gap', () {
+      const context = TooltipPositionContext(
+        target: Offset(590, 150),
+        targetSize: Size(20, 20),
+        tooltipSize: Size(100, 30),
+        verticalOffset: 8,
+        overlaySize: Size(600, 400),
+      );
+
+      expect(desktopControlTooltipPosition(context), const Offset(492, 102));
     });
   });
 

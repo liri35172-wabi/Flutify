@@ -59,6 +59,65 @@ void main() {
   });
 
   test(
+    'very long lines ease in later, then advance faster in the second half',
+    () {
+      final longLine = LyricTickerPlan.create(
+        overflow: 900,
+        remainingCue: const Duration(milliseconds: 3200),
+      );
+      final shortLine = LyricTickerPlan.create(
+        overflow: 220,
+        remainingCue: const Duration(milliseconds: 3200),
+      );
+      final curve = longLine.motionCurve;
+
+      expect(longLine.lateAcceleration, isTrue);
+      expect(shortLine.lateAcceleration, isFalse);
+      expect(curve.transform(0), 0);
+      expect(curve.transform(1), 1);
+      final firstQuarter = curve.transform(.25);
+      final midpoint = curve.transform(.5);
+      final thirdQuarter = curve.transform(.75);
+      expect(firstQuarter, lessThan(.15));
+      expect(thirdQuarter, greaterThan(.65));
+      expect(firstQuarter, lessThan(midpoint));
+      expect(midpoint, lessThan(thirdQuarter));
+      expect(thirdQuarter - midpoint, greaterThan(midpoint - firstQuarter));
+      expect(
+        longLine.distance / longLine.motion.inMilliseconds * 1000,
+        lessThanOrEqualTo(LyricTickerPlan.maxAverageSpeed + .1),
+      );
+      expect(
+        longLine.endRest,
+        greaterThanOrEqualTo(const Duration(milliseconds: 576)),
+      );
+      expect(
+        longLine.leadIn + longLine.motion + longLine.endRest,
+        const Duration(milliseconds: 3200),
+      );
+    },
+  );
+
+  test('short timing windows keep the original gentle motion and dwell', () {
+    final plan = LyricTickerPlan.create(
+      overflow: 400,
+      remainingCue: const Duration(milliseconds: 1200),
+    );
+
+    expect(plan.moves, isTrue);
+    expect(plan.lateAcceleration, isTrue);
+    expect(plan.leadIn, const Duration(milliseconds: 300));
+    expect(
+      plan.endRest,
+      greaterThanOrEqualTo(const Duration(milliseconds: 240)),
+    );
+    expect(
+      plan.leadIn + plan.motion + plan.endRest,
+      const Duration(milliseconds: 1200),
+    );
+  });
+
+  test(
     'unbounded preview keeps its slower one-pass pace and opening pause',
     () {
       final plan = LyricTickerPlan.create(overflow: 320, remainingCue: null);

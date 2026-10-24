@@ -372,7 +372,7 @@ class _OnePassLyricTickerState extends State<OnePassLyricTicker> {
       _scroll.animateTo(
         distance.toDouble(),
         duration: plan.motion,
-        curve: Curves.easeInOutSine,
+        curve: plan.motionCurve,
       );
     });
     return false;
