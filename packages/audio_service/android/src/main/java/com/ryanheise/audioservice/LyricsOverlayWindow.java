@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.text.Layout;
 import android.view.Gravity;
@@ -35,7 +34,6 @@ final class LyricsOverlayWindow {
     private final WindowManager.LayoutParams params;
     private boolean attached;
     private boolean clickThrough;
-    private boolean transparentBackground;
     private int textColor = Color.WHITE;
     private int fontScale = 100;
     private float downRawX;
@@ -52,8 +50,8 @@ final class LyricsOverlayWindow {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
         root.setPadding(dp(20), dp(11), dp(20), dp(11));
-        root.setBackground(background());
-        root.setElevation(dp(10));
+        // A transparent surface leaves the lyric text itself responsible for contrast.
+        root.setBackground(null);
         root.setClickable(true);
         root.setFocusable(false);
 
@@ -99,14 +97,11 @@ final class LyricsOverlayWindow {
         root.setOnTouchListener(this::onTouch);
     }
 
-    /** Changes overlay interaction and appearance without resetting its saved position. */
+    /** Changes overlay interaction without resetting its saved position. */
     void setOptions(boolean clickThrough, boolean transparentBackground) {
-        boolean changed = this.clickThrough != clickThrough
-                || this.transparentBackground != transparentBackground;
+        boolean changed = this.clickThrough != clickThrough;
         this.clickThrough = clickThrough;
-        this.transparentBackground = transparentBackground;
         if (changed) {
-            root.setBackground(transparentBackground ? null : background());
             root.setClickable(!clickThrough);
         }
         int flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
@@ -135,7 +130,6 @@ final class LyricsOverlayWindow {
         translation.setTextColor(lightText ? 0xFFE7E9EF : 0xFF252A32);
         translation.setTextSize(12f * this.fontScale / 100f);
         ((ContrastTextView) translation).setContrastOutline(true);
-        root.setBackground(transparentBackground ? null : background());
     }
 
     void show(String text, String translatedText, long remainingMs) {
@@ -321,15 +315,6 @@ final class LyricsOverlayWindow {
             }
             view.scrollTo(0, 0);
         }
-    }
-
-    private GradientDrawable background() {
-        GradientDrawable drawable = new GradientDrawable();
-        boolean lightText = usesLightText(textColor);
-        drawable.setColor(lightText ? 0xD91A1E27 : 0xEAF5F6FA);
-        drawable.setCornerRadius(dp(20));
-        drawable.setStroke(dp(1), lightText ? 0x44FFFFFF : 0x44353A45);
-        return drawable;
     }
 
     private static boolean usesLightText(int color) {

@@ -135,9 +135,10 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
               height: 68,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: prefs.floatingLyricsTransparent
-                    ? Colors.transparent
-                    : const Color(0x99212630),
+                color: FloatingLyricsPresentation.previewBackground(
+                  isAndroid: Platform.isAndroid,
+                  transparentBackground: prefs.floatingLyricsTransparent,
+                ),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.outlineVariant,
@@ -223,7 +224,10 @@ class _FloatingLyricsSectionState extends State<FloatingLyricsSection>
             onChanged: (value) =>
                 update((p) => p.copyWith(floatingLyricsClickThrough: value)),
           ),
-        if (Platform.isAndroid || Platform.isWindows)
+        if (FloatingLyricsPresentation.showBackgroundControl(
+          isAndroid: Platform.isAndroid,
+          isWindows: Platform.isWindows,
+        ))
           SettingsSwitchTile(
             title: l10n.settingsFloatingLyricsTransparent,
             subtitle: l10n.settingsFloatingLyricsTransparentSubtitle,
@@ -264,4 +268,21 @@ class _FloatingLyricsColorButton extends StatelessWidget {
       label: Text(label),
     );
   }
+}
+
+/// Presentation rules shared by the floating-lyrics preview and platform settings.
+class FloatingLyricsPresentation {
+  const FloatingLyricsPresentation._();
+
+  static Color previewBackground({
+    required bool isAndroid,
+    required bool transparentBackground,
+  }) => isAndroid || transparentBackground
+      ? Colors.transparent
+      : const Color(0x99212630);
+
+  static bool showBackgroundControl({
+    required bool isAndroid,
+    required bool isWindows,
+  }) => isWindows && !isAndroid;
 }
