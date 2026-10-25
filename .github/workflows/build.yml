@@ -108,6 +108,7 @@ jobs:
           # Flutter 给 ABI 拆分包增加 1000/2000/3000/4000。批次间隔 10000，
           # 使新通用包也能覆盖上一批的拆分包；重跑同一批时递增 attempt。
           echo "ANDROID_BUILD_NUMBER=$(( (100 + GITHUB_RUN_NUMBER) * 10000 + GITHUB_RUN_ATTEMPT ))" >> "$GITHUB_ENV"
+          echo "FLUTIFY_BUILD_ID=Build #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT} ${GITHUB_SHA:0:7}" >> "$GITHUB_ENV"
 
       - name: Build APK（按 ABI 拆分 + 通用包）
         env:
@@ -116,8 +117,18 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           FLUTIFY_PLAYBACK_DIAGNOSTICS: ${{ inputs.playback_diagnostics || false }}
         run: |
-          flutter build apk --release --split-per-abi --build-number="$ANDROID_BUILD_NUMBER" --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }} --dart-define=FLUTIFY_PLAYBACK_DIAGNOSTICS=$FLUTIFY_PLAYBACK_DIAGNOSTICS
-          flutter build apk --release --build-number="$ANDROID_BUILD_NUMBER" --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }} --dart-define=FLUTIFY_PLAYBACK_DIAGNOSTICS=$FLUTIFY_PLAYBACK_DIAGNOSTICS
+          flutter build apk --release --split-per-abi \
+            --build-number="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_NUMBER="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_ID="$FLUTIFY_BUILD_ID" \
+            --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }} \
+            --dart-define=FLUTIFY_PLAYBACK_DIAGNOSTICS="$FLUTIFY_PLAYBACK_DIAGNOSTICS"
+          flutter build apk --release \
+            --build-number="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_NUMBER="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_ID="$FLUTIFY_BUILD_ID" \
+            --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }} \
+            --dart-define=FLUTIFY_PLAYBACK_DIAGNOSTICS="$FLUTIFY_PLAYBACK_DIAGNOSTICS"
 
       - name: Verify APK signatures, version codes, and media icons
         env:

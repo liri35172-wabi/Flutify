@@ -193,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SliverToBoxAdapter(
           child: EmptyState(
             icon: failed
-                ? Icons.wifi_off_rounded
+                ? Icons.error_outline_rounded
                 : Icons.library_music_outlined,
             title: failed ? l10n.homeLoadFailedTitle : l10n.homeEmptyTitle,
             message: failed

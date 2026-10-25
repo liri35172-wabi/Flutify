@@ -25,6 +25,7 @@ class AboutSection extends StatelessWidget {
       children: [
         SettingsTile(
           title: l10n.settingsVersion,
+          subtitle: AppInfo.buildId.isEmpty ? null : AppInfo.buildId,
           trailing: Text(AppInfo.displayVersion, style: TextStyle(color: muted)),
         ),
         if (desktop)

@@ -297,7 +297,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeLoadFailedTitle => 'Couldn\'t load recommendations';
 
   @override
-  String get homeLoadFailedMessage => 'Check your connection and try again.';
+  String get homeLoadFailedMessage => 'Recommendations couldn’t load. Try again later.';
 
   @override
   String get authSessionExpiredTitle => 'Your session has expired';

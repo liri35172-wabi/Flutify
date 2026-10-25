@@ -5,13 +5,24 @@ class AppInfo {
   AppInfo._();
 
   static const String name = 'Flutify';
-  static const String version = '0.0.15';
-  static const int build = 15;
-  static const String _buildReleaseTag = String.fromEnvironment(
-    'FLUTIFY_RELEASE_TAG', defaultValue: 'v0.15',
-  );
-  static const String releaseTag = _buildReleaseTag == '' ? 'v0.15' : _buildReleaseTag;
+  static const String version = '0.16.2';
 
-  /// 「0.0.15 (15)」
+  /// Android CI overrides this with the exact versionCode passed to `flutter build`.
+  static const int build = int.fromEnvironment(
+    'FLUTIFY_BUILD_NUMBER',
+    defaultValue: 16,
+  );
+
+  /// CI run and commit label, supplied by artifact-producing workflows.
+  static const String buildId = String.fromEnvironment('FLUTIFY_BUILD_ID');
+  static const String _buildReleaseTag = String.fromEnvironment(
+    'FLUTIFY_RELEASE_TAG',
+    defaultValue: 'v0.16.2',
+  );
+  static const String releaseTag = _buildReleaseTag == ''
+      ? 'v0.16.2'
+      : _buildReleaseTag;
+
+  /// 「0.16.2 (16)」
   static String get displayVersion => '$version ($build)';
 }

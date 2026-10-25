@@ -7,10 +7,19 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('AppInfo version matches pubspec.yaml', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
-    final match = RegExp(r'^version:\s*([\d.]+)\+(\d+)\s*$', multiLine: true).firstMatch(pubspec);
+    final match = RegExp(
+      r'^version:\s*([\d.]+)\+(\d+)\s*$',
+      multiLine: true,
+    ).firstMatch(pubspec);
     expect(match, isNotNull, reason: 'pubspec.yaml 缺少 version: x.y.z+n');
     expect(AppInfo.version, match!.group(1));
-    expect(AppInfo.build, int.parse(match.group(2)!));
+    final pubspecBuild = int.parse(match.group(2)!);
+    const buildOverride = int.fromEnvironment(
+      'FLUTIFY_BUILD_NUMBER',
+      defaultValue: -1,
+    );
+    expect(AppInfo.build, buildOverride >= 0 ? buildOverride : pubspecBuild);
+    expect(AppInfo.buildId, const String.fromEnvironment('FLUTIFY_BUILD_ID'));
     expect(AppInfo.displayVersion, '${AppInfo.version} (${AppInfo.build})');
   });
 }

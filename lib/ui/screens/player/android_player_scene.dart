@@ -279,7 +279,9 @@ class _AndroidPlayerSceneState extends State<AndroidPlayerScene>
     child: ExcludeSemantics(
       excluding: !_motion.controlsVisible,
       child: IgnorePointer(
-        ignoring: !_motion.controlsVisible,
+        // Keep the artwork hit target alive while a lyrics/queue card's
+        // chrome is folded, so tapping its cover can still return to artwork.
+        ignoring: !_motion.controlsVisible && !_cardMode,
         child: ClipRect(
           clipper: PlayerCardBodyClipper(geometry: _geometry, slot: slot),
           child: child,

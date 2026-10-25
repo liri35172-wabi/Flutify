@@ -21,6 +21,8 @@ import android.widget.TextView;
 /** Small draggable, non-focusable Android lyrics overlay owned by the active media service. */
 final class LyricsOverlayWindow {
     private static final float LONG_LINE_THRESHOLD_DP = 260f;
+    // Android 12+ allows touch-through while the obscuring window stays at or below 0.8.
+    private static final float MAX_CLICK_THROUGH_ALPHA = 0.8f;
     private static final PathInterpolator LONG_LINE_INTERPOLATOR =
             new PathInterpolator(0.55f, 0f, 0.85f, 1f);
 
@@ -50,7 +52,7 @@ final class LyricsOverlayWindow {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER);
         root.setPadding(dp(20), dp(11), dp(20), dp(11));
-        // A transparent surface leaves the lyric text itself responsible for contrast.
+        // The lyric surface stays transparent; ContrastTextView keeps glyphs readable.
         root.setBackground(null);
         root.setClickable(true);
         root.setFocusable(false);
@@ -59,7 +61,7 @@ final class LyricsOverlayWindow {
         primary.setTextColor(textColor);
         // Keep lyrics readable over light or busy apps even when the surface is transparent.
         primary.setTextSize(18);
-        primary.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        primary.setTypeface(miSansTypeface("MiSans-Demibold.ttf", "sans-serif-medium", Typeface.NORMAL));
         primary.setSingleLine(true);
         primary.setHorizontallyScrolling(true);
         primary.setEllipsize(null);
@@ -71,6 +73,7 @@ final class LyricsOverlayWindow {
 
         translation = new ContrastTextView(context);
         translation.setTextColor(0xFFE7E9EF);
+        translation.setTypeface(miSansTypeface("MiSans-Regular.ttf", "sans-serif", Typeface.NORMAL));
         translation.setTextSize(12);
         translation.setSingleLine(true);
         translation.setHorizontallyScrolling(true);
@@ -97,7 +100,9 @@ final class LyricsOverlayWindow {
         root.setOnTouchListener(this::onTouch);
     }
 
-    /** Changes overlay interaction without resetting its saved position. */
+    /** Changes overlay interaction without resetting its saved position.
+     * The background argument remains for channel compatibility; Android is always transparent.
+     */
     void setOptions(boolean clickThrough, boolean transparentBackground) {
         boolean changed = this.clickThrough != clickThrough;
         this.clickThrough = clickThrough;
@@ -109,8 +114,9 @@ final class LyricsOverlayWindow {
                 | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
         if (clickThrough) flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         params.flags = flags;
-        // Android 12+ blocks touches through highly-obscuring application overlays.
-        params.alpha = clickThrough ? 0.65f : 1f;
+        // Keep the overlay as legible as possible without exceeding Android's touch-through
+        // obscuring-opacity threshold for a single application overlay.
+        params.alpha = clickThrough ? MAX_CLICK_THROUGH_ALPHA : 1f;
         if (changed && attached) {
             try {
                 windowManager.updateViewLayout(root, params);
@@ -242,6 +248,16 @@ final class LyricsOverlayWindow {
             textPaint.setStyle(originalStyle);
             textPaint.setStrokeWidth(originalStrokeWidth);
             textPaint.setStrokeJoin(originalJoin);
+        }
+    }
+
+    /** Match the Windows overlay's bundled MiSans face; fall back if an asset is unavailable. */
+    private Typeface miSansTypeface(String fileName, String fallbackFamily, int fallbackStyle) {
+        try {
+            return Typeface.createFromAsset(
+                    context.getAssets(), "flutter_assets/assets/fonts/MiSans/" + fileName);
+        } catch (RuntimeException ignored) {
+            return Typeface.create(fallbackFamily, fallbackStyle);
         }
     }
 

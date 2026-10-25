@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutify_app/core/utils/artwork_palette.dart';
 import 'package:flutify_app/main.dart';
@@ -11,6 +12,8 @@ import 'package:flutify_app/providers/library_provider.dart';
 import 'package:flutify_app/providers/playback_provider.dart';
 import 'package:flutify_app/services/eme/eme_player.dart';
 import 'package:flutify_app/services/storage_service.dart';
+import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_channel.dart';
+import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_controls.dart';
 import 'package:flutify_app/ui/navigation/app_routes.dart';
 import 'package:flutify_app/ui/screens/detail/album_detail_screen.dart';
 import 'package:flutify_app/ui/screens/detail/artist_detail_screen.dart';
@@ -18,6 +21,8 @@ import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/android_player_scene.dart';
 import 'package:flutify_app/ui/screens/player/device_picker_sheet.dart';
 import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/floating_lyrics_quick_toggle.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/current_lyrics_preview.dart';
 import 'package:flutify_app/ui/screens/player/player_destinations_sheet.dart';
 import 'package:flutify_app/ui/widgets/marquee_text.dart';
 import 'package:flutify_app/ui/widgets/cover_image.dart';
@@ -55,6 +60,75 @@ Future<void> _frames(WidgetTester tester, [int count = 8]) async {
 Finder _inPlayer(Finder finder) =>
     find.descendant(of: find.byType(FullPlayerSheet), matching: finder);
 
+Finder _lyricsPreview() => _inPlayer(find.byType(CurrentLyricsPreview));
+
+Future<void> _tapLyricsCover(WidgetTester tester) async {
+  final cover = _inPlayer(find.byType(Hero));
+  final scene = _inPlayer(find.byType(AndroidPlayerScene));
+  final viewport = tester.getRect(scene);
+  final coverRect = tester.getRect(cover);
+  if (!viewport.contains(coverRect.topLeft) ||
+      !viewport.contains(coverRect.bottomRight)) {
+    // The card folds the cover below the viewport; wake it with a real swipe
+    // before tapping a point the user can actually reach.
+    await tester.dragFrom(tester.getRect(scene).center, const Offset(0, 48));
+    await _frames(tester);
+  }
+  expect(
+    tester.getRect(scene).contains(tester.getCenter(cover)),
+    isTrue,
+    reason: 'the cover center is on screen before it is used as a tap target',
+  );
+  // The cover's child ignores input in portrait card mode, but its parent
+  // GestureDetector owns the back-to-artwork tap. Test that real pointer path.
+  await tester.tap(cover, warnIfMissed: false);
+  await tester.pump();
+  expect(
+    tester.widget<AndroidPlayerScene>(scene).lyricsMode,
+    isFalse,
+    reason: 'tapping the visible cover returns to artwork',
+  );
+}
+
+class _NoopTaskbarLyricsPlatform implements TaskbarLyricsPlatform {
+  @override
+  Stream<TaskbarLyricsEvent> get events =>
+      const Stream<TaskbarLyricsEvent>.empty();
+
+  @override
+  Future<void> setEnabled(bool enabled) async {}
+
+  @override
+  Future<void> setOverlayEnabled(bool enabled) async {}
+
+  @override
+  Future<void> setOverlayOptions({
+    required bool clickThrough,
+    required bool transparentBackground,
+  }) async {}
+
+  @override
+  Future<void> setOverlayStyle(TaskbarLyricsStyle style) async {}
+
+  @override
+  Future<void> setStyle(TaskbarLyricsStyle style) async {}
+
+  @override
+  Future<void> setTrack(({String title, String artist})? track) async {}
+
+  @override
+  Future<void> setArt(Uint8List? bytes) async {}
+
+  @override
+  Future<void> setLyrics(List<LyricLine>? lines) async {}
+
+  @override
+  Future<void> setPlayback({
+    required bool playing,
+    required Duration position,
+  }) async {}
+}
+
 class _ArtistApi extends FakeSpotifyApiService {
   _ArtistApi(
     super.storage, {
@@ -79,6 +153,7 @@ _open(
   WidgetTester tester, {
   SpotifyTrack track = _track,
   bool lyrics = true,
+  TaskbarLyricsControls? taskbarLyrics,
   double width = 390,
   double height = 844,
   Map<String, Future<SpotifyArtist>> artistDetails = const {},
@@ -117,6 +192,7 @@ _open(
       emePlayer: EmePlayer(),
       spotifyApiService: api,
       trackAudioLoader: FakeTrackAudioSource(),
+      taskbarLyrics: taskbarLyrics,
     ),
   );
   await _frames(tester);
@@ -131,7 +207,7 @@ _open(
   FullPlayerSheet.show(tester.element(find.byType(MainShell)));
   await _frames(tester);
   if (lyrics) {
-    await tester.tap(_inPlayer(find.byTooltip('歌词')));
+    await tester.tap(_lyricsPreview());
     await _frames(tester);
   }
   audio.seeks.clear();
@@ -176,7 +252,7 @@ void main() {
       );
       final detailSlider = tester.getRect(slider);
 
-      await tester.tap(_inPlayer(find.byTooltip('歌词')));
+      await tester.tap(_lyricsPreview());
       await tester.pump();
       expect(
         tester.widget<PlayPauseButton>(play).size,
@@ -190,13 +266,13 @@ void main() {
       expect(moving.background.a, inExclusiveRange(0, 1));
       expect(tester.getRect(slider).width, lessThan(detailSlider.width));
       final beforeReverse = tester.getRect(slider);
-      await tester.tap(_inPlayer(find.byTooltip('歌词')));
+      await _tapLyricsCover(tester);
       await tester.pump();
       expect(tester.getRect(slider), rectMoreOrLessEquals(beforeReverse));
       await _frames(tester);
       expect(tester.widget<PlayPauseButton>(play).background, Colors.white);
 
-      await tester.tap(_inPlayer(find.byTooltip('歌词')));
+      await tester.tap(_lyricsPreview());
       await _frames(tester);
       final card = tester.widget<PlayPauseButton>(play);
       expect(card.size, 52);
@@ -233,7 +309,7 @@ void main() {
         final slider = _inPlayer(find.byType(Slider));
         final playElement = tester.element(play);
         final sliderElement = tester.element(slider);
-        await tester.tap(_inPlayer(find.byTooltip('歌词')));
+        await tester.tap(_lyricsPreview());
         await tester.pump();
         for (var frame = 0; frame < 40; frame++) {
           await tester.pump(const Duration(milliseconds: 16));
@@ -247,7 +323,7 @@ void main() {
         await tester.pump(const Duration(seconds: 4));
         await _frames(tester, 4);
         expect(play.hitTestable(), findsNothing);
-        await tester.tap(_inPlayer(find.byTooltip('歌词')));
+        await _tapLyricsCover(tester);
         await tester.pump();
         for (var frame = 0; frame < 40; frame++) {
           await tester.pump(const Duration(milliseconds: 16));
@@ -319,7 +395,7 @@ void main() {
     await _frames(tester, 4);
     await tester.pump(const Duration(seconds: 4));
     await _frames(tester, 4);
-    await tester.tap(_inPlayer(find.byTooltip('歌词')));
+    await _tapLyricsCover(tester);
     await _frames(tester);
     expect(
       tester
@@ -357,7 +433,7 @@ void main() {
         final cover = _inPlayer(find.byType(Hero));
         final largeCover = tester.getRect(cover);
 
-        await tester.tap(_inPlayer(find.byTooltip('歌词')));
+        await tester.tap(_lyricsPreview());
         await tester.pump();
         expect(
           tester.widget<MarqueeText>(title).style!.fontSize,
@@ -403,13 +479,13 @@ void main() {
           );
         }
 
-        await tester.tap(_inPlayer(find.byTooltip('歌词')));
+        await _tapLyricsCover(tester);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 96));
         final reversingFont = tester.widget<MarqueeText>(title).style!.fontSize;
         final reversingTitle = tester.getRect(title);
         final reversingArtist = tester.getRect(artist);
-        await tester.tap(_inPlayer(find.byTooltip('歌词')));
+        await tester.tap(_lyricsPreview());
         await tester.pump();
         expect(
           tester.widget<MarqueeText>(title).style!.fontSize,
@@ -456,7 +532,7 @@ void main() {
           .style!
           .fontSize;
 
-      await tester.tap(_inPlayer(find.byTooltip('歌词')));
+      await tester.tap(_lyricsPreview());
       await _frames(tester);
 
       expect(
@@ -470,7 +546,7 @@ void main() {
             .fontSize,
         artistSize,
       );
-      await tester.tap(_inPlayer(find.byTooltip('歌词')));
+      await _tapLyricsCover(tester);
       await _frames(tester);
       expect(tester.widget<MarqueeText>(title).style!.fontSize, artworkSize);
       await _unmount(tester);
@@ -733,7 +809,12 @@ void main() {
   testWidgets('destinations pause card auto-hide and dismissal re-arms it', (
     tester,
   ) async {
-    await _open(tester);
+    final lyricsControls = TaskbarLyricsControls(
+      _NoopTaskbarLyricsPlatform(),
+      isAndroid: true,
+    );
+    addTearDown(lyricsControls.dispose);
+    await _open(tester, taskbarLyrics: lyricsControls);
     await tester.tap(_inPlayer(find.text(_track.name)).first);
     await _frames(tester);
     final header = find.byKey(const ValueKey('player-card-title'));
@@ -760,7 +841,10 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await _frames(tester);
     expect(header.hitTestable(), findsNothing);
-    expect(_inPlayer(find.byTooltip('歌词')).hitTestable(), findsOneWidget);
+    expect(
+      _inPlayer(find.byType(FloatingLyricsQuickToggle)).hitTestable(),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await _unmount(tester);
   });

@@ -174,7 +174,7 @@
   "libraryAdd": "保存到音樂庫",
   "libraryRemove": "從音樂庫中移除",
   "homeLoadFailedTitle": "無法載入推薦內容",
-  "homeLoadFailedMessage": "請檢查網路連接后重試。",
+  "homeLoadFailedMessage": "推薦內容暫時無法載入，請稍後再試。",
   "authSessionExpiredTitle": "登入已過期",
   "authSessionExpiredMessage": "Spotify 已讓這次登入失效（例如在其他地方退出了所有裝置或修改了密碼），請重新登入。",
   "authSignInAgain": "重新登入",

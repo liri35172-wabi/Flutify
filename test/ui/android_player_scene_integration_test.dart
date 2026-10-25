@@ -12,6 +12,7 @@ import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_channel.dart'
 import 'package:flutify_app/services/taskbar_lyrics/taskbar_lyrics_controls.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/current_lyrics_preview.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyric_line_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
@@ -142,16 +143,17 @@ void main() {
         preferences.prefs.copyWith(lyricsAutoTranslate: autoTranslate),
       );
       await _frames(tester);
-      final lyricsButton = find.descendant(
-        of: player,
-        matching: find.byTooltip('歌词'),
-      );
       final translationButton = find.byType(LyricsTranslationToggle);
       final translationIcon = find.descendant(
         of: translationButton,
         matching: find.byType(IconButton),
       );
-      await tester.tap(lyricsButton);
+      await tester.tap(
+        find.descendant(
+          of: player,
+          matching: find.byType(CurrentLyricsPreview),
+        ),
+      );
       await _frames(tester);
       if (!autoTranslate) {
         expect(find.text('第 0 行歌词译文'), findsNothing);
@@ -164,21 +166,18 @@ void main() {
       final translations = controller.lines;
       expect(find.text('第 0 行歌词译文'), findsOneWidget);
 
-      // Exercise both the small cover and the footer toggle, including a
-      // second remount with an unchanged shared translation controller.
-      for (final viaCover in [true, false]) {
-        if (viaCover) {
-          final cover = find.descendant(
-            of: player,
-            matching: find.byType(Hero),
-          );
-          await tester.tapAt(tester.getCenter(cover));
-        } else {
-          await tester.tap(lyricsButton);
-        }
+      // Return through the cover, then use its lyric preview to re-enter.
+      for (var roundTrip = 0; roundTrip < 2; roundTrip++) {
+        final cover = find.descendant(of: player, matching: find.byType(Hero));
+        await tester.tapAt(tester.getCenter(cover));
         await _frames(tester);
         expect(find.byType(LyricsView), findsNothing);
-        await tester.tap(lyricsButton);
+        await tester.tap(
+          find.descendant(
+            of: player,
+            matching: find.byType(CurrentLyricsPreview),
+          ),
+        );
         await _frames(tester);
 
         expect(controller.lines, same(translations));
@@ -196,10 +195,19 @@ void main() {
       // automatic translation is enabled in preferences.
       await tester.tap(translationButton);
       await _frames(tester);
-      await tester.tap(lyricsButton);
+      await tester.tapAt(
+        tester.getCenter(
+          find.descendant(of: player, matching: find.byType(Hero)),
+        ),
+      );
       await _frames(tester);
       expect(find.byType(LyricsView), findsNothing);
-      await tester.tap(lyricsButton);
+      await tester.tap(
+        find.descendant(
+          of: player,
+          matching: find.byType(CurrentLyricsPreview),
+        ),
+      );
       await _frames(tester);
       expect(tester.widget<IconButton>(translationIcon).isSelected, isFalse);
       expect(find.text('第 0 行歌词译文'), findsNothing);
@@ -214,7 +222,7 @@ void main() {
   }
 
   testWidgets(
-    'Android player footer omits the redundant floating lyrics toggle',
+    'Android footer keeps floating lyrics and omits the lyrics-page toggle',
     (tester) async {
       final controls = TaskbarLyricsControls(
         _NoopTaskbarLyricsPlatform(),
@@ -229,38 +237,29 @@ void main() {
             of: player,
             matching: find.byType(FloatingLyricsQuickToggle),
           ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: player, matching: find.byTooltip('歌词')),
           findsNothing,
         );
-        final buttons = [
-          find.descendant(of: player, matching: find.byTooltip('歌词')),
-          find.descendant(of: player, matching: find.byTooltip('播放队列')),
-        ];
-        for (final button in buttons) {
-          expect(button, findsOneWidget);
-          expect(tester.getSize(button), const Size.square(44));
-        }
-        for (var i = 1; i < buttons.length; i++) {
-          expect(
-            tester.getCenter(buttons[i]).dx -
-                tester.getCenter(buttons[i - 1]).dx,
-            48,
-          );
-        }
+        final queueButton = find.descendant(
+          of: player,
+          matching: find.byTooltip('播放队列'),
+        );
+        expect(queueButton, findsOneWidget);
+        expect(tester.getSize(queueButton), const Size.square(44));
       }
 
       expectFooterGeometry();
-      final lyricsButton = find.descendant(
-        of: player,
-        matching: find.byTooltip('歌词'),
+      await tester.tap(
+        find.descendant(
+          of: player,
+          matching: find.byType(CurrentLyricsPreview),
+        ),
       );
-      final lyricsIconButton = find.descendant(
-        of: lyricsButton,
-        matching: find.byType(IconButton),
-      );
-      expect(lyricsIconButton, findsOneWidget);
-      expect(tester.widget<IconButton>(lyricsIconButton).icon, isA<Icon>());
-      await tester.tap(lyricsButton);
       await _frames(tester);
+      expect(find.byType(LyricsView), findsOneWidget);
       expectFooterGeometry();
       await tester.pumpWidget(const SizedBox.shrink());
       controls.dispose();
@@ -276,7 +275,10 @@ void main() {
       final playback = await _open(tester, width: width);
       final player = find.byType(FullPlayerSheet);
       await tester.tap(
-        find.descendant(of: player, matching: find.byTooltip('歌词')),
+        find.descendant(
+          of: player,
+          matching: find.byType(CurrentLyricsPreview),
+        ),
       );
       await _frames(tester);
       final hero = find.descendant(of: player, matching: find.byType(Hero));
@@ -300,11 +302,16 @@ void main() {
         findsOneWidget,
       );
       expect(
+        find.descendant(of: player, matching: find.byTooltip('歌词')),
+        findsNothing,
+        reason: 'the redundant lyrics-page footer entry stays absent',
+      );
+      expect(
         find
-            .descendant(of: player, matching: find.byTooltip('歌词'))
+            .descendant(of: player, matching: find.byTooltip('播放队列'))
             .hitTestable(),
         findsOneWidget,
-        reason: 'the bottom lyrics/device/queue row survives folding',
+        reason: 'the queue control survives folding',
       );
       final queueButton = tester.getRect(
         find.descendant(of: player, matching: find.byTooltip('播放队列')),
@@ -425,7 +432,7 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
     tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
-    await tester.tap(find.byTooltip('歌词'));
+    await tester.tap(find.byType(CurrentLyricsPreview));
     await _frames(tester);
     for (final size in [const Size(320, 560), const Size(844, 390)]) {
       tester.view.physicalSize = size;
@@ -446,7 +453,7 @@ void main() {
     'scene width cap follows the layout orientation, not the window',
     (tester) async {
       await _open(tester);
-      await tester.tap(find.byTooltip('歌词'));
+      await tester.tap(find.byType(CurrentLyricsPreview));
       await _frames(tester);
       final card = find.byKey(const ValueKey('lyrics-control-card'));
 

@@ -12,6 +12,7 @@ import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_backdrop.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/glass_icon_button.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/current_lyrics_preview.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
 import 'package:flutify_app/ui/screens/player/queue_list.dart';
 import 'package:flutify_app/ui/shell/desktop/now_playing_details.dart';
@@ -119,7 +120,7 @@ void main() {
     expect(find.text('Synthetic Mix'), findsWidgets);
 
     // 播放器内嵌歌词
-    await tester.tap(find.byTooltip('歌词'));
+    await tester.tap(find.byType(CurrentLyricsPreview));
     await settle(tester);
     // The artwork preview remains mounted but transparent during the page
     // transition, so scope this assertion to the destination lyrics view.

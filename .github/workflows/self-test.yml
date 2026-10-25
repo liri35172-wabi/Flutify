@@ -107,8 +107,14 @@ jobs:
         run: bash tool/create_self_test_android_key.sh
       - name: Compile release-mode self-test APKs
         run: |
-          flutter build apk --release --no-pub --split-per-abi --build-number="$ANDROID_BUILD_NUMBER"
-          flutter build apk --release --no-pub --build-number="$ANDROID_BUILD_NUMBER"
+          flutter build apk --release --no-pub --split-per-abi \
+            --build-number="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_NUMBER="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_ID="Self-test #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT} ${GITHUB_SHA:0:7}"
+          flutter build apk --release --no-pub \
+            --build-number="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_NUMBER="$ANDROID_BUILD_NUMBER" \
+            --dart-define=FLUTIFY_BUILD_ID="Self-test #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT} ${GITHUB_SHA:0:7}"
       - name: Verify signatures, version codes and media icons
         run: python3 tool/verify_android_apks.py build/app/outputs/flutter-apk "$ANDROID_BUILD_NUMBER"
       - name: Remove temporary self-test key

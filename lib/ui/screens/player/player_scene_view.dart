@@ -294,10 +294,9 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
             translation: _view == PlayerView.lyrics
                 ? const LyricsTranslationToggle()
                 : null,
-            // 手机上底栏已有歌词页入口；独立的浮窗开关显得重复，桌面端保留。
-            floatingLyrics: defaultTargetPlatform == TargetPlatform.android
-                ? null
-                : const FloatingLyricsQuickToggle(buttonSize: 44),
+            // Android keeps the floating-lyrics shortcut; the lyrics-page
+            // entry lives in the artwork preview instead of this footer row.
+            floatingLyrics: const FloatingLyricsQuickToggle(buttonSize: 44),
           ),
         ),
         artworkPreview: CurrentLyricsPreview(
@@ -811,11 +810,12 @@ class _BottomBar extends StatelessWidget {
       ?pin,
       ?translation,
       ?floatingLyrics,
-      toggle(
-        PlayerView.lyrics,
-        Icons.lyrics_outlined,
-        context.l10n.lyricsTitle,
-      ),
+      if (defaultTargetPlatform != TargetPlatform.android)
+        toggle(
+          PlayerView.lyrics,
+          Icons.lyrics_outlined,
+          context.l10n.lyricsTitle,
+        ),
       toggle(
         PlayerView.queue,
         Icons.queue_music_rounded,

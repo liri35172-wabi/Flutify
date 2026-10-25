@@ -73,7 +73,7 @@
   "libraryAdd": "マイライブラリに保存",
   "libraryRemove": "マイライブラリから削除",
   "homeLoadFailedTitle": "おすすめを読み込めませんでした",
-  "homeLoadFailedMessage": "接続を確認して再試行してください。",
+  "homeLoadFailedMessage": "おすすめを読み込めませんでした。しばらくしてから再試行してください。",
   "authSessionExpiredTitle": "ログインの有効期限が切れました",
   "authSessionExpiredMessage": "すべてのデバイスからのログアウトやパスワード変更などにより、Spotify のログインが終了しました。もう一度ログインしてください。",
   "authSignInAgain": "再ログイン",

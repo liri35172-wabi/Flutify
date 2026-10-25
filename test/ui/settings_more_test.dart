@@ -349,6 +349,9 @@ void main() {
     await openSettings(tester);
 
     expect(find.text(AppInfo.displayVersion), findsOneWidget);
+    if (AppInfo.buildId.isNotEmpty) {
+      expect(find.text(AppInfo.buildId), findsOneWidget);
+    }
     await tapText(tester, '键盘快捷键');
     expect(find.byType(ShortcutsDialog), findsOneWidget);
     expect(find.text('Space'), findsOneWidget);

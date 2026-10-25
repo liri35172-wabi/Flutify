@@ -12,6 +12,7 @@ import 'package:flutify_app/ui/navigation/app_routes.dart';
 import 'package:flutify_app/ui/screens/auth/login_screen.dart';
 import 'package:flutify_app/ui/screens/home/home_screen.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/current_lyrics_preview.dart';
 import 'package:flutify_app/ui/screens/settings/settings_screen.dart';
 import 'package:flutify_app/ui/widgets/mini_player.dart';
 import 'package:flutter/material.dart';
@@ -34,14 +35,22 @@ import '../fixtures/sample_catalog.dart';
 void main() {
   final enabled = Platform.environment['FLUTIFY_AUDIT'] == '1';
   const size = Size(390, 844);
-  const tracks = [SampleCatalog.track1, SampleCatalog.track2, SampleCatalog.track3, SampleCatalog.track4];
+  const tracks = [
+    SampleCatalog.track1,
+    SampleCatalog.track2,
+    SampleCatalog.track3,
+    SampleCatalog.track4,
+  ];
 
   /// 加载真实字体（MiSans + Material Icons），否则测试环境用方块字体渲染。
   Future<void> loadFonts() async {
-    final manifest = jsonDecode(await rootBundle.loadString('FontManifest.json')) as List<dynamic>;
+    final manifest =
+        jsonDecode(await rootBundle.loadString('FontManifest.json'))
+            as List<dynamic>;
     for (final family in manifest.cast<Map<String, dynamic>>()) {
       final loader = FontLoader(family['family'] as String);
-      for (final font in (family['fonts'] as List<dynamic>).cast<Map<String, dynamic>>()) {
+      for (final font
+          in (family['fonts'] as List<dynamic>).cast<Map<String, dynamic>>()) {
         loader.addFont(rootBundle.load(font['asset'] as String));
       }
       await loader.load();
@@ -50,11 +59,13 @@ void main() {
 
   /// 图片缓存会查询缓存目录：指向项目 build/ 下，避免 MissingPluginException。
   setUpAll(() {
-    final cacheDir = Directory('build/audit_cache')..createSync(recursive: true);
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/path_provider'),
-      (_) async => cacheDir.absolute.path,
-    );
+    final cacheDir = Directory('build/audit_cache')
+      ..createSync(recursive: true);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (_) async => cacheDir.absolute.path,
+        );
   });
 
   Future<void> settle(WidgetTester tester, [int frames = 12]) async {
@@ -64,7 +75,10 @@ void main() {
   }
 
   Future<void> shot(WidgetTester tester, String name) async {
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('../../build/audit/$name.png'));
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('../../build/audit/$name.png'),
+    );
   }
 
   for (final brightness in Brightness.values) {
@@ -88,33 +102,46 @@ void main() {
         albums: const [SampleCatalog.albumA],
         artists: const [SampleCatalog.artistA, SampleCatalog.artistB],
       );
-      await tester.pumpWidget(FlutifyApp(
-        storageService: storage,
-        audioEngine: FakeAudioPlayerService(),
-        emePlayer: EmePlayer(),
-        spotifyApiService: FakeSpotifyApiService(
-          storage,
-          librarySource: library,
-          lyricsById: {
-            SampleCatalog.track1.id: const SpotifyLyrics(lines: [
-              LyricLine(startTimeMs: 0, words: '夜空中最亮的星'),
-              LyricLine(startTimeMs: 4000, words: '能否听清那仰望的人心底的孤独和叹息'),
-              LyricLine(startTimeMs: 8000, words: 'Every night in my dreams I see you'),
-              LyricLine(startTimeMs: 12000, words: '我祈祷拥有一颗透明的心灵'),
-            ]),
-          },
-          albumTracks: {SampleCatalog.albumA.id: tracks},
+      await tester.pumpWidget(
+        FlutifyApp(
+          storageService: storage,
+          audioEngine: FakeAudioPlayerService(),
+          emePlayer: EmePlayer(),
+          spotifyApiService: FakeSpotifyApiService(
+            storage,
+            librarySource: library,
+            lyricsById: {
+              SampleCatalog.track1.id: const SpotifyLyrics(
+                lines: [
+                  LyricLine(startTimeMs: 0, words: '夜空中最亮的星'),
+                  LyricLine(startTimeMs: 4000, words: '能否听清那仰望的人心底的孤独和叹息'),
+                  LyricLine(
+                    startTimeMs: 8000,
+                    words: 'Every night in my dreams I see you',
+                  ),
+                  LyricLine(startTimeMs: 12000, words: '我祈祷拥有一颗透明的心灵'),
+                ],
+              ),
+            },
+            albumTracks: {SampleCatalog.albumA.id: tracks},
+          ),
+          trackAudioLoader: FakeTrackAudioSource(),
         ),
-        trackAudioLoader: FakeTrackAudioSource(),
-      ));
+      );
       await settle(tester);
       await shot(tester, '${suffix}_01_home_empty');
 
-      final playback = Provider.of<PlaybackProvider>(tester.element(find.byType(MainShell)), listen: false);
+      final playback = Provider.of<PlaybackProvider>(
+        tester.element(find.byType(MainShell)),
+        listen: false,
+      );
       await playback.playTrack(
         tracks.first,
         contextQueue: tracks,
-        context: const PlaybackContext.playlist('Synthetic Mix', uri: 'spotify:playlist:synthetic'),
+        context: const PlaybackContext.playlist(
+          'Synthetic Mix',
+          uri: 'spotify:playlist:synthetic',
+        ),
       );
       await settle(tester);
       await shot(tester, '${suffix}_02_home_playing');
@@ -144,7 +171,7 @@ void main() {
       await tester.tap(find.byType(MiniPlayer));
       await settle(tester);
       await shot(tester, '${suffix}_08_player');
-      await tester.tap(find.byTooltip('歌词'));
+      await tester.tap(find.byType(CurrentLyricsPreview));
       await settle(tester);
       await shot(tester, '${suffix}_09_player_lyrics');
       await tester.tap(find.byTooltip('全屏歌词'));
@@ -158,8 +185,13 @@ void main() {
       await tester.tap(find.byTooltip('关闭').first);
       await settle(tester);
 
-      final root = Navigator.of(tester.element(find.byType(MainShell)), rootNavigator: true);
-      root.push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+      final root = Navigator.of(
+        tester.element(find.byType(MainShell)),
+        rootNavigator: true,
+      );
+      root.push(
+        MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+      );
       await settle(tester);
       await shot(tester, '${suffix}_12_settings_top');
       await tester.drag(find.byType(ListView).last, const Offset(0, -700));
@@ -190,26 +222,42 @@ void main() {
 
     SharedPreferences.setMockInitialValues({});
     final storage = await StorageService.init();
-    await tester.pumpWidget(FlutifyApp(
-      storageService: storage,
-      audioEngine: FakeAudioPlayerService(),
-      emePlayer: EmePlayer(),
-      spotifyApiService: FakeSpotifyApiService(storage, lyricsById: {
-        SampleCatalog.track1.id: const SpotifyLyrics(lines: [
-          LyricLine(startTimeMs: 0, words: '夜空中最亮的星'),
-          LyricLine(startTimeMs: 4000, words: '能否听清那仰望的人心底的孤独和叹息'),
-          LyricLine(startTimeMs: 8000, words: 'Every night in my dreams I see you'),
-          LyricLine(startTimeMs: 12000, words: '我祈祷拥有一颗透明的心灵'),
-        ]),
-      }),
-      trackAudioLoader: FakeTrackAudioSource(),
-    ));
+    await tester.pumpWidget(
+      FlutifyApp(
+        storageService: storage,
+        audioEngine: FakeAudioPlayerService(),
+        emePlayer: EmePlayer(),
+        spotifyApiService: FakeSpotifyApiService(
+          storage,
+          lyricsById: {
+            SampleCatalog.track1.id: const SpotifyLyrics(
+              lines: [
+                LyricLine(startTimeMs: 0, words: '夜空中最亮的星'),
+                LyricLine(startTimeMs: 4000, words: '能否听清那仰望的人心底的孤独和叹息'),
+                LyricLine(
+                  startTimeMs: 8000,
+                  words: 'Every night in my dreams I see you',
+                ),
+                LyricLine(startTimeMs: 12000, words: '我祈祷拥有一颗透明的心灵'),
+              ],
+            ),
+          },
+        ),
+        trackAudioLoader: FakeTrackAudioSource(),
+      ),
+    );
     await settle(tester);
-    final playback = Provider.of<PlaybackProvider>(tester.element(find.byType(MainShell)), listen: false);
+    final playback = Provider.of<PlaybackProvider>(
+      tester.element(find.byType(MainShell)),
+      listen: false,
+    );
     await playback.playTrack(
       tracks.first,
       contextQueue: tracks,
-      context: const PlaybackContext.playlist('Synthetic Mix', uri: 'spotify:playlist:synthetic'),
+      context: const PlaybackContext.playlist(
+        'Synthetic Mix',
+        uri: 'spotify:playlist:synthetic',
+      ),
     );
     await settle(tester);
 
@@ -228,7 +276,10 @@ void main() {
   });
 
   // 桌面设置页：嵌在内容区。宽窗口双栏、较窄窗口单列横向行
-  for (final (name, windowSize) in const [('wide', Size(1440, 900)), ('narrow', Size(1000, 760))]) {
+  for (final (name, windowSize) in const [
+    ('wide', Size(1440, 900)),
+    ('narrow', Size(1000, 760)),
+  ]) {
     testWidgets('audit desktop settings $name', skip: !enabled, (tester) async {
       await tester.runAsync(loadFonts);
       tester.view.physicalSize = windowSize;
@@ -240,13 +291,15 @@ void main() {
 
       SharedPreferences.setMockInitialValues({});
       final storage = await StorageService.init();
-      await tester.pumpWidget(FlutifyApp(
-        storageService: storage,
-        audioEngine: FakeAudioPlayerService(),
-        emePlayer: EmePlayer(),
-        spotifyApiService: FakeSpotifyApiService(storage),
-        trackAudioLoader: FakeTrackAudioSource(),
-      ));
+      await tester.pumpWidget(
+        FlutifyApp(
+          storageService: storage,
+          audioEngine: FakeAudioPlayerService(),
+          emePlayer: EmePlayer(),
+          spotifyApiService: FakeSpotifyApiService(storage),
+          trackAudioLoader: FakeTrackAudioSource(),
+        ),
+      );
       await settle(tester);
       await tester.tap(find.byTooltip('账号'));
       await settle(tester);

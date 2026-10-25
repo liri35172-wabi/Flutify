@@ -186,7 +186,7 @@
   "libraryAdd": "保存到音乐库",
   "libraryRemove": "从音乐库中移除",
   "homeLoadFailedTitle": "无法加载推荐内容",
-  "homeLoadFailedMessage": "请检查网络连接后重试。",
+  "homeLoadFailedMessage": "推荐内容暂时无法加载，请稍后重试。",
   "authSessionExpiredTitle": "登录已过期",
   "authSessionExpiredMessage": "Spotify 已让这次登录失效（例如在其他地方退出了所有设备或修改了密码），请重新登录。",
   "authSignInAgain": "重新登录",

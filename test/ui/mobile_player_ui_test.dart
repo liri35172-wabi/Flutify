@@ -11,6 +11,7 @@ import 'package:flutify_app/services/spotify_api_service.dart';
 import 'package:flutify_app/services/storage_service.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/current_lyrics_preview.dart';
 import 'package:flutify_app/ui/screens/player/player_expansion.dart';
 import 'package:flutify_app/ui/screens/player/player_lyrics_motion.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_view.dart';
@@ -269,9 +270,24 @@ void main() {
         reason: 'every platform keeps the shared artwork in the queue card',
       );
 
-      await tester.tap(
-        find.descendant(of: player, matching: find.byTooltip('歌词')),
-      );
+      if (platform == TargetPlatform.android) {
+        // Android returns to artwork by selecting the already-open queue tab;
+        // lyrics pages are entered through the artwork preview instead.
+        await tester.tap(
+          find.descendant(of: player, matching: find.byTooltip('播放队列')),
+        );
+        await settle(tester);
+        await tester.tap(
+          find.descendant(
+            of: player,
+            matching: find.byType(CurrentLyricsPreview),
+          ),
+        );
+      } else {
+        await tester.tap(
+          find.descendant(of: player, matching: find.byTooltip('歌词')),
+        );
+      }
       await settle(tester);
       expect(
         find.descendant(of: player, matching: find.byType(LyricsView)),
@@ -296,13 +312,18 @@ void main() {
         reason: 'the original small cover returns to the artwork view',
       );
 
-      // 再点一次当前视图的按钮回到封面
+      // Re-enter lyrics from the artwork preview on Android; iOS keeps its footer toggle.
       await tester.tap(
-        find.descendant(of: player, matching: find.byTooltip('歌词')),
+        find.descendant(
+          of: player,
+          matching: platform == TargetPlatform.android
+              ? find.byType(CurrentLyricsPreview)
+              : find.byTooltip('歌词'),
+        ),
       );
       await settle(tester);
       expect(
-        find.descendant(of: player, matching: find.byType(SwipeableArtwork)),
+        find.descendant(of: player, matching: find.byType(LyricsView)),
         findsOneWidget,
       );
       debugDefaultTargetPlatformOverride = null;
@@ -324,11 +345,11 @@ void main() {
         await tester.tap(find.byType(MiniPlayer));
         await settle(tester);
         final player = find.byType(FullPlayerSheet);
-        final lyricsButton = find.descendant(
+        final lyricsPreview = find.descendant(
           of: player,
-          matching: find.byTooltip('歌词'),
+          matching: find.byType(CurrentLyricsPreview),
         );
-        await tester.tap(lyricsButton);
+        await tester.tap(lyricsPreview);
         await settle(tester);
         final lyricsState = tester.state(find.byType(LyricsView));
         final card = find.byKey(const ValueKey('lyrics-control-card'));
@@ -350,7 +371,16 @@ void main() {
               .first,
         );
         final blank = Offset(
-          (deviceButton.right + tester.getRect(lyricsButton).left) / 2,
+          (deviceButton.right +
+                  tester
+                      .getRect(
+                        find.descendant(
+                          of: player,
+                          matching: find.byTooltip('播放队列'),
+                        ),
+                      )
+                      .left) /
+              2,
           folded.center.dy,
         );
         expect(blank.dx, greaterThan(deviceButton.right));
@@ -400,7 +430,10 @@ void main() {
           await settle(tester);
           final player = find.byType(FullPlayerSheet);
           await tester.tap(
-            find.descendant(of: player, matching: find.byTooltip('歌词')),
+            find.descendant(
+              of: player,
+              matching: find.byType(CurrentLyricsPreview),
+            ),
           );
           await settle(tester);
           final card = find.byKey(const ValueKey('lyrics-control-card'));
@@ -636,7 +669,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(FullPlayerSheet),
-          matching: find.byTooltip('歌词'),
+          matching: find.byType(CurrentLyricsPreview),
         ),
       );
       await settle(tester);
@@ -901,7 +934,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(FullPlayerSheet),
-        matching: find.byTooltip('歌词'),
+        matching: find.byType(CurrentLyricsPreview),
       ),
     );
     await settle(tester);

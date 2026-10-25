@@ -293,7 +293,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeLoadFailedTitle => '无法加载推荐内容';
 
   @override
-  String get homeLoadFailedMessage => '请检查网络连接后重试。';
+  String get homeLoadFailedMessage => '推荐内容暂时无法加载，请稍后重试。';
 
   @override
   String get authSessionExpiredTitle => '登录已过期';
@@ -2243,7 +2243,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get homeLoadFailedTitle => '無法載入推薦內容';
 
   @override
-  String get homeLoadFailedMessage => '請檢查網路連接后重試。';
+  String get homeLoadFailedMessage => '推薦內容暫時無法載入，請稍後再試。';
 
   @override
   String get authSessionExpiredTitle => '登入已過期';

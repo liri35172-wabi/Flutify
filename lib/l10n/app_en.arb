@@ -121,7 +121,7 @@
   "libraryAdd": "Save to Your Library",
   "libraryRemove": "Remove from Your Library",
   "homeLoadFailedTitle": "Couldn't load recommendations",
-  "homeLoadFailedMessage": "Check your connection and try again.",
+  "homeLoadFailedMessage": "Recommendations couldn’t load. Try again later.",
   "authSessionExpiredTitle": "Your session has expired",
   "authSessionExpiredMessage": "Spotify ended this sign-in (for example, you signed out everywhere or changed your password). Please sign in again.",
   "authSignInAgain": "Sign in again",

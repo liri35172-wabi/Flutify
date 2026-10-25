@@ -283,7 +283,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeLoadFailedTitle => 'おすすめを読み込めませんでした';
 
   @override
-  String get homeLoadFailedMessage => '接続を確認して再試行してください。';
+  String get homeLoadFailedMessage => 'おすすめを読み込めませんでした。しばらくしてから再試行してください。';
 
   @override
   String get authSessionExpiredTitle => 'ログインの有効期限が切れました';

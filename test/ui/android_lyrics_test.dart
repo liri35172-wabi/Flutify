@@ -13,6 +13,7 @@ import 'package:flutify_app/services/eme/eme_player.dart';
 import 'package:flutify_app/services/storage_service.dart';
 import 'package:flutify_app/ui/screens/main_shell.dart';
 import 'package:flutify_app/ui/screens/player/full_player_sheet.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/current_lyrics_preview.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/breathing_dots.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyric_line_view.dart';
 import 'package:flutify_app/ui/screens/player/lyrics/lyrics_translation_controls.dart';
@@ -76,6 +77,7 @@ void main() {
     SpotifyLyrics source = lyrics,
     double? viewportHeight,
     double topInset = 48,
+    bool appleMusicStyle = false,
   }) async {
     tester.view.physicalSize = Size(width, 844);
     tester.view.devicePixelRatio = 1;
@@ -110,7 +112,11 @@ void main() {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: LyricsView(track: track, topInset: topInset),
+                    child: LyricsView(
+                      track: track,
+                      topInset: topInset,
+                      appleMusicStyle: appleMusicStyle,
+                    ),
                   ),
                   Positioned(
                     top: 0,
@@ -334,7 +340,7 @@ void main() {
           await tester.tap(
             find.descendant(
               of: find.byType(FullPlayerSheet),
-              matching: find.byTooltip('歌词'),
+              matching: find.byType(CurrentLyricsPreview),
             ),
           );
           for (var frame = 0; frame < 8; frame++) {
@@ -856,7 +862,7 @@ void main() {
     'Android full lyrics keep the active original multiline with translation below',
     (tester) async {
       const activeLine =
-          'This is a deliberately long highlighted lyric that should wrap naturally onto multiple lines';
+          'I just wanna make a lot of money, be my own housewife';
       const source = SpotifyLyrics(
         language: 'en',
         lines: [
@@ -872,8 +878,9 @@ void main() {
       );
       final (_, playback) = await pumpLyrics(
         tester,
-        width: 320,
+        width: 360,
         source: source,
+        appleMusicStyle: true,
       );
       playback.positionNotifier.value = const Duration(seconds: 1);
       await tester.pumpAndSettle();
@@ -881,8 +888,69 @@ void main() {
       final activeText = find.text(activeLine);
       expect(activeText, findsOneWidget);
       expect(tester.widget<Text>(activeText).maxLines, isNull);
+      expect(tester.getSize(activeText).height, greaterThan(40));
       expect(find.byType(OnePassLyricTicker), findsNothing);
       expect(find.text('这句歌词应该显示在多行原文的下方'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'Android lyrics sheet wraps the active long line in the real modal',
+    (tester) async {
+      const activeLine =
+          'I just wanna make a lot of money, be my own housewife';
+      const source = SpotifyLyrics(
+        language: 'en',
+        lines: [
+          LyricLine(startTimeMs: 0, words: activeLine),
+          LyricLine(startTimeMs: 12000, words: 'Next line'),
+        ],
+      );
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final paletteEnabled = ArtworkPalette.enabled;
+      ArtworkPalette.enabled = false;
+      addTearDown(() => ArtworkPalette.enabled = paletteEnabled);
+      SharedPreferences.setMockInitialValues({});
+      final storage = await StorageService.init();
+      final audio = FakeAudioPlayerService();
+      await tester.pumpWidget(
+        FlutifyApp(
+          storageService: storage,
+          audioEngine: audio,
+          emePlayer: EmePlayer(),
+          spotifyApiService: FakeSpotifyApiService(
+            storage,
+            lyricsById: {track.id: source},
+          ),
+          trackAudioLoader: FakeTrackAudioSource(),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      final context = tester.element(find.byType(MainShell));
+      final playback = context.read<PlaybackProvider>();
+      await playback.playTrack(track);
+      audio.stateController.add(PlayerState(true, ProcessingState.ready));
+      unawaited(LyricsSheet.show(context));
+      for (var frame = 0; frame < 12; frame++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      playback.positionNotifier.value = const Duration(seconds: 1);
+      for (var frame = 0; frame < 4; frame++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      final activeText = find.descendant(
+        of: find.byType(LyricsView),
+        matching: find.text(activeLine),
+      );
+      expect(activeText, findsOneWidget);
+      expect(tester.widget<Text>(activeText).maxLines, isNull);
+      expect(tester.getSize(activeText).height, greaterThan(40));
+      expect(find.byType(OnePassLyricTicker), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },
