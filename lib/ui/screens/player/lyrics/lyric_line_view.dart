@@ -71,7 +71,8 @@ class LyricLineView extends StatelessWidget {
     final isActive = distance == 0;
 
     // 相邻句 1.0、隔一句 2.0 …… 上限 3.5：近处可辨认，远处退为氛围
-    final blur = appleMusicStyle || focusAll || isActive
+    final blur =
+        appleMusicStyle || focusAll || isActive || context.tokens.powerSaving
         ? 0.0
         : d.toDouble().clamp(0.0, _maxBlur);
     final opacity = appleMusicStyle

@@ -141,7 +141,7 @@ class _GlassNavigationPill extends StatelessWidget {
                   child: nav,
                 ),
               );
-              if (transitioning) return fill;
+              if (transitioning || tokens.powerSaving) return fill;
               return BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
                 child: fill,

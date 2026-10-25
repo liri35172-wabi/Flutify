@@ -8,6 +8,8 @@ import '../../l10n/l10n.dart';
 import '../../services/updates/update_release.dart';
 import '../../services/updates/update_service.dart';
 
+import 'release_notes_view.dart';
+
 Future<void> showUpdateDialog(BuildContext context, UpdateService service) => showDialog<void>(
   context: context,
   builder: (_) => ListenableBuilder(
@@ -33,7 +35,10 @@ Future<void> showUpdateDialog(BuildContext context, UpdateService service) => sh
                 ],
                 Text(l.updatesNotes, style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 8),
-                SelectableText(release?.notes.isNotEmpty == true ? release!.notes : l.updatesNoNotes),
+                if (release?.notes.isNotEmpty == true)
+                  ReleaseNotesView(release!.notes)
+                else
+                  Text(l.updatesNoNotes),
                 const SizedBox(height: 16),
                 UpdateProgress(service: service),
                 if (!service.canDownload) Text(l.updatesUnsupported),
@@ -71,7 +76,9 @@ Future<void> openUpdatePage(BuildContext context, UpdateService service) async {
         mode: LaunchMode.externalApplication);
     if (opened) return;
   } catch (_) {}
-  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.updatesFailed)));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.updatesFailed)));
+  }
 }
 
 class UpdateProgress extends StatelessWidget {
@@ -79,7 +86,9 @@ class UpdateProgress extends StatelessWidget {
   const UpdateProgress({super.key, required this.service});
   @override
   Widget build(BuildContext context) {
-    if (service.status != UpdateStatus.downloading && service.status != UpdateStatus.installing) return const SizedBox.shrink();
+    if (service.status != UpdateStatus.downloading && service.status != UpdateStatus.installing) {
+      return const SizedBox.shrink();
+    }
     final downloading = service.status == UpdateStatus.downloading;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -122,10 +131,14 @@ class _UpdatePromptBindingState extends State<UpdatePromptBinding> with WidgetsB
   }
   void _changed() {
     final service = _service!;
-    if (service.notification == _seen || service.mode == UpdateMode.disabled) return;
+    if (service.notification == _seen || service.mode == UpdateMode.disabled) {
+      return;
+    }
     _seen = service.notification;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || service.release == null || service.mode == UpdateMode.disabled) return;
+      if (!mounted || service.release == null || service.mode == UpdateMode.disabled) {
+        return;
+      }
       final l = context.l10n;
       final ready = service.status == UpdateStatus.ready;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

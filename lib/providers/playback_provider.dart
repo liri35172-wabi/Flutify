@@ -510,6 +510,10 @@ class PlaybackProvider extends ChangeNotifier {
   }
 
   void _handleTrackEnded() {
+    debugPrint(
+      '[playback] 本首播完（repeat=${_repeatMode.name}, '
+      'position=${positionNotifier.value.inMilliseconds}ms）',
+    );
     if (_stopAfterCurrent) {
       // 睡眠定时器「本首结束时」：停在本首开头，不接下一首（单曲循环也停）
       _stopAfterCurrent = false;
@@ -1280,6 +1284,10 @@ class PlaybackProvider extends ChangeNotifier {
   Future<void> togglePlayPause() async {
     final track = _currentTrack;
     if (track == null) return;
+    debugPrint(
+      '[playback] 播放/暂停切换（playing=$isPlaybackActive, '
+      'loaded=${_loadedTrackId == track.id}）',
+    );
 
     if (_isLoadingTrack) {
       await pause();

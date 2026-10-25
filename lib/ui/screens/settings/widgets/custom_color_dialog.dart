@@ -63,7 +63,7 @@ class _CustomColorDialogState extends State<CustomColorDialog> {
       title: Text(l10n.settingsCustomColorTitle),
       content: SizedBox(
         width: 340,
-        child: Column(
+        child: SingleChildScrollView(child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -122,7 +122,7 @@ class _CustomColorDialogState extends State<CustomColorDialog> {
               ),
             ),
           ],
-        ),
+        )),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonCancel)),

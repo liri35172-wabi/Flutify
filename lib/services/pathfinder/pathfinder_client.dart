@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../core/utils/json_bytes.dart';
 import 'pathfinder_operations.dart';
 
 /// GraphQL Pathfinder 客户端（`api-partner.spotify.com/pathfinder/v2/query`）。
@@ -32,7 +33,7 @@ class PathfinderClient {
 
     Object? json;
     try {
-      json = jsonDecode(utf8.decode(res.bodyBytes));
+      json = await decodeJsonBytes(res.bodyBytes);
     } catch (_) {}
     final data = json is Map<String, dynamic> ? json['data'] : null;
     if (res.statusCode != 200 || data is! Map<String, dynamic>) {

@@ -1,6 +1,7 @@
 import 'dart:ui' show lerpDouble;
 
-import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, ValueListenable, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -293,7 +294,10 @@ class _PlayerSceneViewState extends State<PlayerSceneView> {
             translation: _view == PlayerView.lyrics
                 ? const LyricsTranslationToggle()
                 : null,
-            floatingLyrics: const FloatingLyricsQuickToggle(buttonSize: 44),
+            // 手机上底栏已有歌词页入口；独立的浮窗开关显得重复，桌面端保留。
+            floatingLyrics: defaultTargetPlatform == TargetPlatform.android
+                ? null
+                : const FloatingLyricsQuickToggle(buttonSize: 44),
           ),
         ),
         artworkPreview: CurrentLyricsPreview(

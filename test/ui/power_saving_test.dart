@@ -1,5 +1,6 @@
 import 'package:flutify_app/core/theme/flutify_tokens.dart';
 import 'package:flutify_app/models/appearance.dart';
+import 'package:flutify_app/ui/screens/player/lyrics/lyric_line_view.dart';
 import 'package:flutify_app/ui/widgets/liquid_glass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,4 +40,24 @@ void main() {
     expect(find.byType(BackdropFilter), findsNothing);
     expect(tester.getSize(find.byType(LiquidGlass)), const Size(120, 48));
   });
+  testWidgets('power saving lyric lines skip the per-line blur', (
+    tester,
+  ) async {
+    final tokens = FlutifyTokens.from(
+      const AppearanceSettings(powerSaving: true),
+      const Color(0xFF1ED760),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [tokens]),
+        home: const Scaffold(
+          body: LyricLineView(text: 'A nearby line', distance: 1),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final filter = tester.widget<ImageFiltered>(find.byType(ImageFiltered));
+    expect(filter.enabled, isFalse);
+  });
+
 }

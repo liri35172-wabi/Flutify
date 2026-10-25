@@ -214,7 +214,7 @@ void main() {
   }
 
   testWidgets(
-    'Android player footer controls share equal slots on artwork and lyrics',
+    'Android player footer omits the redundant floating lyrics toggle',
     (tester) async {
       final controls = TaskbarLyricsControls(
         _NoopTaskbarLyricsPlatform(),
@@ -224,11 +224,14 @@ void main() {
       final player = find.byType(FullPlayerSheet);
 
       void expectFooterGeometry() {
-        final buttons = [
+        expect(
           find.descendant(
             of: player,
             matching: find.byType(FloatingLyricsQuickToggle),
           ),
+          findsNothing,
+        );
+        final buttons = [
           find.descendant(of: player, matching: find.byTooltip('歌词')),
           find.descendant(of: player, matching: find.byTooltip('播放队列')),
         ];

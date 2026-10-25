@@ -11,13 +11,10 @@ class UpdateVersion implements Comparable<UpdateVersion> {
       r'^v?(\d+)\.(\d+)(?:\.(\d+))?(?:-(alpha|beta|rc)(?:[.-]?(\d+))?)?(?:\+[\w.-]+)?$',
     ).firstMatch(tag);
     if (match == null) return null;
-    final major = int.parse(match[1]!);
-    final minor = int.parse(match[2]!);
-    final patch = match[3];
+    // Tags with two components and tags with three components use one SemVer
+    // ordering, so v0.17 correctly sorts after v0.16.1.
     return UpdateVersion(
-      patch == null && major == 0
-          ? [0, 0, minor]
-          : [major, minor, int.parse(patch ?? '0')],
+      [int.parse(match[1]!), int.parse(match[2]!), int.parse(match[3] ?? '0')],
       match[4],
       int.parse(match[5] ?? '0'),
     );
@@ -65,8 +62,12 @@ class UpdateAsset {
     final name = json['name'];
     final size = json['size'];
     final url = Uri.tryParse(json['browser_download_url'] as String? ?? '');
-    if (name is! String || size is! int || size <= 0 || url == null ||
-        url.scheme != 'https' || url.host != 'github.com' ||
+    if (name is! String ||
+        size is! int ||
+        size <= 0 ||
+        url == null ||
+        url.scheme != 'https' ||
+        url.host != 'github.com' ||
         !url.path.startsWith('/is-hp-is-mad/Flutify/releases/download/') ||
         !RegExp(r'^[a-zA-Z0-9._-]+$').hasMatch(name)) {
       return null;
@@ -101,8 +102,7 @@ class UpdateRelease {
       version: version,
       assets: [
         for (final item in json['assets'] as List? ?? [])
-          if (item is Map<String, dynamic>)
-            ?UpdateAsset.fromJson(item),
+          if (item is Map<String, dynamic>) ?UpdateAsset.fromJson(item),
       ],
     );
   }
