@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../audio/audio_engine.dart';
+import '../media_controls/playback_diagnostics.dart';
 import 'eme_player.dart' show EmePlayerState;
 
 /// Android 原生 DRM 播放器：MethodChannel/EventChannel 封装 Kotlin 侧 ExoPlayer(Media3)+Widevine。
@@ -39,6 +40,19 @@ class NativeDrmPlayer {
       _onEvent,
       onError: (Object e) => debugPrint('[ndrm] 事件流异常: $e'),
     );
+    if (PlaybackDiagnostics.instance.enabled) {
+      unawaited(_enableNativeDiagnostics());
+    }
+  }
+
+  Future<void> _enableNativeDiagnostics() async {
+    try {
+      await _method.invokeMethod<void>('setDiagnosticsEnabled', {
+        'enabled': true,
+      });
+    } catch (_) {
+      // Diagnostic opt-in must never affect player startup or behavior.
+    }
   }
 
   /// 播一首：本地回环 HLS 清单 + license/provision 反代地址

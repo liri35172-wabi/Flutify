@@ -65,6 +65,11 @@ class RoutedAudioEngine implements AudioEngine {
 
   AudioEngine get _current => _active ?? _local;
 
+  /// Minimal source classification for opt-in playback diagnostics; exposes no
+  /// media identity or engine internals.
+  bool get hasActiveEngine => _active != null;
+  bool get isEmeActive => identical(_active, _eme);
+
   @override
   Stream<Duration> get positionStream => _positionController.stream;
   @override

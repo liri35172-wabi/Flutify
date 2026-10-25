@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/track.dart';
 import '../../providers/playback_provider.dart';
+import 'playback_diagnostics.dart';
 import 'system_media_controls.dart';
 
 /// 媒体卡片的替代来源（例如在其他设备上播放时的 Connect 远程设备，见 [ConnectMediaSource]）。
@@ -102,6 +103,15 @@ class MediaControlsSync {
         ? last.position + elapsed
         : last.position;
     final position = _remote ? _override!.position.value : playback.position;
+    final sourceInfo = _playbackInfo();
+    PlaybackDiagnostics.instance.recordMediaSessionSource(
+      engine: _remote
+          ? PlaybackDiagnosticEngine.connectRemote
+          : playback.diagnosticEngine,
+      playing: sourceInfo.playing,
+      buffering: sourceInfo.buffering,
+      positionMs: position.inMilliseconds,
+    );
     final jumped = (position - expected).abs() > const Duration(seconds: 2);
     final periodic =
         controls.needsPeriodicTimeline &&
@@ -113,6 +123,14 @@ class MediaControlsSync {
   void _push(MediaPlaybackInfo info) {
     _lastPlayback = info;
     _lastPlaybackAt = DateTime.now();
+    PlaybackDiagnostics.instance.recordMediaSessionSubmit(
+      engine: _remote
+          ? PlaybackDiagnosticEngine.connectRemote
+          : playback.diagnosticEngine,
+      playing: info.playing,
+      buffering: info.buffering,
+      positionMs: info.position.inMilliseconds,
+    );
     unawaited(controls.setPlayback(info));
   }
 

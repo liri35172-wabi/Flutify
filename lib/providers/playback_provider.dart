@@ -13,6 +13,8 @@ import '../models/playback_session.dart';
 import '../models/playback_state.dart';
 import '../models/track.dart';
 import '../services/audio/audio_engine.dart';
+import '../services/audio/routed_audio_engine.dart';
+import '../services/media_controls/playback_diagnostics.dart';
 import '../services/playback/playback_region_gate.dart';
 import '../services/playback_session_store.dart';
 import '../services/network/network_failure.dart';
@@ -274,6 +276,11 @@ class PlaybackProvider extends ChangeNotifier {
        _normalize = _storage.normalizeVolume,
        _fadeSeconds = _storage.fadeSeconds.clamp(0, maxFadeSeconds) {
     _initAudioListeners();
+    unawaited(
+      PlaybackDiagnostics.instance.startAudioSessionObservers(
+        engine: () => diagnosticEngine,
+      ),
+    );
     _applyVolume();
     _defaultRepeatMode = defaultRepeatMode;
     if (defaultRepeatMode != null) _repeatMode = defaultRepeatMode;
@@ -286,6 +293,18 @@ class PlaybackProvider extends ChangeNotifier {
   // Getters
   // ---------------------------------------------------------------------------
   SpotifyTrack? get currentTrack => _currentTrack;
+
+  /// Safe fixed-label engine classification for local playback diagnostics.
+  PlaybackDiagnosticEngine get diagnosticEngine {
+    final audio = _audio;
+    if (audio is! RoutedAudioEngine) {
+      return PlaybackDiagnosticEngine.unknown;
+    }
+    if (!audio.hasActiveEngine) return PlaybackDiagnosticEngine.none;
+    return audio.isEmeActive
+        ? PlaybackDiagnosticEngine.drm
+        : PlaybackDiagnosticEngine.local;
+  }
 
   /// 最近一次播放失败；UI 读取后提示用户，并可调用 [clearPlaybackError] 清除。
   /// 对话框 / SnackBar 建议监听 [playbackErrors]（每次失败触发一次事件）。
@@ -412,6 +431,13 @@ class PlaybackProvider extends ChangeNotifier {
       // 还原会话后音频尚未加载：播放器报的 0 不能覆盖还原的进度
       if (_loadedTrackId == null && _resumeAt != null) return;
       positionNotifier.value = pos;
+      PlaybackDiagnostics.instance.recordDartPosition(
+        engine: diagnosticEngine,
+        playing: _isPlaying,
+        playbackActive: isPlaybackActive,
+        buffering: _isBuffering,
+        positionMs: pos.inMilliseconds,
+      );
       if (_fadeSeconds > 0) _updateFade(pos);
       if ((pos - _savedPosition).abs() >= _positionSaveInterval)
         _scheduleSave();
@@ -434,6 +460,20 @@ class PlaybackProvider extends ChangeNotifier {
           ps == ProcessingState.completed &&
           _lastProcessingState != ProcessingState.completed;
       _lastProcessingState = ps;
+      PlaybackDiagnostics.instance.recordDartPlayerState(
+        engine: diagnosticEngine,
+        playing: state.playing,
+        playbackActive: isPlaybackActive,
+        buffering: buffering,
+        processingState: switch (ps) {
+          ProcessingState.idle => PlaybackDiagnosticProcessing.idle,
+          ProcessingState.loading => PlaybackDiagnosticProcessing.loading,
+          ProcessingState.buffering => PlaybackDiagnosticProcessing.buffering,
+          ProcessingState.ready => PlaybackDiagnosticProcessing.ready,
+          ProcessingState.completed => PlaybackDiagnosticProcessing.completed,
+        },
+        positionMs: _audio.position.inMilliseconds,
+      );
 
       // Set continuation intent BEFORE notifying media controls of completion.
       // Loading the next source (and repeat-one's seek) can take arbitrarily long.

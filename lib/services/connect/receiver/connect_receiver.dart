@@ -9,6 +9,7 @@ import 'listening_progress.dart';
 import '../dealer_client.dart';
 import 'track_playback_api.dart';
 import 'track_playback_state.dart';
+import '../../media_controls/playback_diagnostics.dart';
 
 /// 播放端要驱动的本机播放器（由 [PlaybackReceiverHost] 接到 PlaybackProvider）。
 abstract class ReceiverHost {
@@ -211,6 +212,12 @@ class ConnectReceiver {
       debugPrint('[Receiver] 命令 $type');
       switch (type) {
         case 'replace_state':
+          PlaybackDiagnostics.instance.recordConnectReceiver(
+            event: PlaybackDiagnosticConnectEvent.receiverCommand,
+            active: payload['state_ref'] != null,
+            paused: false,
+            positionMs: host.positionMs,
+          );
           // track-playback uses an absent/null state_ref to revoke ownership.
           // This is a stop command, not an invalid state machine to ignore.
           if (payload['state_ref'] == null) {
@@ -273,6 +280,12 @@ class ConnectReceiver {
       }
       if (revision != _revision) return;
       _listening.anchor(seekTo ?? host.positionMs, _clock.elapsedMilliseconds);
+      PlaybackDiagnostics.instance.recordConnectReceiver(
+        event: PlaybackDiagnosticConnectEvent.receiverStateApplied,
+        active: isActive,
+        paused: _paused,
+        positionMs: seekTo ?? host.positionMs,
+      );
       _report(
         _paused ? 'pause' : 'started_playing',
         positionMs: seekTo ?? host.positionMs,
@@ -323,6 +336,12 @@ class ConnectReceiver {
     _stateIndex = target;
     _revision++;
     _listening.anchor(0, _clock.elapsedMilliseconds, reset: true);
+    PlaybackDiagnostics.instance.recordConnectReceiver(
+      event: PlaybackDiagnosticConnectEvent.receiverLocalTrackChanged,
+      active: true,
+      paused: _paused,
+      positionMs: 0,
+    );
     _report('started_playing', positionMs: 0, durationMs: durationMs);
   }
 
@@ -334,6 +353,12 @@ class ConnectReceiver {
     if (!isActive || paused == _paused) return;
     _paused = paused;
     _listening.anchor(positionMs, _clock.elapsedMilliseconds);
+    PlaybackDiagnostics.instance.recordConnectReceiver(
+      event: PlaybackDiagnosticConnectEvent.receiverLocalPauseChanged,
+      active: isActive,
+      paused: paused,
+      positionMs: positionMs,
+    );
     _report(
       paused ? 'pause' : 'resume',
       positionMs: positionMs,
@@ -344,6 +369,12 @@ class ConnectReceiver {
   void onLocalSeek(int fromMs, int toMs, {required int durationMs}) {
     if (!isActive) return;
     _listening.anchor(toMs, _clock.elapsedMilliseconds);
+    PlaybackDiagnostics.instance.recordConnectReceiver(
+      event: PlaybackDiagnosticConnectEvent.receiverLocalSeek,
+      active: isActive,
+      paused: _paused,
+      positionMs: toMs,
+    );
     _report(
       'seek',
       positionMs: toMs,
@@ -382,6 +413,12 @@ class ConnectReceiver {
     _stateIndex = -1;
     _paused = true;
     _listening.anchor(0, _clock.elapsedMilliseconds, reset: true);
+    PlaybackDiagnostics.instance.recordConnectReceiver(
+      event: PlaybackDiagnosticConnectEvent.receiverStateCleared,
+      active: false,
+      paused: true,
+      positionMs: 0,
+    );
   }
 
   void _report(

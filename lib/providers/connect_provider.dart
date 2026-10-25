@@ -8,6 +8,7 @@ import '../models/image.dart';
 import '../models/track.dart';
 import '../services/connect/connect_play_request.dart';
 import '../services/connect/connect_service.dart';
+import '../services/media_controls/playback_diagnostics.dart';
 
 /// Spotify Connect 遥控：同账号其他设备的列表、播放状态与远程控制。
 ///
@@ -34,6 +35,8 @@ class ConnectProvider extends ChangeNotifier {
   Timer? _volumeTimer;
 
   bool _disposed = false;
+  String? _diagnosticTrackUri;
+  int _diagnosticTrackRevision = 0;
 
   ConnectProvider(
     this._service, {
@@ -49,9 +52,17 @@ class ConnectProvider extends ChangeNotifier {
     _resolveRemoteTrack(_cluster.player.trackUri);
     _updateDisplayTrack();
     _syncPositionTicker();
+    _recordConnectCluster(PlaybackDiagnosticConnectEvent.clusterSnapshot);
+    PlaybackDiagnostics.instance.recordConnectStatus(
+      _diagnosticStatus(_status),
+    );
     _clusterSub = service.clusters.listen(_onCluster);
     _statusSub = service.statusChanges.listen((s) {
       _status = s;
+      PlaybackDiagnostics.instance.recordConnectStatus(_diagnosticStatus(s));
+      _recordConnectCluster(
+        PlaybackDiagnosticConnectEvent.clusterStatusChanged,
+      );
       _notify();
     });
     sessionChanged();
@@ -70,7 +81,14 @@ class ConnectProvider extends ChangeNotifier {
   ];
 
   /// 本机作为 Connect 播放端注册的设备 id：它被选中时声音就在本机，不算「远程」设备。
-  String? receiverDeviceId;
+  String? _receiverDeviceId;
+  String? get receiverDeviceId => _receiverDeviceId;
+  set receiverDeviceId(String? value) {
+    if (_receiverDeviceId == value) return;
+    _receiverDeviceId = value;
+    _recordConnectCluster(PlaybackDiagnosticConnectEvent.clusterSnapshot);
+  }
+
   String? _pendingTarget;
   int _targetRevision = 0;
   Future<void>? _receiverTransfer;
@@ -231,6 +249,7 @@ class ConnectProvider extends ChangeNotifier {
       _tracks.clear();
       _updateDisplayTrack();
       _syncPositionTicker();
+      _recordConnectCluster(PlaybackDiagnosticConnectEvent.clusterSnapshot);
       _notify();
     }
   }
@@ -253,7 +272,42 @@ class ConnectProvider extends ChangeNotifier {
     _resolveRemoteTrack(cluster.player.trackUri);
     _updateDisplayTrack();
     _syncPositionTicker();
+    _recordConnectCluster(PlaybackDiagnosticConnectEvent.clusterSnapshot);
     _notify();
+  }
+
+  static PlaybackDiagnosticConnectStatus _diagnosticStatus(
+    ConnectStatus status,
+  ) => switch (status) {
+    ConnectStatus.idle => PlaybackDiagnosticConnectStatus.idle,
+    ConnectStatus.connecting => PlaybackDiagnosticConnectStatus.connecting,
+    ConnectStatus.online => PlaybackDiagnosticConnectStatus.online,
+    ConnectStatus.offline => PlaybackDiagnosticConnectStatus.offline,
+  };
+
+  void _recordConnectCluster(PlaybackDiagnosticConnectEvent event) {
+    final uri = _cluster.player.trackUri;
+    if (uri != _diagnosticTrackUri) {
+      _diagnosticTrackUri = uri;
+      _diagnosticTrackRevision++;
+    }
+    final player = _cluster.player;
+    final activeId = _cluster.activeDeviceId;
+    PlaybackDiagnostics.instance.recordConnectCluster(
+      event: event,
+      status: _diagnosticStatus(_status),
+      activeDevicePresent: activeId.isNotEmpty,
+      activeDeviceIsReceiver:
+          activeId.isNotEmpty &&
+          receiverDeviceId != null &&
+          activeId == receiverDeviceId,
+      remoteSession: hasRemoteSession,
+      hasTrack: player.hasTrack,
+      playing: player.isPlaying,
+      paused: player.isPaused,
+      positionMs: player.positionAt(serverNowMs),
+      trackRevision: _diagnosticTrackRevision,
+    );
   }
 
   void _resolveRemoteTrack(String uri) {

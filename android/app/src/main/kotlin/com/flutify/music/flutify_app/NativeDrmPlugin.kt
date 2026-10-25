@@ -1,6 +1,8 @@
 package com.flutify.music.flutify_app
 
 import android.content.Context
+import android.os.SystemClock
+import android.util.Log
 import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.AudioAttributes
@@ -46,6 +48,9 @@ class NativeDrmPlugin(
     private var player: ExoPlayer? = null
     private var requestedVolume = 1f
     private var eventSink: EventChannel.EventSink? = null
+    private var diagnosticsEnabled = false
+    private var lastDiagnosticState: String? = null
+    private var lastDiagnosticPositionAtMs = 0L
 
     private val methodChannel = MethodChannel(messenger, METHOD_CHANNEL).also {
         it.setMethodCallHandler(this)
@@ -58,6 +63,7 @@ class NativeDrmPlugin(
         private const val METHOD_CHANNEL = "flutify/native_drm"
         private const val EVENT_CHANNEL = "flutify/native_drm/events"
         private const val POSITION_INTERVAL_MS = 500L
+        private const val DIAGNOSTIC_TAG = "FlutifyPlaybackDiag"
 
         fun register(flutterEngine: FlutterEngine, context: Context): NativeDrmPlugin =
             NativeDrmPlugin(context, flutterEngine.dartExecutor.binaryMessenger)
@@ -78,6 +84,12 @@ class NativeDrmPlugin(
                     val autoplay = call.argument<Boolean>("autoplay") ?: true
                     val positionMs = call.argument<Number>("positionMs")?.toLong() ?: 0L
                     play(hlsUrl, licenseUrl, provisionUrl, autoplay, positionMs)
+                    result.success(null)
+                }
+                "setDiagnosticsEnabled" -> {
+                    // Dart only calls this when the explicit diagnostic build flag is enabled.
+                    diagnosticsEnabled = call.argument<Boolean>("enabled") == true
+                    logDiagnosticState(force = true)
                     result.success(null)
                 }
                 "pause" -> { player?.pause(); result.success(null) }
@@ -151,6 +163,7 @@ class NativeDrmPlugin(
         p.addListener(playerListener)
         handler.post(positionTicker)
         player = p
+        logDiagnosticState(force = true)
         return p
     }
 
@@ -228,10 +241,58 @@ class NativeDrmPlugin(
         eventSink?.success(payload)
     }
 
-    private val playerListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) = sendState()
+    /** Local opt-in snapshot; deliberately excludes MediaItem/URI/device data. */
+    private fun logDiagnosticState(force: Boolean = false) {
+        if (!diagnosticsEnabled) return
+        val p = player ?: return
+        val signature = "${p.playWhenReady}|${p.isPlaying}|${p.playbackState}|${p.playbackSuppressionReason}"
+        if (!force && signature == lastDiagnosticState) return
+        lastDiagnosticState = signature
+        Log.d(
+            DIAGNOSTIC_TAG,
+            "wall_ms=${System.currentTimeMillis()} elapsed_ms=${SystemClock.elapsedRealtime()} " +
+                "event=native_player_state engine=drm_exoplayer " +
+                "play_when_ready=${p.playWhenReady} is_playing=${p.isPlaying} " +
+                "playback_state=${p.playbackState} suppression_reason=${p.playbackSuppressionReason} " +
+                "position_ms=${p.currentPosition.coerceAtLeast(0L)}",
+        )
+    }
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) = sendState()
+    /** Periodic scalar position sample; no player metadata or identifiers. */
+    private fun logDiagnosticPosition() {
+        if (!diagnosticsEnabled) return
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastDiagnosticPositionAtMs < 5_000L) return
+        lastDiagnosticPositionAtMs = now
+        val p = player ?: return
+        Log.d(
+            DIAGNOSTIC_TAG,
+            "wall_ms=${System.currentTimeMillis()} elapsed_ms=$now " +
+                "event=native_player_position_sample engine=drm_exoplayer " +
+                "play_when_ready=${p.playWhenReady} is_playing=${p.isPlaying} " +
+                "playback_state=${p.playbackState} suppression_reason=${p.playbackSuppressionReason} " +
+                "position_ms=${p.currentPosition.coerceAtLeast(0L)}",
+        )
+    }
+
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            logDiagnosticState()
+            sendState()
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            logDiagnosticState()
+            sendState()
+        }
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            logDiagnosticState()
+        }
+
+        override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
+            logDiagnosticState()
+        }
 
         override fun onPlayerError(error: PlaybackException) {
             val cause = error.cause
@@ -262,6 +323,7 @@ class NativeDrmPlugin(
     private val positionTicker = object : Runnable {
         override fun run() {
             player?.let {
+                logDiagnosticPosition()
                 send(
                     mapOf(
                         "type" to "position",

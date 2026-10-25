@@ -21,6 +21,10 @@ on:
         description: 'Release tag (required when publishing, e.g. v0.04-beta)'
         type: string
         default: ''
+      playback_diagnostics:
+        description: 'Enable local playback diagnostics; build Android only and never publish a release'
+        type: boolean
+        default: false
 
 concurrency:
   group: build-${{ github.event_name }}-${{ github.ref }}-${{ inputs.release_tag || '' }}
@@ -110,9 +114,10 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          FLUTIFY_PLAYBACK_DIAGNOSTICS: ${{ inputs.playback_diagnostics || false }}
         run: |
-          flutter build apk --release --split-per-abi --build-number="$ANDROID_BUILD_NUMBER" --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }}
-          flutter build apk --release --build-number="$ANDROID_BUILD_NUMBER" --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }}
+          flutter build apk --release --split-per-abi --build-number="$ANDROID_BUILD_NUMBER" --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }} --dart-define=FLUTIFY_PLAYBACK_DIAGNOSTICS=$FLUTIFY_PLAYBACK_DIAGNOSTICS
+          flutter build apk --release --build-number="$ANDROID_BUILD_NUMBER" --dart-define=FLUTIFY_RELEASE_TAG=${{ needs.prepare.outputs.tag }} --dart-define=FLUTIFY_PLAYBACK_DIAGNOSTICS=$FLUTIFY_PLAYBACK_DIAGNOSTICS
 
       - name: Verify APK signatures, version codes, and media icons
         env:
@@ -158,6 +163,7 @@ jobs:
 
   windows:
     name: Windows ${{ matrix.arch }}
+    if: ${{ !inputs.playback_diagnostics }}
     needs: prepare
     env:
       BUILD_LABEL: ${{ needs.prepare.outputs.label }}
@@ -244,6 +250,7 @@ jobs:
 
   macos:
     name: macOS
+    if: ${{ !inputs.playback_diagnostics }}
     needs: prepare
     env:
       BUILD_LABEL: ${{ needs.prepare.outputs.label }}
@@ -277,6 +284,7 @@ jobs:
 
   linux:
     name: Linux x64
+    if: ${{ !inputs.playback_diagnostics }}
     needs: prepare
     env:
       BUILD_LABEL: ${{ needs.prepare.outputs.label }}
@@ -315,7 +323,7 @@ jobs:
 
   release:
     name: Publish release
-    if: needs.prepare.outputs.publish == 'true'
+    if: needs.prepare.outputs.publish == 'true' && !inputs.playback_diagnostics
     needs: [prepare, android, windows, macos, linux]
     runs-on: ubuntu-latest
     steps:
